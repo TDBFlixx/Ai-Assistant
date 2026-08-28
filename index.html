@@ -1,0 +1,6239 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#071a2b"
+    >
+
+    <title>Mein KI-Assistent</title>
+
+
+    <!--
+        FRÜHE THEME-ANWENDUNG
+        Dieses kleine Skript läuft, bevor die Seite überhaupt
+        gezeichnet wird. Es liest das zuletzt gespeicherte Theme
+        aus localStorage und setzt data-theme sofort - dadurch
+        gibt es kein kurzes "Aufblitzen" des falschen Themes beim
+        Laden der Seite.
+    -->
+
+    <script>
+
+        (function() {
+
+            const savedTheme =
+                localStorage.getItem("theme") ||
+                "dark";
+
+
+            document.documentElement.setAttribute(
+                "data-theme",
+                savedTheme
+            );
+
+        })();
+
+    </script>
+
+
+    <style>
+
+        /* =========================================================
+           GRUNDEINSTELLUNGEN
+           Diese Werte gelten für die ganze Seite als Basis.
+        ========================================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        :root {
+
+            /*
+            // FARBVARIABLEN - DUNKLES THEME (Standard)
+            // Wenn du die Grundfarben der App ändern willst,
+            // reicht es meistens, hier die Werte anzupassen -
+            // alle anderen Stellen im CSS greifen darauf zu (var(--name)).
+            */
+
+            --background: #071a2b;
+
+            --background-light: #0d2940;
+
+            --card: #102f48;
+
+            --card-light: #143953;
+
+            --border: rgba(255, 255, 255, 0.08);
+
+            --text: #f5f9ff;
+
+            --muted: #8fa8bd;
+
+            --blue: #4aa8ff;
+
+            --blue-light: #72c2ff;
+
+            --green: #42d392;
+
+            --red: #ff6675;
+
+            --yellow: #f7c95b;
+
+        }
+
+
+        /*
+        // FARBVARIABLEN - HELLES THEME
+        // Wird aktiv, sobald <html data-theme="light"> gesetzt ist.
+        // Das übernimmt die Funktion applyTheme() weiter unten im JS,
+        // je nachdem was in den Einstellungen ausgewählt wurde.
+        */
+
+        [data-theme="light"] {
+
+            --background: #eef2f7;
+
+            --background-light: #ffffff;
+
+            --card: #ffffff;
+
+            --card-light: #f2f5f9;
+
+            --border: rgba(16, 32, 47, 0.1);
+
+            --text: #142333;
+
+            --muted: #5c7288;
+
+            --blue: #1c86e6;
+
+            --blue-light: #2f9bff;
+
+            --green: #1f9d67;
+
+            --red: #e0334b;
+
+            --yellow: #caa23a;
+
+        }
+
+
+        html {
+            background: var(--background);
+        }
+
+
+        body {
+
+            margin: 0;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "SF Pro Display",
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at 50% -10%,
+                    #16466a 0%,
+                    var(--background) 45%
+                );
+
+            color: var(--text);
+
+            min-height: 100vh;
+
+            /* Platz unten, damit die feste Navigation nichts verdeckt */
+            padding-bottom: 100px;
+
+        }
+
+
+        /*
+        // Im hellen Theme brauchen wir einen helleren Verlauf oben,
+        // sonst würde der dunkelblaue Farbfleck aus dem Dark-Mode
+        // seltsam auf hellem Hintergrund wirken.
+        */
+
+        [data-theme="light"] body {
+
+            background:
+                radial-gradient(
+                    circle at 50% -10%,
+                    #d7e6f7 0%,
+                    var(--background) 45%
+                );
+
+        }
+
+
+
+
+        button,
+        input,
+        select {
+
+            font: inherit;
+
+        }
+
+
+        button {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+
+        /* =========================================================
+           APP-CONTAINER
+           Begrenzt die Breite auf großen Bildschirmen.
+        ========================================================= */
+
+        .app {
+
+            width: 100%;
+
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            padding:
+                max(20px, env(safe-area-inset-top))
+                18px
+                110px;
+
+        }
+
+
+        /*
+        // SEITEN (Home / To-Do / Habits / Profil)
+        // Immer nur eine Seite mit der Klasse "active" ist sichtbar.
+        // Das Umschalten übernimmt die Funktion showPage() weiter unten.
+        */
+
+        .page {
+
+            display: none;
+
+            animation:
+                pageIn 0.25s ease;
+
+        }
+
+
+        .page.active {
+            display: block;
+        }
+
+
+        @keyframes pageIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(8px);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+
+            }
+
+        }
+
+
+        /* =========================================================
+           TOP BAR (Pfeile + aktuelles Datum)
+        ========================================================= */
+
+        .top-bar {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .today-info {
+
+            text-align: center;
+
+            flex: 1;
+
+        }
+
+
+        .today-title {
+
+            font-size: 13px;
+
+            color: var(--muted);
+
+            margin-bottom: 3px;
+
+        }
+
+
+        .today-date {
+
+            font-size: 17px;
+
+            font-weight: 700;
+
+        }
+
+
+        .arrow-button {
+
+            width: 38px;
+
+            height: 38px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background:
+                rgba(255,255,255,0.06);
+
+            color: white;
+
+            cursor: pointer;
+
+            font-size: 20px;
+
+        }
+
+
+        /* =========================================================
+           WOCHENLEISTE
+           Zeigt Mo-So an, anklickbar, um selectedDate zu ändern.
+        ========================================================= */
+
+        .week-strip {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(7, 1fr);
+
+            gap: 6px;
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .week-day {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            padding: 6px 2px;
+
+            border-radius: 14px;
+
+            cursor: pointer;
+
+        }
+
+
+        .week-day-name {
+
+            font-size: 11px;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .week-day-number {
+
+            width: 32px;
+
+            height: 32px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            margin: auto;
+
+            border-radius: 50%;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* Der heutige Tag bekommt immer den blauen Kreis */
+
+        .week-day.today .week-day-number {
+
+            background: var(--blue);
+
+            color: white;
+
+            box-shadow:
+                0 0 18px
+                rgba(74,168,255,0.35);
+
+        }
+
+
+        /* Der gerade ausgewählte Tag (kann auch ein anderer Tag als heute sein) */
+
+        .week-day.selected {
+
+            color: white;
+
+        }
+
+
+        /* =========================================================
+           STREAK-KARTE
+        ========================================================= */
+
+        .streak-card {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(74,168,255,0.13),
+                    rgba(66,211,146,0.06)
+                );
+
+            border: 1px solid var(--border);
+
+            border-radius: 18px;
+
+            padding: 15px 16px;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        .streak-left {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .streak-fire {
+            font-size: 22px;
+        }
+
+
+        .streak-title {
+
+            font-weight: 700;
+
+            font-size: 14px;
+
+        }
+
+
+        .streak-subtitle {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            margin-top: 3px;
+
+        }
+
+
+        .details-button {
+
+            border: none;
+
+            background:
+                rgba(74,168,255,0.12);
+
+            color: var(--blue-light);
+
+            padding: 8px 12px;
+
+            border-radius: 10px;
+
+            font-size: 12px;
+
+            cursor: pointer;
+
+        }
+
+
+        /* =========================================================
+           TAGESZITAT
+        ========================================================= */
+
+        .quote {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #3c91c7,
+                    #70c6f5
+                );
+
+            color: #082037;
+
+            border-radius: 16px;
+
+            padding: 15px 17px;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+            font-weight: 600;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        /* =========================================================
+           PROGRESS-KREIS (SVG-Version mit weicher Animation)
+        ========================================================= */
+
+        .progress-card {
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #0d2d44,
+                    #0b2539
+                );
+
+            border: 1px solid var(--border);
+
+            border-radius: 24px;
+
+            padding: 25px;
+
+            text-align: center;
+
+            margin-bottom: 28px;
+
+        }
+
+
+        .progress-ring {
+
+            width: 220px;
+
+            height: 220px;
+
+            margin: 0 auto 12px;
+
+            position: relative;
+
+        }
+
+
+        .progress-ring svg {
+
+            width: 100%;
+
+            height: 100%;
+
+            /* -90deg dreht den Start des Kreises auf "12 Uhr" statt "3 Uhr" */
+            transform:
+                rotate(-90deg);
+
+        }
+
+
+        .progress-track {
+
+            fill: none;
+
+            stroke:
+                rgba(255,255,255,0.06);
+
+            stroke-width: 9;
+
+        }
+
+
+        .progress-value {
+
+            fill: none;
+
+            stroke: var(--blue);
+
+            stroke-width: 9;
+
+            stroke-linecap: butt;
+
+            /*
+            // DIESE ZEILE ist für die weiche Animation verantwortlich.
+            // Jede Änderung von stroke-dashoffset (siehe JS) wird
+            // automatisch über 0.7 Sekunden sanft animiert.
+            */
+
+            transition:
+                stroke-dashoffset 0.7s ease;
+
+        }
+
+
+        .progress-center {
+
+            position: absolute;
+
+            inset: 0;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+        .progress-percent {
+
+            font-size: 39px;
+
+            font-weight: 800;
+
+            letter-spacing: -1px;
+
+        }
+
+
+        .progress-label {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            margin-top: 3px;
+
+        }
+
+
+        .progress-summary {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+        }
+
+
+        /* =========================================================
+           ABSCHNITTS-ÜBERSCHRIFTEN (z.B. "Daily Habits", "Meine Aufgaben")
+        ========================================================= */
+
+        .section-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 13px;
+
+        }
+
+
+        .section-title {
+
+            font-size: 20px;
+
+            font-weight: 750;
+
+            margin: 0;
+
+        }
+
+
+        .section-link {
+
+            color: var(--blue-light);
+
+            font-size: 13px;
+
+            cursor: pointer;
+
+            border: none;
+
+            background: none;
+
+        }
+
+
+        /* =========================================================
+           HABITS (Gewohnheiten)
+        ========================================================= */
+
+        .habit-grid {
+
+            display: grid;
+
+            /* Handy: 2 Spalten nebeneinander */
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap: 10px;
+
+            margin-bottom: 28px;
+
+        }
+
+
+        .habit-card {
+
+            position: relative;
+
+            background: var(--card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 17px;
+
+            padding: 15px;
+
+            min-height: 100px;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.15s,
+                border-color 0.2s;
+
+        }
+
+
+        .habit-card:active {
+
+            transform:
+                scale(0.97);
+
+        }
+
+
+        .habit-card.done {
+
+            border-color:
+                rgba(66,211,146,0.5);
+
+        }
+
+
+        .habit-icon {
+
+            font-size: 22px;
+
+            margin-bottom: 11px;
+
+        }
+
+
+        .habit-name {
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            /*
+            // Etwas Platz rechts und links lassen, damit der Text nicht
+            // unter dem Papierkorb- bzw. Häkchen-Button verschwindet.
+            */
+
+            padding-right: 6px;
+
+        }
+
+
+        .habit-status {
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+            margin-top: 5px;
+
+            /* Platz lassen, damit der Text nicht unter dem
+               Papierkorb-Button (unten rechts) verschwindet */
+            padding-right: 26px;
+
+        }
+
+
+        /* Häkchen-Kreis oben rechts zum Abhaken des Habits */
+
+        .habit-check {
+
+            position: absolute;
+
+            right: 12px;
+
+            top: 12px;
+
+            width: 25px;
+
+            height: 25px;
+
+            border-radius: 50%;
+
+            border: 2px solid #45627a;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 12px;
+
+            background: transparent;
+
+        }
+
+
+        .habit-card.done .habit-check {
+
+            background: var(--green);
+
+            border-color: var(--green);
+
+            color: #05271b;
+
+        }
+
+
+        /*
+        // PAPIERKORB-BUTTON zum Löschen eines Habits.
+        // Liegt oben links in der Karte, damit er nicht mit dem
+        // Häkchen oben rechts kollidiert.
+        // Es ist ein eigener <button>, deshalb müssen wir beim Klick
+        // per event.stopPropagation() verhindern, dass zusätzlich
+        // noch das Habit abgehakt wird (siehe JS: deleteHabit()).
+        */
+
+        .habit-delete {
+
+            position: absolute;
+
+            /* Unten rechts in der Karte, unter dem Häkchen (das liegt oben rechts) */
+            right: 10px;
+
+            bottom: 10px;
+
+            width: 25px;
+
+            height: 25px;
+
+            border-radius: 50%;
+
+            border: none;
+
+            background:
+                rgba(255,255,255,0.05);
+
+            color: #b9c9d6;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 12px;
+
+            cursor: pointer;
+
+        }
+
+
+        .habit-delete:hover {
+
+            background:
+                rgba(255,102,117,0.15);
+
+            color: var(--red);
+
+        }
+
+
+        .add-habit-card {
+
+            border:
+                1px dashed #3d6078;
+
+            background:
+                rgba(255,255,255,0.02);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+        }
+
+
+        /* =========================================================
+           AUFGABEN (Tasks)
+        ========================================================= */
+
+        .task-list {
+
+            list-style: none;
+
+            padding: 0;
+
+            margin: 0;
+
+        }
+
+
+        .task {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            background: var(--card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 15px;
+
+            padding: 14px;
+
+            margin-bottom: 9px;
+
+            /*
+            // Diese transition sorgt dafür, dass die Aufgabe beim
+            // Erledigen sanft ausgeblendet wird (siehe .completing unten
+            // und die 1.5 Sekunden Verzögerung im JS-Code).
+            */
+
+            transition:
+                opacity 0.8s ease,
+                transform 0.8s ease;
+
+        }
+
+
+        /* Wird per JS gesetzt, sobald eine Aufgabe abgehakt wurde */
+
+        .task.completing {
+
+            opacity: 0;
+
+            transform:
+                translateX(20px);
+
+        }
+
+
+        .check-circle {
+
+            width: 23px;
+
+            height: 23px;
+
+            flex-shrink: 0;
+
+            border-radius: 50%;
+
+            border:
+                2px solid #71899c;
+
+            background: transparent;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            color: #06251a;
+
+            font-size: 12px;
+
+        }
+
+
+        .check-circle.checked {
+
+            background: var(--green);
+
+            border-color: var(--green);
+
+        }
+
+
+        .task-info {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+
+        .task-text {
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            line-height: 1.35;
+
+        }
+
+
+        .task-text.completed {
+
+            text-decoration:
+                line-through;
+
+            opacity: 0.5;
+
+        }
+
+
+        .priority-dot {
+
+            font-size: 14px;
+
+        }
+
+
+        .delete-button {
+
+            border: none;
+
+            background: transparent;
+
+            color: #71899c;
+
+            cursor: pointer;
+
+            font-size: 16px;
+
+            padding: 5px;
+
+        }
+
+
+        .empty-state {
+
+            color: var(--muted);
+
+            text-align: center;
+
+            padding: 30px 10px;
+
+            font-size: 13px;
+
+        }
+
+
+        /* =========================================================
+           TO-DO SEITE
+        ========================================================= */
+
+        .page-heading {
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .page-heading h1 {
+
+            font-size: 30px;
+
+            margin: 0 0 5px;
+
+        }
+
+
+        .page-heading p {
+
+            color: var(--muted);
+
+            margin: 0;
+
+            font-size: 13px;
+
+        }
+
+
+        .add-main-button {
+
+            width: 48px;
+
+            height: 48px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-size: 30px;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 8px 25px
+                rgba(74,168,255,0.25);
+
+            /*
+            // Flexbox zentriert das "+"-Zeichen exakt in der Mitte
+            // des Kreises (statt sich auf die Standard-Textausrichtung
+            // eines Buttons zu verlassen, die je nach Schriftart
+            // leicht daneben liegen kann).
+            */
+
+            padding: 0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            /*
+            // line-height: 1 verhindert zusätzlichen Abstand über/unter
+            // dem Zeichen, der die Zentrierung stören könnte.
+            */
+
+            line-height: 1;
+
+        }
+
+
+        /*
+        // SCHWEBENDER "+"-BUTTON AUF DER HOME-SEITE
+        // Liegt fest unten rechts über dem Inhalt (position: fixed),
+        // schwebt über der unteren Navigation und öffnet das
+        // "Neu hinzufügen"-Modal (Aufgabe ODER Habit).
+        // Da dieser Button INNERHALB von #homePage liegt, wird er
+        // automatisch mit versteckt, wenn eine andere Seite aktiv ist
+        // (siehe .page { display: none; } weiter oben).
+        */
+
+        .floating-add-button {
+
+            position: fixed;
+
+            z-index: 60;
+
+            right: 22px;
+
+            /* Genug Abstand zur unteren Navigation lassen */
+            bottom:
+                calc(
+                    max(12px, env(safe-area-inset-bottom))
+                    + 67px
+                    + 16px
+                );
+
+            width: 56px;
+
+            height: 56px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-size: 32px;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 10px 28px
+                rgba(74,168,255,0.35);
+
+            /* Auch hier: Flexbox zentriert das "+" exakt mittig */
+            padding: 0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            line-height: 1;
+
+        }
+
+
+        .floating-add-button:active {
+
+            transform:
+                scale(0.94);
+
+        }
+
+
+        @media (min-width: 700px) {
+
+            .floating-add-button {
+
+                bottom: 34px;
+
+            }
+
+        }
+
+
+        /* =========================================================
+           PROFIL-SEITE
+        ========================================================= */
+
+        .profile-header {
+
+            text-align: center;
+
+            padding: 10px 0 25px;
+
+        }
+
+
+        .avatar {
+
+            width: 82px;
+
+            height: 82px;
+
+            border-radius: 50%;
+
+            margin: 0 auto 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #3b8fd1,
+                    #6bc7ee
+                );
+
+            font-size: 34px;
+
+        }
+
+
+        .profile-name {
+
+            font-size: 22px;
+
+            font-weight: 750;
+
+        }
+
+
+        .profile-email {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            margin-top: 4px;
+
+        }
+
+
+        .settings-card {
+
+            background: var(--card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 18px;
+
+            overflow: hidden;
+
+            margin-bottom: 14px;
+
+        }
+
+
+        .settings-title {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            padding: 15px 16px 8px;
+
+        }
+
+
+        .setting-row {
+
+            width: 100%;
+
+            border: none;
+
+            background: transparent;
+
+            color: white;
+
+            padding: 16px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            border-top:
+                1px solid var(--border);
+
+            cursor: pointer;
+
+            text-align: left;
+
+        }
+
+
+        .setting-left {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+        }
+
+
+        .setting-icon {
+
+            width: 32px;
+
+            height: 32px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 9px;
+
+            background:
+                rgba(74,168,255,0.1);
+
+        }
+
+
+        .setting-label {
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+        }
+
+
+        .setting-arrow {
+
+            color: var(--muted);
+
+        }
+
+
+        .logout {
+
+            color: var(--red);
+
+        }
+
+
+        /*
+        // THEME-SCHALTER (Dunkel/Hell)
+        // Ein Toggle-Switch direkt in der Einstellungen-Zeile
+        // "Erscheinungsbild", statt eines separaten Buttons.
+        // Technisch ist es eine ausgeblendete Checkbox (#themeToggle)
+        // mit einem hübsch gestylten <span> als sichtbarem Schalter.
+        */
+
+        .theme-switch {
+
+            position: relative;
+
+            width: 46px;
+
+            height: 27px;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .theme-switch input {
+
+            /* Die echte Checkbox bleibt unsichtbar, ist aber weiter klickbar */
+            opacity: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            margin: 0;
+
+            position: absolute;
+
+            cursor: pointer;
+
+            z-index: 2;
+
+        }
+
+
+        .theme-switch-track {
+
+            position: absolute;
+
+            inset: 0;
+
+            background: #45627a;
+
+            border-radius: 999px;
+
+            transition: background 0.2s ease;
+
+        }
+
+
+        .theme-switch-track::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 21px;
+
+            height: 21px;
+
+            left: 3px;
+
+            top: 3px;
+
+            border-radius: 50%;
+
+            background: white;
+
+            transition: transform 0.2s ease;
+
+        }
+
+
+        /*
+        // Wenn die Checkbox angehakt ist (= Helles Theme aktiv),
+        // färben wir die Schiene blau ein und schieben den Punkt
+        // per transform nach rechts.
+        */
+
+        .theme-switch input:checked ~ .theme-switch-track {
+
+            background: var(--blue);
+
+        }
+
+
+        .theme-switch input:checked ~ .theme-switch-track::before {
+
+            transform: translateX(19px);
+
+        }
+
+
+        /*
+        // FORMULARFELDER INNERHALB DER EINSTELLUNGEN-KARTEN
+        // (z.B. für "Konto löschen"-Bereich, falls du dort mal
+        // direkt Felder statt eines Modals einbauen willst).
+        */
+
+        .settings-note {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            padding: 0 16px 16px;
+
+            line-height: 1.5;
+
+        }
+
+
+        /*
+        // GEFAHRENZONE
+        // Deutlich abgesetzter Bereich für "zerstörerische" Aktionen
+        // wie das endgültige Löschen des Kontos.
+        */
+
+        .danger-zone-title {
+
+            color: var(--red);
+
+        }
+
+
+        /* =========================================================
+           UNTERE NAVIGATION
+        ========================================================= */
+
+        .bottom-nav {
+
+            position: fixed;
+
+            z-index: 50;
+
+            left: 50%;
+
+            bottom:
+                max(12px, env(safe-area-inset-bottom));
+
+            transform:
+                translateX(-50%);
+
+            width:
+                min(94%, 520px);
+
+            height: 67px;
+
+            background:
+                rgba(10, 34, 52, 0.92);
+
+            backdrop-filter:
+                blur(20px);
+
+            -webkit-backdrop-filter:
+                blur(20px);
+
+            border:
+                1px solid rgba(255,255,255,0.08);
+
+            border-radius: 22px;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            padding: 6px;
+
+            box-shadow:
+                0 15px 40px
+                rgba(0,0,0,0.35);
+
+        }
+
+
+        .nav-button {
+
+            border: none;
+
+            background: transparent;
+
+            color: #7893a8;
+
+            border-radius: 17px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 3px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s,
+                color 0.2s;
+
+        }
+
+
+        .nav-button.active {
+
+            background:
+                rgba(74,168,255,0.13);
+
+            color: var(--blue-light);
+
+        }
+
+
+        .nav-icon {
+
+            font-size: 19px;
+
+        }
+
+
+        .nav-label {
+
+            font-size: 9px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================================
+           MODAL (Popup-Fenster für "Neu hinzufügen")
+        ========================================================= */
+
+        .modal {
+
+            display: none;
+
+            position: fixed;
+
+            z-index: 100;
+
+            inset: 0;
+
+            background:
+                rgba(0,0,0,0.65);
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 18px;
+
+        }
+
+
+        .modal.show {
+
+            display: flex;
+
+        }
+
+
+        .modal-content {
+
+            width: 100%;
+
+            max-width: 450px;
+
+            background: #f7f9fc;
+
+            color: #142333;
+
+            border-radius: 23px;
+
+            padding: 23px;
+
+            animation:
+                modalIn 0.2s ease;
+
+        }
+
+
+        @keyframes modalIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    scale(0.96)
+                    translateY(10px);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    scale(1)
+                    translateY(0);
+
+            }
+
+        }
+
+
+        .modal-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .modal-header h2 {
+
+            margin: 0;
+
+            font-size: 21px;
+
+        }
+
+
+        .close-button {
+
+            border: none;
+
+            background: transparent;
+
+            font-size: 28px;
+
+            color: #65717d;
+
+            cursor: pointer;
+
+        }
+
+
+        .modal-content label {
+
+            display: block;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .modal-content input,
+        .modal-content select {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border:
+                1px solid #d9e0e7;
+
+            border-radius: 11px;
+
+            margin-bottom: 17px;
+
+            background: white;
+
+            color: #172534;
+
+            outline: none;
+
+        }
+
+
+        .modal-content input:focus,
+        .modal-content select:focus {
+
+            border-color: var(--blue);
+
+        }
+
+
+        /*
+        // Diese beiden Blöcke (Priorität / Symbol) werden per JS
+        // ein- und ausgeblendet, je nachdem ob man eine Aufgabe
+        // oder ein Habit anlegt. Siehe Funktion updateAddModalFields().
+        */
+
+        #priorityField,
+        #iconField {
+
+            display: block;
+
+        }
+
+
+        .modal-buttons {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 9px;
+
+            margin-top: 5px;
+
+        }
+
+
+        .modal-button {
+
+            border: none;
+
+            padding: 12px 17px;
+
+            border-radius: 11px;
+
+            cursor: pointer;
+
+            font-weight: 700;
+
+        }
+
+
+        .cancel-button {
+
+            background: #e5e9ee;
+
+            color: #34414e;
+
+        }
+
+
+        .create-button {
+
+            background: #1688df;
+
+            color: white;
+
+        }
+
+
+        /* =========================================================
+           LOGIN / REGISTRIERUNG
+           Voller Bildschirm, wird angezeigt solange man nicht
+           eingeloggt ist. Blendet die eigentliche App komplett aus
+           (siehe checkAuthState() im JS).
+        ========================================================= */
+
+        .auth-screen {
+
+            /*
+            // Wichtig: "display" wird per JS zwischen "none" und "flex"
+            // umgeschaltet (siehe checkAuthState()). Der Startwert hier
+            // ist "none", damit beim allerersten Laden kein kurzes
+            // Aufblitzen der Login-Maske passiert, falls man doch
+            // schon eingeloggt ist.
+            */
+
+            display: none;
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 200;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 22px;
+
+            background:
+                radial-gradient(
+                    circle at 50% -10%,
+                    #16466a 0%,
+                    var(--background) 45%
+                );
+
+        }
+
+
+        .auth-card {
+
+            width: 100%;
+
+            max-width: 380px;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 24px;
+
+            padding: 30px 26px;
+
+            text-align: center;
+
+        }
+
+
+        .auth-logo {
+
+            width: 60px;
+
+            height: 60px;
+
+            margin: 0 auto 16px;
+
+            border-radius: 50%;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #3b8fd1,
+                    #6bc7ee
+                );
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 26px;
+
+        }
+
+
+        .auth-card h1 {
+
+            font-size: 22px;
+
+            margin: 0 0 6px;
+
+        }
+
+
+        .auth-card p {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            margin: 0 0 22px;
+
+        }
+
+
+        .auth-card label {
+
+            display: block;
+
+            text-align: left;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            color: var(--muted);
+
+            margin-bottom: 6px;
+
+        }
+
+
+        .auth-card input {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border-radius: 11px;
+
+            border: 1px solid var(--border);
+
+            background: var(--card-light);
+
+            color: var(--text);
+
+            margin-bottom: 15px;
+
+            outline: none;
+
+        }
+
+
+        .auth-card input:focus {
+
+            border-color: var(--blue);
+
+        }
+
+
+        .auth-error {
+
+            background: rgba(255,102,117,0.12);
+
+            color: var(--red);
+
+            font-size: 12.5px;
+
+            border-radius: 10px;
+
+            padding: 10px 12px;
+
+            margin-bottom: 15px;
+
+            text-align: left;
+
+            line-height: 1.4;
+
+        }
+
+
+        .auth-submit {
+
+            width: 100%;
+
+            border: none;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-weight: 700;
+
+            padding: 14px;
+
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+        }
+
+
+        .auth-switch {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            margin: 18px 0 0;
+
+        }
+
+
+        .auth-switch button {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--blue-light);
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            padding: 0;
+
+        }
+
+
+        /* =========================================================
+           KI-CHAT SEITE
+        ========================================================= */
+
+        /*
+        // Der Nachrichtenverlauf. overflow-y sorgt dafür, dass die
+        // Seite scrollt statt beliebig lang zu werden.
+        */
+
+        .chat-window {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 10px;
+
+            min-height: 300px;
+
+            margin-bottom: 16px;
+
+        }
+
+
+        .chat-message {
+
+            max-width: 80%;
+
+            padding: 12px 15px;
+
+            border-radius: 16px;
+
+            font-size: 14px;
+
+            line-height: 1.45;
+
+        }
+
+
+        /* Nachrichten von dir selbst: rechts, blau */
+
+        .chat-message.user {
+
+            align-self: flex-end;
+
+            background: var(--blue);
+
+            color: white;
+
+            border-bottom-right-radius: 4px;
+
+        }
+
+
+        /* Antworten der KI: links, dezente Kartenfarbe */
+
+        .chat-message.ai {
+
+            align-self: flex-start;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-bottom-left-radius: 4px;
+
+        }
+
+
+        .chat-input-row {
+
+            display: flex;
+
+            gap: 10px;
+
+            align-items: center;
+
+        }
+
+
+        .chat-input-row input {
+
+            flex: 1;
+
+            padding: 14px 16px;
+
+            border-radius: 14px;
+
+            border: 1px solid var(--border);
+
+            background: var(--card);
+
+            color: var(--text);
+
+            outline: none;
+
+        }
+
+
+        .chat-input-row input:focus {
+
+            border-color: var(--blue);
+
+        }
+
+
+        .chat-send-button {
+
+            width: 48px;
+
+            height: 48px;
+
+            flex-shrink: 0;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-size: 18px;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+        .chat-hint {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            text-align: center;
+
+            margin-top: 12px;
+
+        }
+
+
+        /* =========================================================
+           DESKTOP-ANPASSUNGEN
+        ========================================================= */
+
+        @media (min-width: 700px) {
+
+            .app {
+
+                padding-top: 35px;
+
+            }
+
+
+            .habit-grid {
+
+                /* Ab Desktop-Breite: 3 Spalten statt 2 */
+                grid-template-columns:
+                    repeat(3, 1fr);
+
+            }
+
+
+            .bottom-nav {
+
+                bottom: 20px;
+
+            }
+
+        }
+
+
+        @media (max-width: 380px) {
+
+            .progress-ring {
+
+                width: 190px;
+
+                height: 190px;
+
+            }
+
+
+            .habit-card {
+
+                padding: 12px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="app">
+
+
+    <!-- =====================================
+         HOME-SEITE
+    ====================================== -->
+
+    <main
+        class="page active"
+        id="homePage"
+    >
+
+
+        <div class="top-bar">
+
+            <button
+                class="arrow-button"
+                onclick="changeDay(-1)"
+            >
+                ‹
+            </button>
+
+
+            <div class="today-info">
+
+                <div
+                    class="today-title"
+                    id="topDayTitle"
+                >
+                    Heute
+                </div>
+
+                <div
+                    class="today-date"
+                    id="topDate"
+                >
+                </div>
+
+            </div>
+
+
+            <button
+                class="arrow-button"
+                onclick="changeDay(1)"
+            >
+                ›
+            </button>
+
+        </div>
+
+
+        <div
+            class="week-strip"
+            id="weekStrip"
+        ></div>
+
+
+        <div class="streak-card">
+
+            <div class="streak-left">
+
+                <div class="streak-fire">
+                    🔥
+                </div>
+
+                <div>
+
+                    <div class="streak-title">
+                        <span id="streakNumber">0</span>
+                        Tage Streak
+                    </div>
+
+                    <div class="streak-subtitle">
+                        Weiter so!
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="details-button"
+                onclick="showHabitPage()"
+            >
+                Details
+            </button>
+
+        </div>
+
+
+        <div class="quote">
+
+            💭
+            <span id="dailyQuote">
+                My mind is calm, my heart is open,
+                my spirit is strong.
+            </span>
+
+        </div>
+
+
+        <!-- FORTSCHRITTS-KREIS -->
+
+        <div class="progress-card">
+
+            <div class="progress-ring">
+
+                <svg viewBox="0 0 220 220">
+
+                    <circle
+                        class="progress-track"
+                        cx="110"
+                        cy="110"
+                        r="91"
+                    ></circle>
+
+                    <circle
+                        class="progress-value"
+                        id="progressCircle"
+                        cx="110"
+                        cy="110"
+                        r="91"
+                    ></circle>
+
+                </svg>
+
+
+                <div class="progress-center">
+
+                    <div
+                        class="progress-percent"
+                        id="progressPercent"
+                    >
+                        0%
+                    </div>
+
+                    <div class="progress-label">
+                        Daily Progress
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="progress-summary"
+                id="progressSummary"
+            >
+                0 von 0 Habits erledigt
+            </div>
+
+        </div>
+
+
+        <!-- HABITS -->
+
+        <div class="section-header">
+
+            <h2 class="section-title">
+                Daily Habits
+            </h2>
+
+            <button
+                class="section-link"
+                onclick="showHabitPage()"
+            >
+                Alle
+            </button>
+
+        </div>
+
+
+        <div
+            class="habit-grid"
+            id="homeHabitGrid"
+        ></div>
+
+
+        <!-- AUFGABEN -->
+
+        <div class="section-header">
+
+            <h2 class="section-title">
+                Meine Aufgaben
+            </h2>
+
+            <button
+                class="section-link"
+                onclick="showTodoPage()"
+            >
+                Alle
+            </button>
+
+        </div>
+
+
+        <ul
+            class="task-list"
+            id="homeTaskList"
+        ></ul>
+
+
+        <!--
+            Schwebender "+"-Button unten rechts auf der Home-Seite.
+            Öffnet das gemeinsame "Neu hinzufügen"-Modal, dort kann
+            man dann per Dropdown zwischen Aufgabe und Daily Habit wählen.
+        -->
+
+        <button
+            class="floating-add-button"
+            onclick="openAddModal()"
+            aria-label="Neu hinzufügen"
+        >
+            +
+        </button>
+
+
+    </main>
+
+
+    <!-- =====================================
+         TO-DO SEITE
+    ====================================== -->
+
+    <main
+        class="page"
+        id="todoPage"
+    >
+
+        <div class="page-heading">
+
+            <div
+                style="
+                    display:flex;
+                    align-items:center;
+                    justify-content:space-between;
+                    gap:15px;
+                "
+            >
+
+                <div>
+
+                    <h1>
+                        Meine Aufgaben
+                    </h1>
+
+                    <p>
+                        Alles, was heute oder später
+                        erledigt werden muss.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="add-main-button"
+                    onclick="openAddModal('todo')"
+                >
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <ul
+            class="task-list"
+            id="todoTaskList"
+        ></ul>
+
+    </main>
+
+
+    <!-- =====================================
+         HABITS SEITE
+    ====================================== -->
+
+    <main
+        class="page"
+        id="habitPage"
+    >
+
+        <div class="page-heading">
+
+            <h1>
+                Daily Habits
+            </h1>
+
+            <p>
+                Kleine Gewohnheiten,
+                große Fortschritte.
+            </p>
+
+        </div>
+
+
+        <div class="progress-card">
+
+            <div class="progress-ring">
+
+                <svg viewBox="0 0 220 220">
+
+                    <circle
+                        class="progress-track"
+                        cx="110"
+                        cy="110"
+                        r="91"
+                    ></circle>
+
+                    <circle
+                        class="progress-value"
+                        id="habitProgressCircle"
+                        cx="110"
+                        cy="110"
+                        r="91"
+                    ></circle>
+
+                </svg>
+
+
+                <div class="progress-center">
+
+                    <div
+                        class="progress-percent"
+                        id="habitProgressPercent"
+                    >
+                        0%
+                    </div>
+
+                    <div class="progress-label">
+                        Heute
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="progress-summary"
+                id="habitProgressSummary"
+            >
+                0 von 0 erledigt
+            </div>
+
+        </div>
+
+
+        <div class="section-header">
+
+            <h2 class="section-title">
+                Deine Habits
+            </h2>
+
+        </div>
+
+
+        <div
+            class="habit-grid"
+            id="habitPageGrid"
+        ></div>
+
+    </main>
+
+
+    <!-- =====================================
+         KI-CHAT SEITE
+         Platzhalter-Chat: Nachrichten werden aktuell nur lokal
+         gespeichert und mit einer Beispiel-Antwort beantwortet.
+         Sobald eine echte KI-Anbindung (z.B. per API) existiert,
+         wird nur die Funktion sendChatMessage() im JS angepasst.
+    ====================================== -->
+
+    <main
+        class="page"
+        id="aiPage"
+    >
+
+        <div class="page-heading">
+
+            <h1>
+                KI-Assistent
+            </h1>
+
+            <p>
+                Schreib mir etwas - sobald ich mit einer echten
+                KI verbunden bin, antworte ich dir hier direkt.
+            </p>
+
+        </div>
+
+
+        <div
+            class="chat-window"
+            id="chatWindow"
+        ></div>
+
+
+        <div class="chat-input-row">
+
+            <input
+                id="chatInput"
+                type="text"
+                placeholder="Nachricht schreiben..."
+                onkeydown="handleChatKeydown(event)"
+            >
+
+            <button
+                class="chat-send-button"
+                onclick="sendChatMessage()"
+                aria-label="Senden"
+            >
+                ➤
+            </button>
+
+        </div>
+
+
+        <div class="chat-hint">
+            Noch keine echte KI verbunden - das kommt als Nächstes.
+        </div>
+
+
+    </main>
+
+
+    <!-- =====================================
+         EINSTELLUNGEN-SEITE
+         (früher "Profil" - jetzt mit echtem Account,
+         Theme-Schalter und weiteren Einstellungen)
+    ====================================== -->
+
+    <main
+        class="page"
+        id="settingsPage"
+    >
+
+        <div class="profile-header">
+
+            <div class="avatar">
+                👤
+            </div>
+
+            <div
+                class="profile-name"
+                id="accountEmailDisplay"
+            >
+                Nicht angemeldet
+            </div>
+
+            <div class="profile-email">
+                Dein persönlicher Account
+            </div>
+
+        </div>
+
+
+        <!-- ACCOUNT: E-Mail und Passwort ändern -->
+
+        <div class="settings-card">
+
+            <div class="settings-title">
+                ACCOUNT
+            </div>
+
+
+            <button
+                class="setting-row"
+                onclick="openAccountModal('email')"
+            >
+
+                <div class="setting-left">
+
+                    <div class="setting-icon">
+                        📧
+                    </div>
+
+                    <div class="setting-label">
+                        E-Mail ändern
+                    </div>
+
+                </div>
+
+                <div class="setting-arrow">
+                    ›
+                </div>
+
+            </button>
+
+
+            <button
+                class="setting-row"
+                onclick="openAccountModal('password')"
+            >
+
+                <div class="setting-left">
+
+                    <div class="setting-icon">
+                        🔐
+                    </div>
+
+                    <div class="setting-label">
+                        Passwort ändern
+                    </div>
+
+                </div>
+
+                <div class="setting-arrow">
+                    ›
+                </div>
+
+            </button>
+
+        </div>
+
+
+        <!-- APP: Erscheinungsbild + Benachrichtigungen -->
+
+        <div class="settings-card">
+
+            <div class="settings-title">
+                APP
+            </div>
+
+
+            <!--
+                Erscheinungsbild-Zeile: kein Klick zum Navigieren,
+                sondern ein direkter Ein/Aus-Schalter (Theme-Switch).
+                "for" verbindet das <label> mit der Checkbox #themeToggle,
+                dadurch reicht ein Klick irgendwo auf die Zeile.
+            -->
+
+            <label
+                class="setting-row"
+                for="themeToggle"
+                style="cursor:pointer;"
+            >
+
+                <div class="setting-left">
+
+                    <div class="setting-icon">
+                        🎨
+                    </div>
+
+                    <div class="setting-label">
+                        Helles Design
+                    </div>
+
+                </div>
+
+
+                <div class="theme-switch">
+
+                    <input
+                        type="checkbox"
+                        id="themeToggle"
+                        onchange="toggleTheme()"
+                    >
+
+                    <span class="theme-switch-track"></span>
+
+                </div>
+
+            </label>
+
+
+            <button
+                class="setting-row"
+                onclick="showAccountMessage()"
+            >
+
+                <div class="setting-left">
+
+                    <div class="setting-icon">
+                        🔔
+                    </div>
+
+                    <div class="setting-label">
+                        Benachrichtigungen
+                    </div>
+
+                </div>
+
+                <div class="setting-arrow">
+                    ›
+                </div>
+
+            </button>
+
+        </div>
+
+
+        <!-- Abmelden -->
+
+        <div class="settings-card">
+
+            <button
+                class="setting-row logout"
+                onclick="logout()"
+            >
+
+                <div class="setting-left">
+
+                    <div class="setting-icon">
+                        🚪
+                    </div>
+
+                    <div class="setting-label">
+                        Abmelden
+                    </div>
+
+                </div>
+
+            </button>
+
+        </div>
+
+
+        <!--
+            GEFAHRENZONE: Konto endgültig löschen.
+            Praktisch auch zum Testen des Registrierungs-Bildschirms,
+            da man sonst kein zweites Konto anlegen kann.
+        -->
+
+        <div class="settings-card">
+
+            <button
+                class="setting-row logout"
+                onclick="deleteAccount()"
+            >
+
+                <div class="setting-left">
+
+                    <div class="setting-icon">
+                        🗑️
+                    </div>
+
+                    <div class="setting-label danger-zone-title">
+                        Konto löschen
+                    </div>
+
+                </div>
+
+            </button>
+
+            <div class="settings-note">
+                Löscht deinen Account (E-Mail + Passwort) und meldet dich ab.
+                Deine Aufgaben und Habits bleiben davon unberührt gespeichert.
+            </div>
+
+        </div>
+
+
+    </main>
+
+
+</div>
+
+
+<!-- =====================================
+     UNTERE NAVIGATION
+====================================== -->
+
+<nav class="bottom-nav">
+
+
+
+    <button
+        class="nav-button active"
+        id="navHome"
+        onclick="showPage('home')"
+    >
+
+        <div class="nav-icon">
+            🏠
+        </div>
+
+        <div class="nav-label">
+            Home
+        </div>
+
+    </button>
+
+
+    <button
+        class="nav-button"
+        id="navAI"
+        onclick="showPage('ai')"
+    >
+
+        <div class="nav-icon">
+            🤖
+        </div>
+
+        <div class="nav-label">
+            KI
+        </div>
+
+    </button>
+
+
+    <button
+        class="nav-button"
+        id="navHabit"
+        onclick="showPage('habit')"
+    >
+
+        <div class="nav-icon">
+            🔥
+        </div>
+
+        <div class="nav-label">
+            Habits
+        </div>
+
+    </button>
+
+
+    <button
+        class="nav-button"
+        id="navSettings"
+        onclick="showPage('settings')"
+    >
+
+        <div class="nav-icon">
+            ⚙️
+        </div>
+
+        <div class="nav-label">
+            Einstellungen
+        </div>
+
+    </button>
+
+
+</nav>
+
+
+<!-- =====================================
+     "NEU HINZUFÜGEN"-MODAL
+     Ein gemeinsames Fenster für Aufgaben UND Habits.
+     Über das Dropdown "Typ" wird entschieden, welche
+     Zusatzfelder angezeigt werden (Priorität oder Symbol).
+====================================== -->
+
+<div
+    class="modal"
+    id="addModal"
+>
+
+    <div class="modal-content">
+
+
+        <div class="modal-header">
+
+            <h2>
+                Hinzufügen
+            </h2>
+
+            <button
+                class="close-button"
+                onclick="closeAddModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <label>
+            Typ
+        </label>
+
+        <select
+            id="addType"
+            onchange="updateAddModalFields()"
+        >
+
+            <option value="todo">
+                📝 Aufgabe
+            </option>
+
+            <option value="habit">
+                🔥 Daily Habit
+            </option>
+
+        </select>
+
+
+        <label>
+            Name
+        </label>
+
+        <input
+            id="newItemName"
+            type="text"
+            placeholder="Was möchtest du hinzufügen?"
+        >
+
+
+        <!-- Wird nur bei Typ "Aufgabe" angezeigt -->
+
+        <div id="priorityField">
+
+            <label>
+                Priorität
+            </label>
+
+            <select id="newPriority">
+
+                <option value="low">
+                    🟢 Niedrig
+                </option>
+
+                <option
+                    value="medium"
+                    selected
+                >
+                    🟡 Mittel
+                </option>
+
+                <option value="high">
+                    🔴 Hoch
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- Wird nur bei Typ "Daily Habit" angezeigt -->
+
+        <div id="iconField">
+
+            <label>
+                Symbol
+            </label>
+
+            <select id="newIcon">
+
+                <option value="💧">
+                    💧 Wasser
+                </option>
+
+                <option value="🍎">
+                    🍎 Ernährung
+                </option>
+
+                <option value="🏋️">
+                    🏋️ Gym
+                </option>
+
+                <option value="📚">
+                    📚 Lernen
+                </option>
+
+                <option value="🧘">
+                    🧘 Meditation
+                </option>
+
+                <option value="📖">
+                    📖 Lesen
+                </option>
+
+                <option value="😴">
+                    😴 Schlafen
+                </option>
+
+                <option value="☀️">
+                    ☀️ Morgenroutine
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="modal-buttons">
+
+            <button
+                class="modal-button cancel-button"
+                onclick="closeAddModal()"
+            >
+                Abbrechen
+            </button>
+
+            <button
+                class="modal-button create-button"
+                onclick="createItem()"
+            >
+                Erstellen
+            </button>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<!-- =====================================
+     ACCOUNT-MODAL
+     Ein gemeinsames Fenster für "E-Mail ändern" UND
+     "Passwort ändern". Welcher Block sichtbar ist, steuert
+     die Funktion openAccountModal('email' | 'password').
+====================================== -->
+
+<div
+    class="modal"
+    id="accountModal"
+>
+
+    <div class="modal-content">
+
+
+        <div class="modal-header">
+
+            <h2 id="accountModalTitle">
+                E-Mail ändern
+            </h2>
+
+            <button
+                class="close-button"
+                onclick="closeAccountModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- Wird nur angezeigt, wenn die E-Mail geändert wird -->
+
+        <div id="accountEmailFields">
+
+            <label>
+                Neue E-Mail-Adresse
+            </label>
+
+            <input
+                id="newEmailInput"
+                type="email"
+                placeholder="neue@email.de"
+            >
+
+        </div>
+
+
+        <!-- Wird nur angezeigt, wenn das Passwort geändert wird -->
+
+        <div id="accountPasswordFields">
+
+            <label>
+                Aktuelles Passwort
+            </label>
+
+            <input
+                id="currentPasswordInput"
+                type="password"
+                placeholder="Aktuelles Passwort"
+            >
+
+            <label>
+                Neues Passwort
+            </label>
+
+            <input
+                id="newPasswordInput"
+                type="password"
+                placeholder="Mindestens 6 Zeichen"
+            >
+
+            <label>
+                Neues Passwort bestätigen
+            </label>
+
+            <input
+                id="newPasswordConfirmInput"
+                type="password"
+                placeholder="Wiederholen"
+            >
+
+        </div>
+
+
+        <!-- Fehlermeldungen (z.B. "Passwort falsch") werden hier eingeblendet -->
+
+        <div
+            class="auth-error"
+            id="accountModalError"
+            style="display:none;"
+        ></div>
+
+
+        <div class="modal-buttons">
+
+            <button
+                class="modal-button cancel-button"
+                onclick="closeAccountModal()"
+            >
+                Abbrechen
+            </button>
+
+            <button
+                class="modal-button create-button"
+                onclick="saveAccountChange()"
+            >
+                Speichern
+            </button>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<!-- =====================================
+     LOGIN / REGISTRIERUNG
+     Voller Bildschirm, überdeckt die komplette App solange
+     man nicht eingeloggt ist. Wird von checkAuthState() im
+     JS ein- bzw. ausgeblendet.
+
+     WICHTIG (Sicherheitshinweis fürs Verständnis):
+     E-Mail und Passwort werden hier nur im Browser
+     (localStorage) gespeichert - unverschlüsselt. Das reicht
+     für eine lokale Demo/Prototyp-App völlig aus, ist aber
+     KEINE echte Account-Sicherheit. Für eine "richtige"
+     Anmeldung bräuchte man später ein echtes Backend, das
+     Passwörter sicher (gehasht) auf einem Server speichert.
+====================================== -->
+
+<div
+    class="auth-screen"
+    id="authScreen"
+>
+
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            🤖
+        </div>
+
+        <h1 id="authTitle">
+            Willkommen zurück
+        </h1>
+
+        <p id="authSubtitle">
+            Melde dich mit deinem Account an.
+        </p>
+
+
+        <!-- Fehlermeldungen (z.B. "E-Mail oder Passwort falsch") -->
+
+        <div
+            class="auth-error"
+            id="authError"
+            style="display:none;"
+        ></div>
+
+
+        <label>
+            E-Mail
+        </label>
+
+        <input
+            id="authEmail"
+            type="email"
+            placeholder="deine@email.de"
+        >
+
+        <label>
+            Passwort
+        </label>
+
+        <input
+            id="authPassword"
+            type="password"
+            placeholder="Passwort"
+        >
+
+
+        <!-- Nur im Registrierungs-Modus sichtbar -->
+
+        <div id="authConfirmField">
+
+            <label>
+                Passwort bestätigen
+            </label>
+
+            <input
+                id="authPasswordConfirm"
+                type="password"
+                placeholder="Passwort wiederholen"
+            >
+
+        </div>
+
+
+        <button
+            class="auth-submit"
+            id="authSubmitButton"
+            onclick="handleAuthSubmit()"
+        >
+            Einloggen
+        </button>
+
+        <p
+            class="auth-switch"
+            id="authSwitchText"
+        >
+            Noch keinen Account?
+            <button onclick="switchAuthMode()">
+                Registrieren
+            </button>
+        </p>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+    /* =========================================================
+       DATEN
+       Alles wird im Browser (localStorage) gespeichert - es gibt
+       noch kein Backend/Server. Wenn du den Browser-Cache leerst,
+       gehen die Daten verloren.
+    ========================================================= */
+
+
+    // Liste aller Aufgaben: { text, priority, completed }
+    let tasks =
+        JSON.parse(
+            localStorage.getItem("tasks")
+        ) || [];
+
+
+    // Liste aller Habits: { id, text, icon, completedDates: [...] }
+    // completedDates speichert für JEDEN Tag einzeln, ob das
+    // Habit erledigt wurde - dadurch kann man in der Woche
+    // zurückblättern und sieht den richtigen Stand pro Tag.
+    let habits =
+        JSON.parse(
+            localStorage.getItem("habits")
+        ) || [];
+
+
+    // Der Tag, der gerade auf der Home-Seite ausgewählt ist
+    // (durch Klick auf die Pfeile oder auf einen Wochentag).
+    let selectedDate =
+        new Date();
+
+
+    // Account-Daten: { email, password }. "null" bedeutet:
+    // es wurde noch nie ein Konto angelegt -> Registrierungs-Bildschirm.
+    let account =
+        JSON.parse(
+            localStorage.getItem("account")
+        ) || null;
+
+
+    // Ob man GERADE eingeloggt ist. Bleibt auch nach dem Neuladen
+    // der Seite bestehen (Session), bis man sich aktiv abmeldet.
+    let isLoggedIn =
+        localStorage.getItem("isLoggedIn") ===
+        "true";
+
+
+    // Steuert, ob der Login-Bildschirm im Login- oder im
+    // Registrierungs-Modus angezeigt wird ("login" | "register").
+    let authMode = "login";
+
+
+    // Merkt sich, ob im Account-Modal gerade die E-Mail oder das
+    // Passwort geändert wird ("email" | "password").
+    let accountModalAction = "email";
+
+
+    // Nachrichtenverlauf der KI-Chat-Seite: { sender, text }
+    // sender ist entweder "user" oder "ai".
+    let chatMessages =
+        JSON.parse(
+            localStorage.getItem("chatMessages")
+        ) || [];
+
+
+    // Tageszitate - wechseln automatisch je nach Kalendertag
+    const quotes = [
+
+        "My mind is calm, my heart is open, my spirit is strong.",
+
+        "Kleine Schritte führen zu großen Veränderungen.",
+
+        "Du musst nicht perfekt sein. Du musst nur anfangen.",
+
+        "Heute ist ein guter Tag, um etwas für dich zu tun.",
+
+        "Consistency beats motivation.",
+
+        "Focus on what you can control.",
+
+        "Dein zukünftiges Ich wird dir dafür danken."
+
+    ];
+
+
+    // Habits, die beim allerersten Start automatisch angelegt werden
+    const defaultHabits = [
+
+        {
+            text: "Frühstück",
+            icon: "🍎"
+        },
+
+        {
+            text: "Schule",
+            icon: "📚"
+        },
+
+        {
+            text: "Gym",
+            icon: "🏋️"
+        },
+
+        {
+            text: "Wasser trinken",
+            icon: "💧"
+        }
+
+    ];
+
+
+    /* =========================================================
+       SPEICHERN
+       Diese Funktionen schreiben die aktuellen Daten
+       ins localStorage. Sie werden nach jeder Änderung aufgerufen.
+    ========================================================= */
+
+
+    function saveTasks() {
+
+        localStorage.setItem(
+            "tasks",
+            JSON.stringify(tasks)
+        );
+
+    }
+
+
+    function saveHabits() {
+
+        localStorage.setItem(
+            "habits",
+            JSON.stringify(habits)
+        );
+
+    }
+
+
+    function saveAccount() {
+
+        localStorage.setItem(
+            "account",
+            JSON.stringify(account)
+        );
+
+    }
+
+
+    function saveChatMessages() {
+
+        localStorage.setItem(
+            "chatMessages",
+            JSON.stringify(chatMessages)
+        );
+
+    }
+
+
+    /* =========================================================
+       DATUMS-HILFSFUNKTIONEN
+    ========================================================= */
+
+
+    // Wandelt ein Datum in einen eindeutigen Text-Schlüssel um,
+    // z.B. "2026-08-25". Damit können wir Tage in Arrays
+    // wiederfinden (z.B. in habit.completedDates).
+    function dateKey(date) {
+
+        const year =
+            date.getFullYear();
+
+        const month =
+            String(
+                date.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                date.getDate()
+            ).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+
+    }
+
+
+    function isToday(date) {
+
+        return (
+            dateKey(date) ===
+            dateKey(new Date())
+        );
+
+    }
+
+
+    function formatDate(date) {
+
+        return date.toLocaleDateString(
+            "de-DE",
+            {
+                day: "numeric",
+                month: "short"
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       STANDARD-HABITS EINMALIG ANLEGEN
+    ========================================================= */
+
+
+    function initializeHabits() {
+
+        // Nur wenn wirklich noch keine Habits gespeichert sind
+        // (z.B. beim allerersten Öffnen der App).
+        if (habits.length === 0) {
+
+            habits =
+                defaultHabits.map(
+                    function(habit) {
+
+                        return {
+
+                            // Date.now() + Zufallszahl sorgt für eine
+                            // eindeutige ID, damit wir das Habit später
+                            // beim Abhaken/Löschen wiederfinden können.
+                            id:
+                                Date.now() +
+                                Math.random(),
+
+                            text:
+                                habit.text,
+
+                            icon:
+                                habit.icon,
+
+                            completedDates: []
+
+                        };
+
+                    }
+                );
+
+            saveHabits();
+
+        }
+
+    }
+
+
+    /* =========================================================
+       NAVIGATION ZWISCHEN DEN SEITEN
+    ========================================================= */
+
+
+    function showPage(page) {
+
+
+        const pages = {
+
+            home:
+                "homePage",
+
+            todo:
+                "todoPage",
+
+            ai:
+                "aiPage",
+
+            habit:
+                "habitPage",
+
+            settings:
+                "settingsPage"
+
+        };
+
+
+        // Erst alle Seiten verstecken ...
+        Object.values(pages)
+            .forEach(
+                function(id) {
+
+                    document
+                        .getElementById(id)
+                        .classList.remove(
+                            "active"
+                        );
+
+                }
+            );
+
+
+        // ... dann nur die gewünschte Seite wieder anzeigen.
+        document
+            .getElementById(
+                pages[page]
+            )
+            .classList.add(
+                "active"
+            );
+
+
+        // Den passenden Button in der unteren Navigation hervorheben
+        document
+            .querySelectorAll(
+                ".nav-button"
+            )
+            .forEach(
+                function(button) {
+
+                    button.classList.remove(
+                        "active"
+                    );
+
+                }
+            );
+
+
+        // Nicht jede Seite hat einen eigenen Button in der unteren
+        // Navigation - z.B. "todo" wird nur über den "Alle"-Link auf
+        // der Home-Seite erreicht. Für solche Seiten bleibt einfach
+        // kein Nav-Button hervorgehoben.
+        const navButton = {
+
+            home: "navHome",
+
+            ai: "navAI",
+
+            habit: "navHabit",
+
+            settings: "navSettings"
+
+        };
+
+
+        if (navButton[page]) {
+
+            document
+                .getElementById(
+                    navButton[page]
+                )
+                .classList.add(
+                    "active"
+                );
+
+        }
+
+
+        window.scrollTo(
+            {
+                top: 0,
+                behavior: "smooth"
+            }
+        );
+
+
+        renderAll();
+
+    }
+
+
+    function showTodoPage() {
+
+        showPage("todo");
+
+    }
+
+
+    function showHabitPage() {
+
+        showPage("habit");
+
+    }
+
+
+    /* =========================================================
+       WOCHENLEISTE
+    ========================================================= */
+
+
+    function renderWeek() {
+
+
+        const strip =
+            document.getElementById(
+                "weekStrip"
+            );
+
+
+        strip.innerHTML = "";
+
+
+        // Wir berechnen immer die Woche der "echten" heutigen Woche
+        // (nicht der gerade ausgewählten), damit die Woche beim
+        // Blättern zwischen Tagen nicht "springt".
+        const current =
+            new Date();
+
+
+        const day =
+            current.getDay();
+
+
+        // getDay() liefert 0 = Sonntag ... 6 = Samstag.
+        // Wir wollen aber Montag als ersten Tag der Woche,
+        // deshalb rechnen wir den Versatz zum Montag aus.
+        const mondayOffset =
+            day === 0
+                ? -6
+                : 1 - day;
+
+
+        const monday =
+            new Date(current);
+
+
+        monday.setDate(
+            current.getDate() +
+            mondayOffset
+        );
+
+
+        const names = [
+
+            "Mo",
+            "Di",
+            "Mi",
+            "Do",
+            "Fr",
+            "Sa",
+            "So"
+
+        ];
+
+
+        for (
+            let i = 0;
+            i < 7;
+            i++
+        ) {
+
+
+            const date =
+                new Date(monday);
+
+
+            date.setDate(
+                monday.getDate() + i
+            );
+
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.className =
+                "week-day";
+
+
+            if (isToday(date)) {
+
+                button.classList.add(
+                    "today"
+                );
+
+            }
+
+
+            if (
+                dateKey(date) ===
+                dateKey(selectedDate)
+            ) {
+
+                button.classList.add(
+                    "selected"
+                );
+
+            }
+
+
+            button.innerHTML = `
+
+                <div class="week-day-name">
+                    ${names[i]}
+                </div>
+
+                <div class="week-day-number">
+                    ${date.getDate()}
+                </div>
+
+            `;
+
+
+            // Klick auf einen Wochentag wählt diesen Tag aus
+            button.onclick =
+                function() {
+
+                    selectedDate =
+                        new Date(date);
+
+                    renderAll();
+
+                };
+
+
+            strip.appendChild(
+                button
+            );
+
+        }
+
+
+        document.getElementById(
+            "topDate"
+        ).textContent =
+            formatDate(
+                selectedDate
+            );
+
+
+        document.getElementById(
+            "topDayTitle"
+        ).textContent =
+            isToday(selectedDate)
+                ? "Heute"
+                : selectedDate.toLocaleDateString(
+                    "de-DE",
+                    {
+                        weekday: "long"
+                    }
+                );
+
+    }
+
+
+    // Wird von den Pfeil-Buttons oben aufgerufen (-1 = ein Tag zurück,
+    // +1 = ein Tag vor).
+    function changeDay(amount) {
+
+        selectedDate.setDate(
+            selectedDate.getDate() +
+            amount
+        );
+
+
+        renderAll();
+
+    }
+
+
+    /* =========================================================
+       HABIT-STATUS (pro ausgewähltem Tag)
+    ========================================================= */
+
+
+    function isHabitCompleted(
+        habit
+    ) {
+
+        return habit.completedDates
+            .includes(
+                dateKey(selectedDate)
+            );
+
+    }
+
+
+    function toggleHabit(
+        id
+    ) {
+
+
+        const habit =
+            habits.find(
+                function(item) {
+
+                    return item.id === id;
+
+                }
+            );
+
+
+        if (!habit) {
+            return;
+        }
+
+
+        const key =
+            dateKey(selectedDate);
+
+
+        const index =
+            habit.completedDates.indexOf(
+                key
+            );
+
+
+        if (index === -1) {
+
+            // Tag ist noch nicht erledigt -> hinzufügen
+            habit.completedDates.push(
+                key
+            );
+
+        }
+
+        else {
+
+            // Tag war schon erledigt -> wieder entfernen (Klick = Umschalten)
+            habit.completedDates.splice(
+                index,
+                1
+            );
+
+        }
+
+
+        saveHabits();
+
+        renderAll();
+
+    }
+
+
+    /* =========================================================
+       HABIT LÖSCHEN
+       Wird über den Papierkorb-Button auf der Habit-Karte aufgerufen.
+    ========================================================= */
+
+
+    function deleteHabit(
+        id,
+        event
+    ) {
+
+        // WICHTIG: Verhindert, dass der Klick auf den Papierkorb
+        // zusätzlich noch die Karte "anklickt" und das Habit
+        // dadurch versehentlich abgehakt wird.
+        if (event) {
+
+            event.stopPropagation();
+
+        }
+
+
+        const confirmed =
+            confirm(
+                "Dieses Habit wirklich löschen? Der gesamte Verlauf geht dabei verloren."
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        habits =
+            habits.filter(
+                function(habit) {
+
+                    return habit.id !== id;
+
+                }
+            );
+
+
+        saveHabits();
+
+        renderAll();
+
+    }
+
+
+    /* =========================================================
+       FORTSCHRITT BERECHNEN
+    ========================================================= */
+
+
+    function getHabitProgress() {
+
+
+        if (habits.length === 0) {
+
+            return {
+
+                completed: 0,
+
+                total: 0,
+
+                percentage: 0
+
+            };
+
+        }
+
+
+        const completed =
+            habits.filter(
+                function(habit) {
+
+                    return isHabitCompleted(
+                        habit
+                    );
+
+                }
+            ).length;
+
+
+        const percentage =
+            Math.round(
+                (
+                    completed /
+                    habits.length
+                ) * 100
+            );
+
+
+        return {
+
+            completed:
+                completed,
+
+            total:
+                habits.length,
+
+            percentage:
+                percentage
+
+        };
+
+    }
+
+
+    /* =========================================================
+       FORTSCHRITTS-KREIS AKTUALISIEREN (mit Animation)
+
+       Funktionsweise (SVG "stroke-dasharray"-Trick):
+       1. stroke-dasharray = gesamter Kreisumfang
+          -> macht aus dem Kreisrand quasi einen einzigen langen "Strich".
+       2. stroke-dashoffset verschiebt, wo dieser Strich beginnt.
+          offset = 0            -> kompletter Kreis sichtbar (100%)
+          offset = Umfang       -> Kreis komplett "versteckt" (0%)
+       3. Die CSS-Regel "transition: stroke-dashoffset 0.7s ease;"
+          (siehe .progress-value oben im <style>) sorgt dafür, dass
+          der Browser jede Änderung von stroke-dashoffset automatisch
+          über 0.7 Sekunden weich animiert.
+    ========================================================= */
+
+
+    function updateProgress(
+        circleId,
+        percentId,
+        summaryId,
+        label
+    ) {
+
+
+        const progress =
+            getHabitProgress();
+
+
+        const circle =
+            document.getElementById(
+                circleId
+            );
+
+
+        // Muss zum "r"-Wert (Radius) der <circle>-Elemente im HTML passen!
+        const radius = 91;
+
+
+        const circumference =
+            2 *
+            Math.PI *
+            radius;
+
+
+        circle.style.strokeDasharray =
+            circumference;
+
+
+        const offset =
+            circumference -
+            (
+                progress.percentage /
+                100
+            ) *
+            circumference;
+
+
+        circle.style.strokeDashoffset =
+            offset;
+
+
+        document.getElementById(
+            percentId
+        ).textContent =
+            progress.percentage + "%";
+
+
+        document.getElementById(
+            summaryId
+        ).textContent =
+            `${progress.completed} von ${progress.total} ${label} erledigt`;
+
+    }
+
+
+    /* =========================================================
+       HABITS RENDERN (als Karten anzeigen)
+    ========================================================= */
+
+
+    function createHabitCard(
+        habit
+    ) {
+
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+
+        const completed =
+            isHabitCompleted(
+                habit
+            );
+
+
+        card.className =
+            "habit-card";
+
+
+        if (completed) {
+
+            card.classList.add(
+                "done"
+            );
+
+        }
+
+
+        card.innerHTML = `
+
+            <button
+                class="habit-delete"
+                title="Habit löschen"
+            >
+                🗑️
+            </button>
+
+            <div class="habit-icon">
+                ${habit.icon}
+            </div>
+
+            <div class="habit-name">
+                ${escapeHtml(habit.text)}
+            </div>
+
+            <div class="habit-status">
+                ${
+                    completed
+                        ? "Erledigt ✓"
+                        : "Noch offen"
+                }
+            </div>
+
+            <div class="habit-check">
+                ${
+                    completed
+                        ? "✓"
+                        : ""
+                }
+            </div>
+
+        `;
+
+
+        // Klick irgendwo auf die Karte (außer dem Papierkorb) hakt ab
+        card.onclick =
+            function() {
+
+                toggleHabit(
+                    habit.id
+                );
+
+            };
+
+
+        // Der Papierkorb-Button bekommt seinen eigenen Klick-Handler.
+        // event wird an deleteHabit() weitergegeben, damit dort
+        // stopPropagation() aufgerufen werden kann.
+        const deleteButton =
+            card.querySelector(
+                ".habit-delete"
+            );
+
+
+        deleteButton.onclick =
+            function(event) {
+
+                deleteHabit(
+                    habit.id,
+                    event
+                );
+
+            };
+
+
+        return card;
+
+    }
+
+
+    function renderHabits() {
+
+
+        const homeGrid =
+            document.getElementById(
+                "homeHabitGrid"
+            );
+
+
+        const habitGrid =
+            document.getElementById(
+                "habitPageGrid"
+            );
+
+
+        homeGrid.innerHTML = "";
+
+        habitGrid.innerHTML = "";
+
+
+        habits.forEach(
+            function(habit) {
+
+
+                // Für Home und Habit-Seite brauchen wir jeweils eine
+                // eigene Karte (ein DOM-Element kann nicht an zwei
+                // Stellen gleichzeitig angezeigt werden).
+                const homeCard =
+                    createHabitCard(
+                        habit
+                    );
+
+
+                const pageCard =
+                    createHabitCard(
+                        habit
+                    );
+
+
+                homeGrid.appendChild(
+                    homeCard
+                );
+
+
+                habitGrid.appendChild(
+                    pageCard
+                );
+
+            }
+        );
+
+
+        // "+ Habit hinzufügen"-Karte ganz am Ende der Habits-Seite
+        const addCard =
+            document.createElement(
+                "div"
+            );
+
+
+        addCard.className =
+            "habit-card add-habit-card";
+
+
+        addCard.textContent =
+            "+ Habit hinzufügen";
+
+
+        addCard.onclick =
+            function() {
+
+                openAddModal("habit");
+
+            };
+
+
+        habitGrid.appendChild(
+            addCard
+        );
+
+
+        updateProgress(
+            "progressCircle",
+            "progressPercent",
+            "progressSummary",
+            "Habits"
+        );
+
+
+        updateProgress(
+            "habitProgressCircle",
+            "habitProgressPercent",
+            "habitProgressSummary",
+            "Habits"
+        );
+
+    }
+
+
+    /* =========================================================
+       AUFGABEN RENDERN
+    ========================================================= */
+
+
+    function createTaskElement(
+        taskData,
+        index
+    ) {
+
+
+        const task =
+            document.createElement(
+                "li"
+            );
+
+
+        task.className =
+            "task";
+
+
+        const checkCircle =
+            document.createElement(
+                "button"
+            );
+
+
+        checkCircle.className =
+            "check-circle";
+
+
+        if (taskData.completed) {
+
+            checkCircle.classList.add(
+                "checked"
+            );
+
+            checkCircle.textContent =
+                "✓";
+
+        }
+
+
+        const taskInfo =
+            document.createElement(
+                "div"
+            );
+
+
+        taskInfo.className =
+            "task-info";
+
+
+        const text =
+            document.createElement(
+                "div"
+            );
+
+
+        text.className =
+            "task-text";
+
+
+        text.textContent =
+            taskData.text;
+
+
+        if (taskData.completed) {
+
+            text.classList.add(
+                "completed"
+            );
+
+        }
+
+
+        taskInfo.appendChild(
+            text
+        );
+
+
+        const priority =
+            document.createElement(
+                "div"
+            );
+
+
+        priority.className =
+            "priority-dot";
+
+
+        if (
+            taskData.priority ===
+            "high"
+        ) {
+
+            priority.textContent =
+                "🔴";
+
+        }
+
+        else if (
+            taskData.priority ===
+            "medium"
+        ) {
+
+            priority.textContent =
+                "🟡";
+
+        }
+
+        else {
+
+            priority.textContent =
+                "🟢";
+
+        }
+
+
+        const deleteButton =
+            document.createElement(
+                "button"
+            );
+
+
+        deleteButton.className =
+            "delete-button";
+
+
+        deleteButton.textContent =
+            "🗑️";
+
+
+        /*
+        // AUFGABE ERLEDIGEN (mit Animation)
+        // Ablauf:
+        // 1. Sofort visuell abhaken (Häkchen, durchgestrichener Text).
+        // 2. Klasse "completing" hinzufügen -> CSS lässt die Zeile
+        //    ausblenden und leicht nach rechts rutschen (siehe .task.completing).
+        // 3. Nach 1.5 Sekunden (also NACHDEM die Animation zu sehen war)
+        //    wird die Aufgabe endgültig aus dem Array entfernt und
+        //    alles neu gerendert.
+        */
+
+        checkCircle.onclick =
+            function() {
+
+
+                if (
+                    tasks[index] &&
+                    tasks[index].completed
+                ) {
+
+                    return;
+
+                }
+
+
+                if (!tasks[index]) {
+                    return;
+                }
+
+
+                tasks[index].completed =
+                    true;
+
+
+                saveTasks();
+
+
+                task.classList.add(
+                    "completing"
+                );
+
+
+                checkCircle.classList.add(
+                    "checked"
+                );
+
+
+                checkCircle.textContent =
+                    "✓";
+
+
+                text.classList.add(
+                    "completed"
+                );
+
+
+                setTimeout(
+                    function() {
+
+
+                        const taskIndex =
+                            tasks.indexOf(
+                                taskData
+                            );
+
+
+                        if (
+                            taskIndex !== -1
+                        ) {
+
+                            tasks.splice(
+                                taskIndex,
+                                1
+                            );
+
+                        }
+
+
+                        saveTasks();
+
+                        renderAll();
+
+
+                    },
+                    1500
+                );
+
+            };
+
+
+        deleteButton.onclick =
+            function() {
+
+
+                const taskIndex =
+                    tasks.indexOf(
+                        taskData
+                    );
+
+
+                if (
+                    taskIndex !== -1
+                ) {
+
+                    tasks.splice(
+                        taskIndex,
+                        1
+                    );
+
+                }
+
+
+                saveTasks();
+
+                renderAll();
+
+            };
+
+
+        task.appendChild(
+            checkCircle
+        );
+
+
+        task.appendChild(
+            taskInfo
+        );
+
+
+        task.appendChild(
+            priority
+        );
+
+
+        task.appendChild(
+            deleteButton
+        );
+
+
+        return task;
+
+    }
+
+
+    function renderTasks() {
+
+
+        const homeList =
+            document.getElementById(
+                "homeTaskList"
+            );
+
+
+        const todoList =
+            document.getElementById(
+                "todoTaskList"
+            );
+
+
+        homeList.innerHTML = "";
+
+        todoList.innerHTML = "";
+
+
+        if (tasks.length === 0) {
+
+
+            const emptyHome =
+                document.createElement(
+                    "div"
+                );
+
+
+            emptyHome.className =
+                "empty-state";
+
+
+            emptyHome.textContent =
+                "Keine offenen Aufgaben 🎉";
+
+
+            homeList.appendChild(
+                emptyHome
+            );
+
+
+            const emptyTodo =
+                document.createElement(
+                    "div"
+                );
+
+
+            emptyTodo.className =
+                "empty-state";
+
+
+            emptyTodo.textContent =
+                "Du hast momentan keine offenen Aufgaben.";
+
+
+            todoList.appendChild(
+                emptyTodo
+            );
+
+
+            return;
+
+        }
+
+
+        tasks.forEach(
+            function(taskData, index) {
+
+
+                homeList.appendChild(
+                    createTaskElement(
+                        taskData,
+                        index
+                    )
+                );
+
+
+                todoList.appendChild(
+                    createTaskElement(
+                        taskData,
+                        index
+                    )
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       GEMEINSAMES MODAL: "NEU HINZUFÜGEN"
+       Ein einziges Popup für Aufgaben UND Habits.
+       Das Dropdown "Typ" entscheidet, was am Ende passiert.
+    ========================================================= */
+
+
+    // Öffnet das Modal. Optional kann ein Start-Typ übergeben werden,
+    // z.B. openAddModal('habit') von der "+"-Karte bei den Habits.
+    function openAddModal(
+        startType
+    ) {
+
+
+        if (startType) {
+
+            document.getElementById(
+                "addType"
+            ).value =
+                startType;
+
+        }
+
+
+        updateAddModalFields();
+
+
+        document
+            .getElementById(
+                "addModal"
+            )
+            .classList.add(
+                "show"
+            );
+
+
+        setTimeout(
+            function() {
+
+                document
+                    .getElementById(
+                        "newItemName"
+                    )
+                    .focus();
+
+            },
+            100
+        );
+
+    }
+
+
+    function closeAddModal() {
+
+        document
+            .getElementById(
+                "addModal"
+            )
+            .classList.remove(
+                "show"
+            );
+
+
+        // Formular zurücksetzen, damit beim nächsten Öffnen
+        // nicht die alten Werte stehen bleiben.
+        document.getElementById(
+            "newItemName"
+        ).value = "";
+
+
+        document.getElementById(
+            "newPriority"
+        ).value =
+            "medium";
+
+    }
+
+
+    // Blendet je nach gewähltem Typ das Prioritäts- oder
+    // das Symbol-Feld ein bzw. aus.
+    function updateAddModalFields() {
+
+
+        const type =
+            document.getElementById(
+                "addType"
+            ).value;
+
+
+        const priorityField =
+            document.getElementById(
+                "priorityField"
+            );
+
+
+        const iconField =
+            document.getElementById(
+                "iconField"
+            );
+
+
+        if (type === "habit") {
+
+            priorityField.style.display =
+                "none";
+
+            iconField.style.display =
+                "block";
+
+        }
+
+        else {
+
+            priorityField.style.display =
+                "block";
+
+            iconField.style.display =
+                "none";
+
+        }
+
+    }
+
+
+    // Liest das Formular aus und legt je nach Typ entweder
+    // eine neue Aufgabe oder ein neues Habit an.
+    function createItem() {
+
+
+        const type =
+            document.getElementById(
+                "addType"
+            ).value;
+
+
+        const name =
+            document.getElementById(
+                "newItemName"
+            ).value.trim();
+
+
+        if (name === "") {
+
+            return;
+
+        }
+
+
+        if (type === "habit") {
+
+
+            const icon =
+                document.getElementById(
+                    "newIcon"
+                ).value;
+
+
+            habits.push({
+
+                id:
+                    Date.now() +
+                    Math.random(),
+
+                text:
+                    name,
+
+                icon:
+                    icon,
+
+                completedDates:
+                    []
+
+            });
+
+
+            saveHabits();
+
+        }
+
+        else {
+
+
+            const priority =
+                document.getElementById(
+                    "newPriority"
+                ).value;
+
+
+            tasks.push({
+
+                text:
+                    name,
+
+                priority:
+                    priority,
+
+                completed:
+                    false
+
+            });
+
+
+            saveTasks();
+
+        }
+
+
+        closeAddModal();
+
+        renderAll();
+
+    }
+
+
+    /* =========================================================
+       STREAK BERECHNEN
+       Zählt rückwärts ab heute, an wie vielen Tagen IN FOLGE
+       ALLE Habits erledigt wurden. Sobald ein Tag fehlt, stoppt
+       die Zählung.
+    ========================================================= */
+
+
+    function calculateStreak() {
+
+
+        let streak = 0;
+
+
+        const today =
+            new Date();
+
+
+        // Wir schauen maximal 365 Tage zurück (mehr braucht kein
+        // realistischer Streak).
+        for (
+            let i = 0;
+            i < 365;
+            i++
+        ) {
+
+
+            const date =
+                new Date(today);
+
+
+            date.setDate(
+                today.getDate() - i
+            );
+
+
+            const key =
+                dateKey(date);
+
+
+            // "completed" ist nur true, wenn es Habits gibt UND
+            // WIRKLICH JEDES einzelne Habit an diesem Tag erledigt wurde.
+            const completed =
+                habits.length > 0 &&
+                habits.every(
+                    function(habit) {
+
+                        return habit.completedDates
+                            .includes(key);
+
+                    }
+                );
+
+
+            if (completed) {
+
+                streak++;
+
+            }
+
+            else {
+
+                break;
+
+            }
+
+        }
+
+
+        return streak;
+
+    }
+
+
+    /* =========================================================
+       LOGIN / REGISTRIERUNG
+    ========================================================= */
+
+
+    // Ganz einfache E-Mail-Prüfung: irgendwas @ irgendwas . irgendwas
+    function isValidEmail(
+        email
+    ) {
+
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            email
+        );
+
+    }
+
+
+    // Zeigt einen Login/Registrierungs-Fehler im roten Kasten an
+    function showAuthError(
+        message
+    ) {
+
+        const errorBox =
+            document.getElementById(
+                "authError"
+            );
+
+        errorBox.textContent =
+            message;
+
+        errorBox.style.display =
+            "block";
+
+    }
+
+
+    function hideAuthError() {
+
+        document.getElementById(
+            "authError"
+        ).style.display =
+            "none";
+
+    }
+
+
+    // Wechselt zwischen Login- und Registrierungs-Ansicht und
+    // passt Überschrift, Button-Text und das "Passwort bestätigen"-
+    // Feld entsprechend an.
+    function switchAuthMode() {
+
+        authMode =
+            authMode === "login"
+                ? "register"
+                : "login";
+
+        renderAuthMode();
+
+    }
+
+
+    function renderAuthMode() {
+
+
+        hideAuthError();
+
+
+        const confirmField =
+            document.getElementById(
+                "authConfirmField"
+            );
+
+
+        if (authMode === "register") {
+
+            document.getElementById(
+                "authTitle"
+            ).textContent =
+                "Konto erstellen";
+
+            document.getElementById(
+                "authSubtitle"
+            ).textContent =
+                "Lege einen Account mit E-Mail und Passwort an.";
+
+            document.getElementById(
+                "authSubmitButton"
+            ).textContent =
+                "Registrieren";
+
+            document.getElementById(
+                "authSwitchText"
+            ).innerHTML =
+                'Schon einen Account? <button onclick="switchAuthMode()">Einloggen</button>';
+
+            confirmField.style.display =
+                "block";
+
+        }
+
+        else {
+
+            document.getElementById(
+                "authTitle"
+            ).textContent =
+                "Willkommen zurück";
+
+            document.getElementById(
+                "authSubtitle"
+            ).textContent =
+                "Melde dich mit deinem Account an.";
+
+            document.getElementById(
+                "authSubmitButton"
+            ).textContent =
+                "Einloggen";
+
+            document.getElementById(
+                "authSwitchText"
+            ).innerHTML =
+                'Noch keinen Account? <button onclick="switchAuthMode()">Registrieren</button>';
+
+            confirmField.style.display =
+                "none";
+
+        }
+
+    }
+
+
+    // Wird beim Klick auf "Einloggen"/"Registrieren" ausgeführt.
+    function handleAuthSubmit() {
+
+
+        hideAuthError();
+
+
+        const email =
+            document.getElementById(
+                "authEmail"
+            ).value.trim().toLowerCase();
+
+
+        const password =
+            document.getElementById(
+                "authPassword"
+            ).value;
+
+
+        if (
+            email === "" ||
+            password === ""
+        ) {
+
+            showAuthError(
+                "Bitte E-Mail und Passwort ausfüllen."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !isValidEmail(email)
+        ) {
+
+            showAuthError(
+                "Bitte eine gültige E-Mail-Adresse eingeben."
+            );
+
+            return;
+
+        }
+
+
+        if (authMode === "register") {
+
+
+            const confirmPassword =
+                document.getElementById(
+                    "authPasswordConfirm"
+                ).value;
+
+
+            if (password.length < 6) {
+
+                showAuthError(
+                    "Das Passwort muss mindestens 6 Zeichen lang sein."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                password !== confirmPassword
+            ) {
+
+                showAuthError(
+                    "Die Passwörter stimmen nicht überein."
+                );
+
+                return;
+
+            }
+
+
+            account = {
+
+                email:
+                    email,
+
+                password:
+                    password
+
+            };
+
+
+            saveAccount();
+
+            isLoggedIn = true;
+
+            localStorage.setItem(
+                "isLoggedIn",
+                "true"
+            );
+
+
+            finishAuthAndEnterApp();
+
+        }
+
+        else {
+
+
+            if (!account) {
+
+                showAuthError(
+                    "Es existiert noch kein Konto. Bitte registriere dich zuerst."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                email !== account.email ||
+                password !== account.password
+            ) {
+
+                showAuthError(
+                    "E-Mail oder Passwort ist falsch."
+                );
+
+                return;
+
+            }
+
+
+            isLoggedIn = true;
+
+            localStorage.setItem(
+                "isLoggedIn",
+                "true"
+            );
+
+
+            finishAuthAndEnterApp();
+
+        }
+
+    }
+
+
+    // Räumt das Login-Formular auf und zeigt die eigentliche App an.
+    function finishAuthAndEnterApp() {
+
+        document.getElementById(
+            "authEmail"
+        ).value = "";
+
+        document.getElementById(
+            "authPassword"
+        ).value = "";
+
+        document.getElementById(
+            "authPasswordConfirm"
+        ).value = "";
+
+        hideAuthError();
+
+        checkAuthState();
+
+        showPage("home");
+
+    }
+
+
+    function logout() {
+
+
+        const confirmed =
+            confirm(
+                "Möchtest du dich wirklich abmelden?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        isLoggedIn = false;
+
+        localStorage.setItem(
+            "isLoggedIn",
+            "false"
+        );
+
+
+        authMode = "login";
+
+
+        checkAuthState();
+
+    }
+
+
+    // Löscht den Account komplett (E-Mail + Passwort). Aufgaben und
+    // Habits bleiben davon unberührt - nur der Zugang wird entfernt.
+    function deleteAccount() {
+
+
+        const confirmed =
+            confirm(
+                "Konto wirklich endgültig löschen? Du müsstest dich danach neu registrieren."
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        account = null;
+
+        localStorage.removeItem(
+            "account"
+        );
+
+
+        isLoggedIn = false;
+
+        localStorage.setItem(
+            "isLoggedIn",
+            "false"
+        );
+
+
+        authMode = "register";
+
+
+        checkAuthState();
+
+    }
+
+
+    // Zeigt entweder die App (eingeloggt) oder den Login/Registrierungs-
+    // Bildschirm (nicht eingeloggt) an. Wird nach jeder Änderung am
+    // Login-Status aufgerufen.
+    function checkAuthState() {
+
+
+        const authScreen =
+            document.getElementById(
+                "authScreen"
+            );
+
+
+        const appContainer =
+            document.querySelector(
+                ".app"
+            );
+
+
+        const bottomNav =
+            document.querySelector(
+                ".bottom-nav"
+            );
+
+
+        if (isLoggedIn && account) {
+
+
+            authScreen.style.display =
+                "none";
+
+            appContainer.style.display =
+                "";
+
+            bottomNav.style.display =
+                "";
+
+
+            renderAccountInfo();
+
+        }
+
+        else {
+
+
+            // Ohne bestehenden Account direkt die Registrierung
+            // anzeigen, sonst den Login-Bildschirm.
+            authMode =
+                account
+                    ? "login"
+                    : "register";
+
+
+            renderAuthMode();
+
+
+            authScreen.style.display =
+                "flex";
+
+            appContainer.style.display =
+                "none";
+
+            bottomNav.style.display =
+                "none";
+
+        }
+
+    }
+
+
+    /* =========================================================
+       ACCOUNT-EINSTELLUNGEN (E-Mail / Passwort ändern)
+    ========================================================= */
+
+
+    function renderAccountInfo() {
+
+        document.getElementById(
+            "accountEmailDisplay"
+        ).textContent =
+            account
+                ? account.email
+                : "Nicht angemeldet";
+
+    }
+
+
+    // Öffnet das Account-Modal im gewünschten Modus und blendet
+    // nur die dazu passenden Eingabefelder ein.
+    function openAccountModal(
+        action
+    ) {
+
+
+        accountModalAction =
+            action;
+
+
+        document.getElementById(
+            "accountModalError"
+        ).style.display =
+            "none";
+
+
+        // Formularfelder leeren
+        document.getElementById(
+            "newEmailInput"
+        ).value = "";
+
+        document.getElementById(
+            "currentPasswordInput"
+        ).value = "";
+
+        document.getElementById(
+            "newPasswordInput"
+        ).value = "";
+
+        document.getElementById(
+            "newPasswordConfirmInput"
+        ).value = "";
+
+
+        const emailFields =
+            document.getElementById(
+                "accountEmailFields"
+            );
+
+
+        const passwordFields =
+            document.getElementById(
+                "accountPasswordFields"
+            );
+
+
+        if (action === "password") {
+
+            document.getElementById(
+                "accountModalTitle"
+            ).textContent =
+                "Passwort ändern";
+
+            emailFields.style.display =
+                "none";
+
+            passwordFields.style.display =
+                "block";
+
+        }
+
+        else {
+
+            document.getElementById(
+                "accountModalTitle"
+            ).textContent =
+                "E-Mail ändern";
+
+            emailFields.style.display =
+                "block";
+
+            passwordFields.style.display =
+                "none";
+
+        }
+
+
+        document
+            .getElementById(
+                "accountModal"
+            )
+            .classList.add(
+                "show"
+            );
+
+    }
+
+
+    function closeAccountModal() {
+
+        document
+            .getElementById(
+                "accountModal"
+            )
+            .classList.remove(
+                "show"
+            );
+
+    }
+
+
+    function showAccountModalError(
+        message
+    ) {
+
+        const errorBox =
+            document.getElementById(
+                "accountModalError"
+            );
+
+        errorBox.textContent =
+            message;
+
+        errorBox.style.display =
+            "block";
+
+    }
+
+
+    // Liest das Account-Modal aus und speichert je nach Modus
+    // entweder die neue E-Mail oder das neue Passwort.
+    function saveAccountChange() {
+
+
+        if (!account) {
+            return;
+        }
+
+
+        if (accountModalAction === "email") {
+
+
+            const newEmail =
+                document.getElementById(
+                    "newEmailInput"
+                ).value.trim().toLowerCase();
+
+
+            if (
+                !isValidEmail(newEmail)
+            ) {
+
+                showAccountModalError(
+                    "Bitte eine gültige E-Mail-Adresse eingeben."
+                );
+
+                return;
+
+            }
+
+
+            account.email =
+                newEmail;
+
+
+            saveAccount();
+
+            closeAccountModal();
+
+            renderAccountInfo();
+
+        }
+
+        else {
+
+
+            const currentPassword =
+                document.getElementById(
+                    "currentPasswordInput"
+                ).value;
+
+
+            const newPassword =
+                document.getElementById(
+                    "newPasswordInput"
+                ).value;
+
+
+            const newPasswordConfirm =
+                document.getElementById(
+                    "newPasswordConfirmInput"
+                ).value;
+
+
+            if (
+                currentPassword !==
+                account.password
+            ) {
+
+                showAccountModalError(
+                    "Das aktuelle Passwort ist falsch."
+                );
+
+                return;
+
+            }
+
+
+            if (newPassword.length < 6) {
+
+                showAccountModalError(
+                    "Das neue Passwort muss mindestens 6 Zeichen lang sein."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                newPassword !==
+                newPasswordConfirm
+            ) {
+
+                showAccountModalError(
+                    "Die neuen Passwörter stimmen nicht überein."
+                );
+
+                return;
+
+            }
+
+
+            account.password =
+                newPassword;
+
+
+            saveAccount();
+
+            closeAccountModal();
+
+        }
+
+    }
+
+
+    function showAccountMessage() {
+
+        alert(
+            "Diese Einstellung kommt als Nächstes."
+        );
+
+    }
+
+
+    /* =========================================================
+       THEME (Dunkel/Hell)
+    ========================================================= */
+
+
+    // Setzt data-theme auf <html> und speichert die Wahl dauerhaft.
+    function applyTheme(
+        theme
+    ) {
+
+        document.documentElement.setAttribute(
+            "data-theme",
+            theme
+        );
+
+
+        localStorage.setItem(
+            "theme",
+            theme
+        );
+
+
+        // Den Schalter in den Einstellungen mit dem echten
+        // Theme synchron halten (falls er gerade sichtbar ist).
+        const toggle =
+            document.getElementById(
+                "themeToggle"
+            );
+
+
+        if (toggle) {
+
+            toggle.checked =
+                theme === "light";
+
+        }
+
+    }
+
+
+    // Wird vom Theme-Schalter in den Einstellungen aufgerufen.
+    function toggleTheme() {
+
+
+        const isLight =
+            document.getElementById(
+                "themeToggle"
+            ).checked;
+
+
+        applyTheme(
+            isLight
+                ? "light"
+                : "dark"
+        );
+
+    }
+
+
+    /* =========================================================
+       KI-CHAT
+    ========================================================= */
+
+
+    function renderChat() {
+
+
+        const chatWindow =
+            document.getElementById(
+                "chatWindow"
+            );
+
+
+        chatWindow.innerHTML = "";
+
+
+        if (chatMessages.length === 0) {
+
+
+            const empty =
+                document.createElement(
+                    "div"
+                );
+
+
+            empty.className =
+                "empty-state";
+
+
+            empty.textContent =
+                "Schreib mir eine Nachricht, um loszulegen 👋";
+
+
+            chatWindow.appendChild(
+                empty
+            );
+
+
+            return;
+
+        }
+
+
+        chatMessages.forEach(
+            function(message) {
+
+
+                const bubble =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                bubble.className =
+                    "chat-message " +
+                    message.sender;
+
+
+                // textContent statt innerHTML, damit eingegebener
+                // Text nicht versehentlich als HTML interpretiert wird.
+                bubble.textContent =
+                    message.text;
+
+
+                chatWindow.appendChild(
+                    bubble
+                );
+
+            }
+        );
+
+
+        // Automatisch ganz nach unten scrollen, zur neuesten Nachricht.
+        chatWindow.scrollTop =
+            chatWindow.scrollHeight;
+
+    }
+
+
+    function handleChatKeydown(
+        event
+    ) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            sendChatMessage();
+
+        }
+
+    }
+
+
+    // Fügt die eigene Nachricht hinzu und lässt (aktuell) eine
+    // Platzhalter-Antwort folgen. Sobald eine echte KI angebunden
+    // ist, muss nur der setTimeout-Block hier unten durch einen
+    // echten API-Aufruf ersetzt werden.
+    function sendChatMessage() {
+
+
+        const input =
+            document.getElementById(
+                "chatInput"
+            );
+
+
+        const text =
+            input.value.trim();
+
+
+        if (text === "") {
+            return;
+        }
+
+
+        chatMessages.push({
+
+            sender:
+                "user",
+
+            text:
+                text
+
+        });
+
+
+        input.value = "";
+
+
+        saveChatMessages();
+
+        renderChat();
+
+
+        setTimeout(
+            function() {
+
+
+                chatMessages.push({
+
+                    sender:
+                        "ai",
+
+                    text:
+                        "Der KI-Assistent ist noch nicht verbunden. Diese Funktion kommt als Nächstes!"
+
+                });
+
+
+                saveChatMessages();
+
+                renderChat();
+
+
+            },
+            500
+        );
+
+    }
+
+
+    /* =========================================================
+       TAGESZITAT
+    ========================================================= */
+
+
+    function renderQuote() {
+
+
+        const day =
+            new Date().getDate();
+
+
+        const quote =
+            quotes[
+                day %
+                quotes.length
+            ];
+
+
+        document.getElementById(
+            "dailyQuote"
+        ).textContent =
+            quote;
+
+    }
+
+
+    /* =========================================================
+       ALLES NEU RENDERN
+       Diese Funktion wird nach JEDER Datenänderung aufgerufen,
+       damit die Anzeige immer zum aktuellen Stand passt.
+    ========================================================= */
+
+
+    function renderAll() {
+
+
+        renderWeek();
+
+        renderHabits();
+
+        renderTasks();
+
+        renderAccountInfo();
+
+        renderChat();
+
+        renderQuote();
+
+
+        document.getElementById(
+            "streakNumber"
+        ).textContent =
+            calculateStreak();
+
+    }
+
+
+    /* =========================================================
+       TASTATUR-STEUERUNG
+       ESC schließt Modals, ENTER bestätigt ein offenes Modal
+       bzw. das Login/Registrierungs-Formular.
+    ========================================================= */
+
+
+    document.addEventListener(
+        "keydown",
+        function(event) {
+
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeAddModal();
+
+                closeAccountModal();
+
+            }
+
+
+            if (
+                event.key ===
+                "Enter"
+            ) {
+
+
+                const addModal =
+                    document.getElementById(
+                        "addModal"
+                    );
+
+
+                if (
+                    addModal.classList
+                        .contains("show")
+                ) {
+
+                    createItem();
+
+                    return;
+
+                }
+
+
+                const accountModal =
+                    document.getElementById(
+                        "accountModal"
+                    );
+
+
+                if (
+                    accountModal.classList
+                        .contains("show")
+                ) {
+
+                    saveAccountChange();
+
+                    return;
+
+                }
+
+
+                const authScreen =
+                    document.getElementById(
+                        "authScreen"
+                    );
+
+
+                if (
+                    authScreen.style.display ===
+                    "flex"
+                ) {
+
+                    handleAuthSubmit();
+
+                }
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       HTML-SICHERHEIT
+       Verhindert, dass eingegebener Text versehentlich als
+       HTML-Code interpretiert wird (z.B. wenn jemand
+       "<b>Test</b>" als Habit-Namen eingibt).
+    ========================================================= */
+
+
+    function escapeHtml(
+        text
+    ) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.textContent =
+            text;
+
+
+        return div.innerHTML;
+
+    }
+
+
+    /* =========================================================
+       APP STARTEN
+    ========================================================= */
+
+
+    // Gespeichertes Theme laden und den Schalter in den
+    // Einstellungen darauf einstellen (ohne es erneut zu speichern).
+    applyTheme(
+        localStorage.getItem("theme") ||
+        "dark"
+    );
+
+
+    initializeHabits();
+
+    renderAll();
+
+    checkAuthState();
+
+
+</script>
+
+
+</body>
+
+</html>
