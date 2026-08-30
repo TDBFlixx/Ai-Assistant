@@ -19,6 +19,16 @@
 
 
     <!--
+        SUPABASE
+        Lädt die offizielle Supabase-JavaScript-Bibliothek per CDN
+        (kein npm install / Build-Tool nötig). Danach steht global
+        "window.supabase.createClient(...)" zur Verfügung.
+    -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <!--
         FRÜHE THEME-ANWENDUNG
         Dieses kleine Skript läuft, bevor die Seite überhaupt
         gezeichnet wird. Es liest das zuletzt gespeicherte Theme
@@ -2933,9 +2943,11 @@
 
 
         <!--
-            GEFAHRENZONE: Konto endgültig löschen.
-            Praktisch auch zum Testen des Registrierungs-Bildschirms,
-            da man sonst kein zweites Konto anlegen kann.
+            GEFAHRENZONE: Alle Daten löschen.
+            WICHTIG: Löscht Aufgaben/Habits/Einstellungen, NICHT den
+            Login selbst - das echte Löschen eines Supabase-Accounts
+            braucht eine serverseitige Funktion (siehe deleteAccount()
+            im JS-Code weiter unten für Details).
         -->
 
         <div class="settings-card">
@@ -2952,7 +2964,7 @@
                     </div>
 
                     <div class="setting-label danger-zone-title">
-                        Konto löschen
+                        Alle meine Daten löschen
                     </div>
 
                 </div>
@@ -2960,8 +2972,10 @@
             </button>
 
             <div class="settings-note">
-                Löscht deinen Account (E-Mail + Passwort) und meldet dich ab.
-                Deine Aufgaben und Habits bleiben davon unberührt gespeichert.
+                Löscht alle deine Aufgaben, Habits und Einstellungen
+                unwiderruflich und meldet dich ab. Dein Login (E-Mail +
+                Passwort) bleibt bestehen - das komplette Löschen eines
+                Accounts erfordert später eine serverseitige Funktion.
             </div>
 
         </div>
@@ -3442,28 +3456,50 @@
 
 
     /* =========================================================
+       SUPABASE VERBINDUNG
+       Der "publishable key" ist absichtlich NICHT geheim - er darf
+       im Frontend stehen. Er kann NUR das, was die Row-Level-
+       Security-Regeln in Supabase erlauben (siehe supabase-setup.sql):
+       jeder Nutzer sieht/bearbeitet ausschließlich seine eigenen Zeilen.
+       Der "secret key" darf NIEMALS hier im Frontend-Code landen!
+    ========================================================= */
+
+    const SUPABASE_URL =
+        "https://ouyzmnqwnfbvnjtnadtz.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_wjWYAQqW0YHt-1aDkk2w-Q_cWrlzikZ";
+
+    const supabase =
+        window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY
+        );
+
+
+    /* =========================================================
        DATEN
-       Alles wird im Browser (localStorage) gespeichert - es gibt
-       noch kein Backend/Server. Wenn du den Browser-Cache leerst,
-       gehen die Daten verloren.
+       tasks und habits starten LEER und werden erst nach dem
+       Login mit loadUserData() aus Supabase geladen (siehe weiter
+       unten). Nur der Chatverlauf bleibt weiterhin lokal im
+       Browser (localStorage) - das war für den KI-Chat nicht
+       gefordert und ist unkritisch, falls sich mal wer anders
+       im selben Browser anmeldet, sieht er höchstens alte
+       Chat-Nachrichten, aber keine fremden Aufgaben/Habits.
     ========================================================= */
 
 
-    // Liste aller Aufgaben: { text, priority, completed }
-    let tasks =
-        JSON.parse(
-            localStorage.getItem("tasks")
-        ) || [];
+    // Liste aller Aufgaben: { id, text, priority, completed }
+    // "id" ist die UUID der Zeile in der Supabase-Tabelle "tasks".
+    let tasks = [];
 
 
     // Liste aller Habits: { id, text, icon, completedDates: [...] }
+    // "id" ist die UUID der Zeile in der Supabase-Tabelle "habits".
     // completedDates speichert für JEDEN Tag einzeln, ob das
     // Habit erledigt wurde - dadurch kann man in der Woche
     // zurückblättern und sieht den richtigen Stand pro Tag.
-    let habits =
-        JSON.parse(
-            localStorage.getItem("habits")
-        ) || [];
+    let habits = [];
 
 
     // Der Tag, der gerade auf der Home-Seite ausgewählt ist
@@ -3472,19 +3508,16 @@
         new Date();
 
 
-    // Account-Daten: { email, password }. "null" bedeutet:
-    // es wurde noch nie ein Konto angelegt -> Registrierungs-Bildschirm.
-    let account =
-        JSON.parse(
-            localStorage.getItem("account")
-        ) || null;
+    // Account-Daten des eingeloggten Nutzers: { id, email }.
+    // WICHTIG: Das Passwort steht hier absichtlich NICHT drin -
+    // Supabase Auth kümmert sich serverseitig sicher (gehasht)
+    // um die Passwort-Prüfung, das Frontend bekommt es nie zu sehen.
+    let account = null;
 
 
-    // Ob man GERADE eingeloggt ist. Bleibt auch nach dem Neuladen
-    // der Seite bestehen (Session), bis man sich aktiv abmeldet.
-    let isLoggedIn =
-        localStorage.getItem("isLoggedIn") ===
-        "true";
+    // Ob man GERADE eingeloggt ist. Wird beim Start anhand der
+    // laufenden Supabase-Sitzung geprüft (siehe checkAuthState()).
+    let isLoggedIn = false;
 
 
     // Steuert, ob der Login-Bildschirm im Login- oder im
@@ -3498,7 +3531,8 @@
 
 
     // Nachrichtenverlauf der KI-Chat-Seite: { sender, text }
-    // sender ist entweder "user" oder "ai".
+    // sender ist entweder "user" oder "ai". Bleibt bewusst lokal
+    // im Browser (siehe Hinweis oben).
     let chatMessages =
         JSON.parse(
             localStorage.getItem("chatMessages")
@@ -3525,7 +3559,8 @@
     ];
 
 
-    // Habits, die beim allerersten Start automatisch angelegt werden
+    // Habits, die für einen brandneuen Account einmalig angelegt
+    // werden (siehe loadUserData() weiter unten).
     const defaultHabits = [
 
         {
@@ -3552,40 +3587,11 @@
 
 
     /* =========================================================
-       SPEICHERN
-       Diese Funktionen schreiben die aktuellen Daten
-       ins localStorage. Sie werden nach jeder Änderung aufgerufen.
+       SPEICHERN (nur noch für den lokalen Chatverlauf - alles
+       andere läuft jetzt direkt über Supabase-Aufrufe in den
+       jeweiligen Funktionen weiter unten, z.B. toggleHabit(),
+       createItem(), handleAuthSubmit() usw.)
     ========================================================= */
-
-
-    function saveTasks() {
-
-        localStorage.setItem(
-            "tasks",
-            JSON.stringify(tasks)
-        );
-
-    }
-
-
-    function saveHabits() {
-
-        localStorage.setItem(
-            "habits",
-            JSON.stringify(habits)
-        );
-
-    }
-
-
-    function saveAccount() {
-
-        localStorage.setItem(
-            "account",
-            JSON.stringify(account)
-        );
-
-    }
 
 
     function saveChatMessages() {
@@ -3650,45 +3656,216 @@
 
 
     /* =========================================================
-       STANDARD-HABITS EINMALIG ANLEGEN
+       NUTZERDATEN AUS SUPABASE LADEN
+       Wird nach jedem erfolgreichen Login aufgerufen. Holt Habits,
+       Aufgaben und das gespeicherte Theme aus der Datenbank -
+       Row Level Security sorgt automatisch dafür, dass hier NUR
+       die Zeilen des gerade eingeloggten Nutzers zurückkommen.
     ========================================================= */
 
 
-    function initializeHabits() {
+    async function loadUserData() {
 
-        // Nur wenn wirklich noch keine Habits gespeichert sind
-        // (z.B. beim allerersten Öffnen der App).
-        if (habits.length === 0) {
 
+        // --- HABITS LADEN ---
+
+        const habitsResult =
+            await supabase
+                .from("habits")
+                .select("*")
+                .order(
+                    "created_at",
+                    { ascending: true }
+                );
+
+
+        if (habitsResult.error) {
+
+            console.error(
+                "Fehler beim Laden der Habits:",
+                habitsResult.error
+            );
+
+            habits = [];
+
+        }
+
+        else {
+
+            // Die Datenbank-Spalte heißt "completed_dates"
+            // (snake_case), im JS-Code nutzen wir weiterhin
+            // "completedDates" (camelCase) wie bisher.
             habits =
-                defaultHabits.map(
-                    function(habit) {
+                habitsResult.data.map(
+                    function(row) {
 
                         return {
 
-                            // Date.now() + Zufallszahl sorgt für eine
-                            // eindeutige ID, damit wir das Habit später
-                            // beim Abhaken/Löschen wiederfinden können.
                             id:
-                                Date.now() +
-                                Math.random(),
+                                row.id,
 
                             text:
-                                habit.text,
+                                row.text,
 
                             icon:
-                                habit.icon,
+                                row.icon,
 
-                            completedDates: []
+                            completedDates:
+                                row.completed_dates || []
 
                         };
 
                     }
                 );
 
-            saveHabits();
+        }
+
+
+        // Ist das ein brandneuer Account ohne eigene Habits?
+        // Dann einmalig die Standard-Habits in der Datenbank anlegen.
+        if (habits.length === 0) {
+
+            for (
+                const defaultHabit of defaultHabits
+            ) {
+
+                const insertResult =
+                    await supabase
+                        .from("habits")
+                        .insert({
+
+                            user_id:
+                                account.id,
+
+                            text:
+                                defaultHabit.text,
+
+                            icon:
+                                defaultHabit.icon,
+
+                            completed_dates: []
+
+                        })
+                        .select()
+                        .single();
+
+
+                if (!insertResult.error) {
+
+                    habits.push({
+
+                        id:
+                            insertResult.data.id,
+
+                        text:
+                            insertResult.data.text,
+
+                        icon:
+                            insertResult.data.icon,
+
+                        completedDates: []
+
+                    });
+
+                }
+
+            }
 
         }
+
+
+        // --- AUFGABEN LADEN ---
+
+        const tasksResult =
+            await supabase
+                .from("tasks")
+                .select("*")
+                .order(
+                    "created_at",
+                    { ascending: true }
+                );
+
+
+        if (tasksResult.error) {
+
+            console.error(
+                "Fehler beim Laden der Aufgaben:",
+                tasksResult.error
+            );
+
+            tasks = [];
+
+        }
+
+        else {
+
+            tasks =
+                tasksResult.data.map(
+                    function(row) {
+
+                        return {
+
+                            id:
+                                row.id,
+
+                            text:
+                                row.text,
+
+                            priority:
+                                row.priority,
+
+                            completed:
+                                row.completed
+
+                        };
+
+                    }
+                );
+
+        }
+
+
+        // --- THEME LADEN ---
+
+        const settingsResult =
+            await supabase
+                .from("settings")
+                .select("*")
+                .maybeSingle();
+
+
+        if (
+            settingsResult.data
+        ) {
+
+            applyTheme(
+                settingsResult.data.theme
+            );
+
+        }
+
+        else {
+
+            // Noch keine Settings-Zeile für diesen Account ->
+            // eine anlegen, mit dem aktuell sichtbaren Theme.
+            await supabase
+                .from("settings")
+                .insert({
+
+                    user_id:
+                        account.id,
+
+                    theme:
+                        document.documentElement.getAttribute(
+                            "data-theme"
+                        ) || "dark"
+
+                });
+
+        }
+
+
+        renderAll();
 
     }
 
@@ -4013,7 +4190,7 @@
     }
 
 
-    function toggleHabit(
+    async function toggleHabit(
         id
     ) {
 
@@ -4043,6 +4220,8 @@
             );
 
 
+        // Erst lokal ändern, damit der Klick sich sofort reaktionsschnell
+        // anfühlt (die App muss nicht erst auf die Antwort vom Server warten).
         if (index === -1) {
 
             // Tag ist noch nicht erledigt -> hinzufügen
@@ -4063,9 +4242,33 @@
         }
 
 
-        saveHabits();
-
         renderAll();
+
+
+        // Jetzt den neuen Stand auch dauerhaft in Supabase speichern.
+        const updateResult =
+            await supabase
+                .from("habits")
+                .update({
+
+                    completed_dates:
+                        habit.completedDates
+
+                })
+                .eq(
+                    "id",
+                    habit.id
+                );
+
+
+        if (updateResult.error) {
+
+            console.error(
+                "Fehler beim Speichern des Habits:",
+                updateResult.error
+            );
+
+        }
 
     }
 
@@ -4076,7 +4279,7 @@
     ========================================================= */
 
 
-    function deleteHabit(
+    async function deleteHabit(
         id,
         event
     ) {
@@ -4112,9 +4315,27 @@
             );
 
 
-        saveHabits();
-
         renderAll();
+
+
+        const deleteResult =
+            await supabase
+                .from("habits")
+                .delete()
+                .eq(
+                    "id",
+                    id
+                );
+
+
+        if (deleteResult.error) {
+
+            console.error(
+                "Fehler beim Löschen des Habits:",
+                deleteResult.error
+            );
+
+        }
 
     }
 
@@ -4604,7 +4825,7 @@
         */
 
         checkCircle.onclick =
-            function() {
+            async function() {
 
 
                 if (
@@ -4626,9 +4847,6 @@
                     true;
 
 
-                saveTasks();
-
-
                 task.classList.add(
                     "completing"
                 );
@@ -4648,8 +4866,31 @@
                 );
 
 
+                // In Supabase als erledigt markieren
+                const updateResult =
+                    await supabase
+                        .from("tasks")
+                        .update({
+                            completed: true
+                        })
+                        .eq(
+                            "id",
+                            taskData.id
+                        );
+
+
+                if (updateResult.error) {
+
+                    console.error(
+                        "Fehler beim Erledigen der Aufgabe:",
+                        updateResult.error
+                    );
+
+                }
+
+
                 setTimeout(
-                    function() {
+                    async function() {
 
 
                         const taskIndex =
@@ -4670,9 +4911,29 @@
                         }
 
 
-                        saveTasks();
-
                         renderAll();
+
+
+                        // Erledigte Aufgabe endgültig aus der
+                        // Datenbank entfernen.
+                        const deleteResult =
+                            await supabase
+                                .from("tasks")
+                                .delete()
+                                .eq(
+                                    "id",
+                                    taskData.id
+                                );
+
+
+                        if (deleteResult.error) {
+
+                            console.error(
+                                "Fehler beim Entfernen der Aufgabe:",
+                                deleteResult.error
+                            );
+
+                        }
 
 
                     },
@@ -4683,7 +4944,7 @@
 
 
         deleteButton.onclick =
-            function() {
+            async function() {
 
 
                 const taskIndex =
@@ -4704,9 +4965,27 @@
                 }
 
 
-                saveTasks();
-
                 renderAll();
+
+
+                const deleteResult =
+                    await supabase
+                        .from("tasks")
+                        .delete()
+                        .eq(
+                            "id",
+                            taskData.id
+                        );
+
+
+                if (deleteResult.error) {
+
+                    console.error(
+                        "Fehler beim Löschen der Aufgabe:",
+                        deleteResult.error
+                    );
+
+                }
 
             };
 
@@ -4953,7 +5232,7 @@
 
     // Liest das Formular aus und legt je nach Typ entweder
     // eine neue Aufgabe oder ein neues Habit an.
-    function createItem() {
+    async function createItem() {
 
 
         const type =
@@ -4975,6 +5254,12 @@
         }
 
 
+        // Das Fenster schon vorab schließen, damit sich die App
+        // reaktionsschnell anfühlt (wir warten nicht erst auf
+        // die Antwort vom Server).
+        closeAddModal();
+
+
         if (type === "habit") {
 
 
@@ -4984,11 +5269,47 @@
                 ).value;
 
 
+            const insertResult =
+                await supabase
+                    .from("habits")
+                    .insert({
+
+                        user_id:
+                            account.id,
+
+                        text:
+                            name,
+
+                        icon:
+                            icon,
+
+                        completed_dates: []
+
+                    })
+                    .select()
+                    .single();
+
+
+            if (insertResult.error) {
+
+                console.error(
+                    "Fehler beim Anlegen des Habits:",
+                    insertResult.error
+                );
+
+                alert(
+                    "Das Habit konnte nicht gespeichert werden."
+                );
+
+                return;
+
+            }
+
+
             habits.push({
 
                 id:
-                    Date.now() +
-                    Math.random(),
+                    insertResult.data.id,
 
                 text:
                     name,
@@ -5001,9 +5322,6 @@
 
             });
 
-
-            saveHabits();
-
         }
 
         else {
@@ -5015,7 +5333,47 @@
                 ).value;
 
 
+            const insertResult =
+                await supabase
+                    .from("tasks")
+                    .insert({
+
+                        user_id:
+                            account.id,
+
+                        text:
+                            name,
+
+                        priority:
+                            priority,
+
+                        completed: false
+
+                    })
+                    .select()
+                    .single();
+
+
+            if (insertResult.error) {
+
+                console.error(
+                    "Fehler beim Anlegen der Aufgabe:",
+                    insertResult.error
+                );
+
+                alert(
+                    "Die Aufgabe konnte nicht gespeichert werden."
+                );
+
+                return;
+
+            }
+
+
             tasks.push({
+
+                id:
+                    insertResult.data.id,
 
                 text:
                     name,
@@ -5028,13 +5386,8 @@
 
             });
 
-
-            saveTasks();
-
         }
 
-
-        closeAddModal();
 
         renderAll();
 
@@ -5246,7 +5599,8 @@
 
 
     // Wird beim Klick auf "Einloggen"/"Registrieren" ausgeführt.
-    function handleAuthSubmit() {
+    // Wird beim Klick auf "Einloggen"/"Registrieren" ausgeführt.
+    async function handleAuthSubmit() {
 
 
         hideAuthError();
@@ -5324,25 +5678,48 @@
             }
 
 
-            account = {
+            // Registrierung bei Supabase. Das Passwort wird NIE im
+            // Klartext irgendwo gespeichert - Supabase kümmert sich
+            // serverseitig sicher (gehasht) darum.
+            const signUpResult =
+                await supabase.auth.signUp({
 
-                email:
-                    email,
+                    email:
+                        email,
 
-                password:
-                    password
+                    password:
+                        password
 
-            };
+                });
 
 
-            saveAccount();
+            if (signUpResult.error) {
 
-            isLoggedIn = true;
+                showAuthError(
+                    signUpResult.error.message
+                );
 
-            localStorage.setItem(
-                "isLoggedIn",
-                "true"
-            );
+                return;
+
+            }
+
+
+            // Falls in Supabase "E-Mail bestätigen" aktiviert ist,
+            // gibt es nach signUp() noch KEINE Sitzung - der Nutzer
+            // muss erst auf einen Link in seiner Mailbox klicken.
+            if (!signUpResult.data.session) {
+
+                showAuthError(
+                    "Fast geschafft! Bitte bestätige deine E-Mail-Adresse über den Link, den wir dir geschickt haben, und logge dich danach ein."
+                );
+
+                authMode = "login";
+
+                renderAuthMode();
+
+                return;
+
+            }
 
 
             finishAuthAndEnterApp();
@@ -5352,21 +5729,21 @@
         else {
 
 
-            if (!account) {
+            // Login bei Supabase. Supabase prüft E-Mail und Passwort
+            // selbst serverseitig und gibt bei Erfolg eine Sitzung zurück.
+            const signInResult =
+                await supabase.auth.signInWithPassword({
 
-                showAuthError(
-                    "Es existiert noch kein Konto. Bitte registriere dich zuerst."
-                );
+                    email:
+                        email,
 
-                return;
+                    password:
+                        password
 
-            }
+                });
 
 
-            if (
-                email !== account.email ||
-                password !== account.password
-            ) {
+            if (signInResult.error) {
 
                 showAuthError(
                     "E-Mail oder Passwort ist falsch."
@@ -5377,14 +5754,6 @@
             }
 
 
-            isLoggedIn = true;
-
-            localStorage.setItem(
-                "isLoggedIn",
-                "true"
-            );
-
-
             finishAuthAndEnterApp();
 
         }
@@ -5392,8 +5761,9 @@
     }
 
 
-    // Räumt das Login-Formular auf und zeigt die eigentliche App an.
-    function finishAuthAndEnterApp() {
+    // Räumt das Login-Formular auf, lädt die Daten des Accounts
+    // und zeigt danach die eigentliche App an.
+    async function finishAuthAndEnterApp() {
 
         document.getElementById(
             "authEmail"
@@ -5409,14 +5779,14 @@
 
         hideAuthError();
 
-        checkAuthState();
+        await checkAuthState();
 
         showPage("home");
 
     }
 
 
-    function logout() {
+    async function logout() {
 
 
         const confirmed =
@@ -5430,13 +5800,12 @@
         }
 
 
+        await supabase.auth.signOut();
+
+
+        account = null;
+
         isLoggedIn = false;
-
-        localStorage.setItem(
-            "isLoggedIn",
-            "false"
-        );
-
 
         authMode = "login";
 
@@ -5446,14 +5815,21 @@
     }
 
 
-    // Löscht den Account komplett (E-Mail + Passwort). Aufgaben und
-    // Habits bleiben davon unberührt - nur der Zugang wird entfernt.
-    function deleteAccount() {
+    // Löscht ALLE Daten (Habits, Aufgaben, Theme-Einstellung) des
+    // Accounts und meldet danach ab.
+    //
+    // WICHTIG: Das Login selbst (E-Mail + Passwort bei Supabase)
+    // bleibt dabei bestehen! Einen Nutzer-Account komplett zu
+    // löschen, geht aus Sicherheitsgründen NICHT mit dem
+    // "publishable key" im Frontend - das darf nur eine Funktion
+    // mit dem "secret key" auf einem Server tun (z.B. eine Supabase
+    // Edge Function). Das wäre ein guter nächster Ausbauschritt.
+    async function deleteAccount() {
 
 
         const confirmed =
             confirm(
-                "Konto wirklich endgültig löschen? Du müsstest dich danach neu registrieren."
+                "Wirklich alle deine Aufgaben, Habits und Einstellungen löschen? Das kann nicht rückgängig gemacht werden. (Dein Login bleibt bestehen.)"
             );
 
 
@@ -5462,33 +5838,48 @@
         }
 
 
-        account = null;
+        await supabase
+            .from("habits")
+            .delete()
+            .eq(
+                "user_id",
+                account.id
+            );
 
-        localStorage.removeItem(
-            "account"
+
+        await supabase
+            .from("tasks")
+            .delete()
+            .eq(
+                "user_id",
+                account.id
+            );
+
+
+        await supabase
+            .from("settings")
+            .delete()
+            .eq(
+                "user_id",
+                account.id
+            );
+
+
+        alert(
+            "Deine Daten wurden gelöscht. Du wirst jetzt abgemeldet."
         );
 
 
-        isLoggedIn = false;
-
-        localStorage.setItem(
-            "isLoggedIn",
-            "false"
-        );
-
-
-        authMode = "register";
-
-
-        checkAuthState();
+        logout();
 
     }
 
 
     // Zeigt entweder die App (eingeloggt) oder den Login/Registrierungs-
-    // Bildschirm (nicht eingeloggt) an. Wird nach jeder Änderung am
-    // Login-Status aufgerufen.
-    function checkAuthState() {
+    // Bildschirm (nicht eingeloggt) an. Prüft dafür die aktuell
+    // laufende Supabase-Sitzung. Wird beim Start der App UND nach
+    // jeder Änderung am Login-Status aufgerufen.
+    async function checkAuthState() {
 
 
         const authScreen =
@@ -5509,7 +5900,32 @@
             );
 
 
-        if (isLoggedIn && account) {
+        // Supabase merkt sich die Sitzung selbst (in seinem eigenen
+        // localStorage-Bereich) - deshalb bleibt man nach dem
+        // Neuladen der Seite automatisch eingeloggt.
+        const sessionResult =
+            await supabase.auth.getSession();
+
+
+        const session =
+            sessionResult.data.session;
+
+
+        if (session) {
+
+
+            account = {
+
+                id:
+                    session.user.id,
+
+                email:
+                    session.user.email
+
+            };
+
+
+            isLoggedIn = true;
 
 
             authScreen.style.display =
@@ -5524,17 +5940,17 @@
 
             renderAccountInfo();
 
+
+            await loadUserData();
+
         }
 
         else {
 
 
-            // Ohne bestehenden Account direkt die Registrierung
-            // anzeigen, sonst den Login-Bildschirm.
-            authMode =
-                account
-                    ? "login"
-                    : "register";
+            account = null;
+
+            isLoggedIn = false;
 
 
             renderAuthMode();
@@ -5692,8 +6108,10 @@
 
 
     // Liest das Account-Modal aus und speichert je nach Modus
-    // entweder die neue E-Mail oder das neue Passwort.
-    function saveAccountChange() {
+    // entweder die neue E-Mail oder das neue Passwort - direkt
+    // über Supabase Auth (supabase.auth.updateUser). Supabase
+    // prüft dabei automatisch, ob man gerade eingeloggt ist.
+    async function saveAccountChange() {
 
 
         if (!account) {
@@ -5723,15 +6141,35 @@
             }
 
 
-            account.email =
-                newEmail;
+            const updateResult =
+                await supabase.auth.updateUser({
+
+                    email:
+                        newEmail
+
+                });
 
 
-            saveAccount();
+            if (updateResult.error) {
+
+                showAccountModalError(
+                    updateResult.error.message
+                );
+
+                return;
+
+            }
+
+
+            // Bei aktivierter E-Mail-Bestätigung ändert sich die
+            // E-Mail erst, NACHDEM der Nutzer den Bestätigungs-Link
+            // in seiner (alten UND neuen) Mailbox angeklickt hat.
+            alert(
+                "Falls die E-Mail-Bestätigung aktiv ist, prüfe deine Mailbox, um die Änderung abzuschließen."
+            );
+
 
             closeAccountModal();
-
-            renderAccountInfo();
 
         }
 
@@ -5756,10 +6194,22 @@
                 ).value;
 
 
-            if (
-                currentPassword !==
-                account.password
-            ) {
+            // Das "aktuelle Passwort" prüfen wir, indem wir uns
+            // testweise damit einloggen. Supabase hat keinen
+            // direkten "check password"-Aufruf im Frontend.
+            const checkResult =
+                await supabase.auth.signInWithPassword({
+
+                    email:
+                        account.email,
+
+                    password:
+                        currentPassword
+
+                });
+
+
+            if (checkResult.error) {
 
                 showAccountModalError(
                     "Das aktuelle Passwort ist falsch."
@@ -5795,13 +6245,31 @@
             }
 
 
-            account.password =
-                newPassword;
+            const updateResult =
+                await supabase.auth.updateUser({
+
+                    password:
+                        newPassword
+
+                });
 
 
-            saveAccount();
+            if (updateResult.error) {
+
+                showAccountModalError(
+                    updateResult.error.message
+                );
+
+                return;
+
+            }
+
 
             closeAccountModal();
+
+            alert(
+                "Passwort erfolgreich geändert."
+            );
 
         }
 
@@ -5822,9 +6290,14 @@
     ========================================================= */
 
 
-    // Setzt data-theme auf <html> und speichert die Wahl dauerhaft.
+    // Setzt data-theme auf <html>. "persist" steuert, ob die Wahl
+    // auch dauerhaft gespeichert werden soll (in Supabase, wenn
+    // eingeloggt, sonst nur lokal) - beim allerersten Laden der
+    // Seite (vor dem Login) wollen wir NICHT gleich in die
+    // Datenbank schreiben, deshalb persist=false in diesem Fall.
     function applyTheme(
-        theme
+        theme,
+        persist
     ) {
 
         document.documentElement.setAttribute(
@@ -5854,6 +6327,35 @@
 
         }
 
+
+        if (persist && account) {
+
+            supabase
+                .from("settings")
+                .update({
+                    theme: theme
+                })
+                .eq(
+                    "user_id",
+                    account.id
+                )
+                .then(
+                    function(result) {
+
+                        if (result.error) {
+
+                            console.error(
+                                "Fehler beim Speichern des Themes:",
+                                result.error
+                            );
+
+                        }
+
+                    }
+                );
+
+        }
+
     }
 
 
@@ -5870,7 +6372,8 @@
         applyTheme(
             isLight
                 ? "light"
-                : "dark"
+                : "dark",
+            true
         );
 
     }
@@ -6216,18 +6719,24 @@
     ========================================================= */
 
 
-    // Gespeichertes Theme laden und den Schalter in den
-    // Einstellungen darauf einstellen (ohne es erneut zu speichern).
+    // Gespeichertes Theme (lokal gecacht) sofort anzeigen, damit es
+    // beim Laden nicht "flackert". persist=false, weil wir hier nur
+    // lesen, nicht schreiben wollen (und ohnehin noch kein Account
+    // bekannt ist).
     applyTheme(
         localStorage.getItem("theme") ||
-        "dark"
+        "dark",
+        false
     );
 
 
-    initializeHabits();
-
     renderAll();
 
+
+    // Prüft, ob bereits eine Supabase-Sitzung existiert (Login von
+    // vorher) und lädt in diesem Fall automatisch alle Daten des
+    // Accounts - sonst wird der Login/Registrierungs-Bildschirm
+    // angezeigt. Das ist der eigentliche Startpunkt der App.
     checkAuthState();
 
 
