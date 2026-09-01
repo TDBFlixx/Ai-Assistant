@@ -5,6 +5,117 @@
 
     <meta charset="UTF-8">
 
+
+    <!--
+        FEHLERANZEIGE FÜR UNTERWEGS
+        Läuft als ALLERERSTES Skript, noch vor allem anderen.
+        Falls irgendwo im restlichen Code ein Fehler auftritt (z.B.
+        weil die Supabase-Bibliothek nicht geladen werden konnte),
+        wird er hier oben als roter Balken direkt auf dem Bildschirm
+        angezeigt - auch auf dem Handy, ganz ohne Entwickler-Tools.
+        Das ist NUR zum Debuggen gedacht und kann später wieder
+        entfernt werden, wenn alles zuverlässig läuft.
+    -->
+
+    <script>
+
+        function showFatalError(
+            text
+        ) {
+
+            let box =
+                document.getElementById(
+                    "fatalErrorBox"
+                );
+
+
+            if (!box) {
+
+                box =
+                    document.createElement(
+                        "div"
+                    );
+
+                box.id =
+                    "fatalErrorBox";
+
+                box.style.cssText =
+                    "position:fixed;top:0;left:0;right:0;z-index:99999;" +
+                    "background:#ff3b3b;color:white;padding:12px 14px;" +
+                    "font-size:12.5px;font-family:monospace;" +
+                    "white-space:pre-wrap;line-height:1.5;";
+
+
+                // document.body existiert an dieser Stelle eventuell
+                // noch nicht (Skript läuft ganz früh) - deshalb notfalls
+                // warten, bis die Seite bereit ist.
+                if (document.body) {
+
+                    document.body.appendChild(
+                        box
+                    );
+
+                }
+
+                else {
+
+                    document.addEventListener(
+                        "DOMContentLoaded",
+                        function() {
+
+                            document.body.appendChild(
+                                box
+                            );
+
+                        }
+                    );
+
+                }
+
+            }
+
+
+            box.textContent +=
+                "⚠️ " + text + "\n";
+
+        }
+
+
+        // Fängt "normale" Fehler ab (z.B. "supabase is not defined")
+        window.addEventListener(
+            "error",
+            function(event) {
+
+                showFatalError(
+                    event.message
+                );
+
+            }
+        );
+
+
+        // Fängt Fehler in async/await-Code ab (z.B. fehlgeschlagene
+        // Netzwerk-Anfragen an Supabase)
+        window.addEventListener(
+            "unhandledrejection",
+            function(event) {
+
+                const reason =
+                    event.reason;
+
+                showFatalError(
+
+                    reason && reason.message
+                        ? reason.message
+                        : String(reason)
+
+                );
+
+            }
+        );
+
+    </script>
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, viewport-fit=cover"
