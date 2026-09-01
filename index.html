@@ -81,7 +81,7 @@
         }
 
 
-        // Fängt "normale" Fehler ab (z.B. "supabase is not defined")
+        // Fängt "normale" Fehler ab (z.B. "supabaseClient is not defined")
         window.addEventListener(
             "error",
             function(event) {
@@ -136,7 +136,7 @@
         "window.supabase.createClient(...)" zur Verfügung.
     -->
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabaseClient-js@2"></script>
 
 
     <!--
@@ -3570,7 +3570,7 @@
        SUPABASE VERBINDUNG
        Der "publishable key" ist absichtlich NICHT geheim - er darf
        im Frontend stehen. Er kann NUR das, was die Row-Level-
-       Security-Regeln in Supabase erlauben (siehe supabase-setup.sql):
+       Security-Regeln in Supabase erlauben (siehe supabaseClient-setup.sql):
        jeder Nutzer sieht/bearbeitet ausschließlich seine eigenen Zeilen.
        Der "secret key" darf NIEMALS hier im Frontend-Code landen!
     ========================================================= */
@@ -3581,7 +3581,7 @@
     const SUPABASE_PUBLISHABLE_KEY =
         "sb_publishable_wjWYAQqW0YHt-1aDkk2w-Q_cWrlzikZ";
 
-    const supabase =
+    const supabaseClient =
         window.supabase.createClient(
             SUPABASE_URL,
             SUPABASE_PUBLISHABLE_KEY
@@ -3781,7 +3781,7 @@
         // --- HABITS LADEN ---
 
         const habitsResult =
-            await supabase
+            await supabaseClient
                 .from("habits")
                 .select("*")
                 .order(
@@ -3841,7 +3841,7 @@
             ) {
 
                 const insertResult =
-                    await supabase
+                    await supabaseClient
                         .from("habits")
                         .insert({
 
@@ -3888,7 +3888,7 @@
         // --- AUFGABEN LADEN ---
 
         const tasksResult =
-            await supabase
+            await supabaseClient
                 .from("tasks")
                 .select("*")
                 .order(
@@ -3939,7 +3939,7 @@
         // --- THEME LADEN ---
 
         const settingsResult =
-            await supabase
+            await supabaseClient
                 .from("settings")
                 .select("*")
                 .maybeSingle();
@@ -3959,7 +3959,7 @@
 
             // Noch keine Settings-Zeile für diesen Account ->
             // eine anlegen, mit dem aktuell sichtbaren Theme.
-            await supabase
+            await supabaseClient
                 .from("settings")
                 .insert({
 
@@ -4358,7 +4358,7 @@
 
         // Jetzt den neuen Stand auch dauerhaft in Supabase speichern.
         const updateResult =
-            await supabase
+            await supabaseClient
                 .from("habits")
                 .update({
 
@@ -4430,7 +4430,7 @@
 
 
         const deleteResult =
-            await supabase
+            await supabaseClient
                 .from("habits")
                 .delete()
                 .eq(
@@ -4979,7 +4979,7 @@
 
                 // In Supabase als erledigt markieren
                 const updateResult =
-                    await supabase
+                    await supabaseClient
                         .from("tasks")
                         .update({
                             completed: true
@@ -5028,7 +5028,7 @@
                         // Erledigte Aufgabe endgültig aus der
                         // Datenbank entfernen.
                         const deleteResult =
-                            await supabase
+                            await supabaseClient
                                 .from("tasks")
                                 .delete()
                                 .eq(
@@ -5080,7 +5080,7 @@
 
 
                 const deleteResult =
-                    await supabase
+                    await supabaseClient
                         .from("tasks")
                         .delete()
                         .eq(
@@ -5381,7 +5381,7 @@
 
 
             const insertResult =
-                await supabase
+                await supabaseClient
                     .from("habits")
                     .insert({
 
@@ -5445,7 +5445,7 @@
 
 
             const insertResult =
-                await supabase
+                await supabaseClient
                     .from("tasks")
                     .insert({
 
@@ -5793,7 +5793,7 @@
             // Klartext irgendwo gespeichert - Supabase kümmert sich
             // serverseitig sicher (gehasht) darum.
             const signUpResult =
-                await supabase.auth.signUp({
+                await supabaseClient.auth.signUp({
 
                     email:
                         email,
@@ -5843,7 +5843,7 @@
             // Login bei Supabase. Supabase prüft E-Mail und Passwort
             // selbst serverseitig und gibt bei Erfolg eine Sitzung zurück.
             const signInResult =
-                await supabase.auth.signInWithPassword({
+                await supabaseClient.auth.signInWithPassword({
 
                     email:
                         email,
@@ -5911,7 +5911,7 @@
         }
 
 
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
 
 
         account = null;
@@ -5949,7 +5949,7 @@
         }
 
 
-        await supabase
+        await supabaseClient
             .from("habits")
             .delete()
             .eq(
@@ -5958,7 +5958,7 @@
             );
 
 
-        await supabase
+        await supabaseClient
             .from("tasks")
             .delete()
             .eq(
@@ -5967,7 +5967,7 @@
             );
 
 
-        await supabase
+        await supabaseClient
             .from("settings")
             .delete()
             .eq(
@@ -6015,7 +6015,7 @@
         // localStorage-Bereich) - deshalb bleibt man nach dem
         // Neuladen der Seite automatisch eingeloggt.
         const sessionResult =
-            await supabase.auth.getSession();
+            await supabaseClient.auth.getSession();
 
 
         const session =
@@ -6220,7 +6220,7 @@
 
     // Liest das Account-Modal aus und speichert je nach Modus
     // entweder die neue E-Mail oder das neue Passwort - direkt
-    // über Supabase Auth (supabase.auth.updateUser). Supabase
+    // über Supabase Auth (supabaseClient.auth.updateUser). Supabase
     // prüft dabei automatisch, ob man gerade eingeloggt ist.
     async function saveAccountChange() {
 
@@ -6253,7 +6253,7 @@
 
 
             const updateResult =
-                await supabase.auth.updateUser({
+                await supabaseClient.auth.updateUser({
 
                     email:
                         newEmail
@@ -6309,7 +6309,7 @@
             // testweise damit einloggen. Supabase hat keinen
             // direkten "check password"-Aufruf im Frontend.
             const checkResult =
-                await supabase.auth.signInWithPassword({
+                await supabaseClient.auth.signInWithPassword({
 
                     email:
                         account.email,
@@ -6357,7 +6357,7 @@
 
 
             const updateResult =
-                await supabase.auth.updateUser({
+                await supabaseClient.auth.updateUser({
 
                     password:
                         newPassword
@@ -6441,7 +6441,7 @@
 
         if (persist && account) {
 
-            supabase
+            supabaseClient
                 .from("settings")
                 .update({
                     theme: theme
