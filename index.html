@@ -244,6 +244,49 @@
         }
 
 
+        /*
+        // FARBVARIABLEN - GRAU/WEISS THEME
+        // Wird aktiv, sobald <html data-theme="gray"> gesetzt ist.
+        // Sauberer, neutraler grauer Hintergrund. Wichtige Texte
+        // (Habit-Namen, Progress-Kreis usw.) stehen in kräftigem Weiß,
+        // damit sie sich klar vom Hintergrund abheben.
+        // --habit-done-text ist eine EXTRA-Variable nur für diese
+        // App - kein Standard-CSS-Name. Sie steuert die Textfarbe von
+        // ERLEDIGTEN Habits: heller als der Hintergrund, aber gedeckter/
+        // "verblasster" als das kräftige Weiß der offenen Habits.
+        */
+
+        [data-theme="gray"] {
+
+            --background: #58595e;
+
+            --background-light: #636469;
+
+            --card: #656669;
+
+            --card-light: #717277;
+
+            --border: rgba(255, 255, 255, 0.1);
+
+            --text: #ffffff;
+
+            --muted: #c9cacd;
+
+            --blue: #4aa8ff;
+
+            --blue-light: #72c2ff;
+
+            --green: #42d392;
+
+            --red: #ff6675;
+
+            --yellow: #f7c95b;
+
+            --habit-done-text: #b3b4b8;
+
+        }
+
+
         html {
             background: var(--background);
         }
@@ -287,6 +330,21 @@
             background:
                 radial-gradient(circle at 50% -10%,
                     #d7e6f7 0%,
+                    var(--background) 45%);
+
+        }
+
+
+        /*
+        // Im Grau-Theme genauso: ein neutraler, dezent hellerer
+        // Verlauf oben statt des dunkelblauen Farbflecks.
+        */
+
+        [data-theme="gray"] body {
+
+            background:
+                radial-gradient(circle at 50% -10%,
+                    #6c6d72 0%,
                     var(--background) 45%);
 
         }
@@ -726,6 +784,23 @@
         }
 
 
+        /*
+        // NUR IM GRAU-THEME: Der Progress-Ring soll laut Vorgabe in
+        // einem "passenden Weiß" erscheinen statt im blauen Akzent,
+        // damit er zu den anderen "wichtigen" weißen Elementen passt
+        // (z.B. den Namen offener Habits). Der Progress-Card-Hintergrund
+        // bleibt bewusst dunkel (siehe .progress-card oben, absichtlich
+        // theme-unabhängig), damit der weiße Ring weiterhin gut sichtbar
+        // bleibt.
+        */
+
+        [data-theme="gray"] .progress-value {
+
+            stroke: #ffffff;
+
+        }
+
+
         .progress-center {
 
             position: absolute;
@@ -876,6 +951,40 @@
         }
 
 
+        /*
+        // NUR IM GRAU-THEME: Erledigte Habits wirken "verblasst" -
+        // Name und Icon wechseln vom kräftigen Weiß (--text) zu einem
+        // gedeckteren Grauweiß (--habit-done-text), das zwar heller
+        // als der Hintergrund bleibt, aber deutlich zurückhaltender
+        // wirkt als offene, noch zu erledigende Habits.
+        // In den anderen beiden Themes (Dunkel/Hell) bleibt das
+        // bisherige Verhalten unverändert - nur die grüne Border
+        // zeigt dort "erledigt" an.
+        */
+
+        [data-theme="gray"] .habit-card.done .habit-name {
+
+            color: var(--habit-done-text);
+
+        }
+
+
+        [data-theme="gray"] .habit-card.done .habit-icon {
+
+            opacity: 0.55;
+
+        }
+
+
+        [data-theme="gray"] .habit-card.done .habit-status {
+
+            color: var(--habit-done-text);
+
+            opacity: 0.8;
+
+        }
+
+
         .habit-icon {
 
             font-size: 22px;
@@ -897,6 +1006,10 @@
             */
 
             padding-right: 6px;
+
+            /* Sanfter Übergang, falls sich die Farbe beim Abhaken ändert
+               (aktuell nur im Grau-Theme relevant, schadet aber sonst nicht) */
+            transition: color 0.2s ease;
 
         }
 
@@ -1518,100 +1631,62 @@
 
 
         /*
-        // THEME-SCHALTER (Dunkel/Hell)
-        // Ein Toggle-Switch direkt in der Einstellungen-Zeile
-        // "Erscheinungsbild", statt eines separaten Buttons.
-        // Technisch ist es eine ausgeblendete Checkbox (#themeToggle)
-        // mit einem hübsch gestylten <span> als sichtbarem Schalter.
+        // THEME-AUSWAHL (Dunkel / Hell / Grau)
+        // Eine "Segmented Control" - drei nebeneinanderliegende
+        // Buttons in einer Pille, von denen immer genau einer als
+        // aktiv markiert ist. Ersetzt den früheren einfachen
+        // Ein/Aus-Schalter, da wir jetzt DREI statt nur zwei
+        // Theme-Optionen haben.
         */
 
-        .theme-switch {
+        .theme-select {
 
-            position: relative;
+            display: flex;
 
-            width: 46px;
+            background:
+                rgba(255, 255, 255, 0.06);
 
-            height: 27px;
+            border-radius: 999px;
+
+            padding: 3px;
+
+            gap: 2px;
 
             flex-shrink: 0;
 
         }
 
 
-        .theme-switch input {
+        .theme-option {
 
-            /* Die echte Checkbox bleibt unsichtbar, ist aber weiter klickbar */
-            opacity: 0;
+            border: none;
 
-            width: 100%;
+            background: transparent;
 
-            height: 100%;
+            color: var(--muted);
 
-            margin: 0;
+            font-size: 12px;
 
-            position: absolute;
+            font-weight: 700;
 
-            cursor: pointer;
-
-            z-index: 2;
-
-        }
-
-
-        .theme-switch-track {
-
-            position: absolute;
-
-            inset: 0;
-
-            background: #45627a;
+            padding: 7px 12px;
 
             border-radius: 999px;
 
-            transition: background 0.2s ease;
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease;
 
         }
 
 
-        .theme-switch-track::before {
-
-            content: "";
-
-            position: absolute;
-
-            width: 21px;
-
-            height: 21px;
-
-            left: 3px;
-
-            top: 3px;
-
-            border-radius: 50%;
-
-            background: white;
-
-            transition: transform 0.2s ease;
-
-        }
-
-
-        /*
-        // Wenn die Checkbox angehakt ist (= Helles Theme aktiv),
-        // färben wir die Schiene blau ein und schieben den Punkt
-        // per transform nach rechts.
-        */
-
-        .theme-switch input:checked~.theme-switch-track {
+        .theme-option.active {
 
             background: var(--blue);
 
-        }
-
-
-        .theme-switch input:checked~.theme-switch-track::before {
-
-            transform: translateX(19px);
+            color: white;
 
         }
 
@@ -2916,14 +2991,13 @@
                 </div>
 
 
-                <!--
-                Erscheinungsbild-Zeile: kein Klick zum Navigieren,
-                sondern ein direkter Ein/Aus-Schalter (Theme-Switch).
-                "for" verbindet das <label> mit der Checkbox #themeToggle,
-                dadurch reicht ein Klick irgendwo auf die Zeile.
+            <!--
+                Erscheinungsbild-Zeile: drei Buttons (Dunkel/Hell/Grau)
+                in einer Pille. setTheme() im JS setzt das gewählte
+                Theme und markiert den passenden Button als "active".
             -->
 
-                <label class="setting-row" for="themeToggle" style="cursor:pointer;">
+                <div class="setting-row">
 
                     <div class="setting-left">
 
@@ -2932,21 +3006,29 @@
                         </div>
 
                         <div class="setting-label">
-                            Helles Design
+                            Erscheinungsbild
                         </div>
 
                     </div>
 
 
-                    <div class="theme-switch">
+                    <div class="theme-select" id="themeSelect">
 
-                        <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                        <button class="theme-option" data-theme-value="dark" onclick="setTheme('dark')">
+                            Dunkel
+                        </button>
 
-                        <span class="theme-switch-track"></span>
+                        <button class="theme-option" data-theme-value="light" onclick="setTheme('light')">
+                            Hell
+                        </button>
+
+                        <button class="theme-option" data-theme-value="gray" onclick="setTheme('gray')">
+                            Grau
+                        </button>
 
                     </div>
 
-                </label>
+                </div>
 
 
                 <button class="setting-row" onclick="showAccountMessage()">
@@ -6347,20 +6429,24 @@
             );
 
 
-            // Den Schalter in den Einstellungen mit dem echten
-            // Theme synchron halten (falls er gerade sichtbar ist).
-            const toggle =
-                document.getElementById(
-                    "themeToggle"
+            // Die drei Buttons in den Einstellungen mit dem echten
+            // Theme synchron halten (falls sie gerade sichtbar sind):
+            // genau der Button, der zum aktuellen Theme passt,
+            // bekommt die Klasse "active", alle anderen verlieren sie.
+            document
+                .querySelectorAll(
+                    ".theme-option"
+                )
+                .forEach(
+                    function (button) {
+
+                        button.classList.toggle(
+                            "active",
+                            button.dataset.themeValue === theme
+                        );
+
+                    }
                 );
-
-
-            if (toggle) {
-
-                toggle.checked =
-                    theme === "light";
-
-            }
 
 
             if (persist && account) {
@@ -6394,20 +6480,12 @@
         }
 
 
-        // Wird vom Theme-Schalter in den Einstellungen aufgerufen.
-        function toggleTheme() {
-
-
-            const isLight =
-                document.getElementById(
-                    "themeToggle"
-                ).checked;
-
+        // Wird beim Klick auf einen der drei Theme-Buttons
+        // (Dunkel/Hell/Grau) in den Einstellungen aufgerufen.
+        function setTheme(theme) {
 
             applyTheme(
-                isLight
-                    ? "light"
-                    : "dark",
+                theme,
                 true
             );
 
