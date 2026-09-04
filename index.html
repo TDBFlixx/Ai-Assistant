@@ -246,10 +246,23 @@
 
         /*
         // FARBVARIABLEN - GRAU/WEISS THEME
-        // Wird aktiv, sobald <html data-theme="gray"> gesetzt ist.
-        // Sauberer, neutraler grauer Hintergrund. Wichtige Texte
-        // (Habit-Namen, Progress-Kreis usw.) stehen in kräftigem Weiß,
-        // damit sie sich klar vom Hintergrund abheben.
+        /*
+        // FARBVARIABLEN - GRAU-THEME (drittes Theme)
+        // Orientiert sich am "dark fintech glass" Look: sehr dunkler,
+        // neutraler Hintergrund OHNE Blaustich, darauf "verschwommene"
+        // helle Glas-Karten (halbtransparentes Weiß + Blur), kräftig
+        // weiße Schrift für wichtige/offene Inhalte.
+        //
+        // WICHTIG: --blue/--blue-light werden hier bewusst NICHT mehr
+        // blau eingefärbt, sondern auf Weiß/Off-White gesetzt, damit
+        // wirklich NICHTS mehr blau erscheint (Buttons, Progress-Ring,
+        // Menü-Indicator usw. hängen alle an diesen Variablen). Weil
+        // dadurch einige Buttons einen WEISSEN statt blauen Hintergrund
+        // bekommen, gibt es weiter unten für jeden betroffenen Button
+        // eine passende [data-theme="gray"]-Regel, die die Schrift/das
+        // Icon-Symbol in diesem Fall auf Dunkel umstellt (sonst wäre
+        // "weißer Text auf weißem Button" unsichtbar).
+        //
         // --habit-done-text ist eine EXTRA-Variable nur für diese
         // App - kein Standard-CSS-Name. Sie steuert die Textfarbe von
         // ERLEDIGTEN Habits: heller als der Hintergrund, aber gedeckter/
@@ -258,23 +271,25 @@
 
         [data-theme="gray"] {
 
-            --background: #58595e;
+            --background: #0d0d0e;
 
-            --background-light: #636469;
+            --background-light: #161617;
 
-            --card: #656669;
+            /* Halbtransparentes Weiß statt fester Farbe = Grundlage
+               für den "verschwommenen", gläsernen Karten-Look. */
+            --card: rgba(255, 255, 255, 0.05);
 
-            --card-light: #717277;
+            --card-light: rgba(255, 255, 255, 0.09);
 
-            --border: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.12);
 
-            --text: #ffffff;
+            --text: #f5f5f5;
 
-            --muted: #c9cacd;
+            --muted: #98999c;
 
-            --blue: #4aa8ff;
+            --blue: #ffffff;
 
-            --blue-light: #72c2ff;
+            --blue-light: #f0f0f0;
 
             --green: #42d392;
 
@@ -282,7 +297,7 @@
 
             --yellow: #f7c95b;
 
-            --habit-done-text: #b3b4b8;
+            --habit-done-text: #85868a;
 
         }
 
@@ -336,16 +351,15 @@
 
 
         /*
-        // Im Grau-Theme genauso: ein neutraler, dezent hellerer
-        // Verlauf oben statt des dunkelblauen Farbflecks.
+        // Im Grau-Theme bewusst KEIN Farbschimmer oben - flacher,
+        // einheitlicher dunkler Hintergrund, damit die "verschwommenen"
+        // Glas-Karten (siehe --card) der auffällige Kontrast bleiben,
+        // nicht ein zusätzlicher Verlauf im Hintergrund.
         */
 
         [data-theme="gray"] body {
 
-            background:
-                radial-gradient(circle at 50% -10%,
-                    #6c6d72 0%,
-                    var(--background) 45%);
+            background: var(--background);
 
         }
 
@@ -579,6 +593,24 @@
         }
 
 
+        /*
+        // NUR IM GRAU-THEME: --blue ist hier Weiß statt Blau (siehe
+        // Variablen-Definition oben), der Hintergrund des Kreises wird
+        // dadurch automatisch weiß - die Zahl selbst braucht deshalb
+        // eine DUNKLE statt weiße Schriftfarbe, sonst unsichtbar. Auch
+        // der Leucht-Schatten wird von Blau auf neutrales Weiß umgestellt.
+        */
+
+        [data-theme="gray"] .week-day.today .week-day-number {
+
+            color: #111111;
+
+            box-shadow:
+                0 0 16px rgba(255, 255, 255, 0.35);
+
+        }
+
+
         /* Der gerade ausgewählte Tag (kann auch ein anderer Tag als heute sein) */
 
         .week-day.selected {
@@ -612,6 +644,23 @@
             padding: 15px 16px;
 
             margin-bottom: 18px;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: statt des blau-grünen Verlaufs die gleiche
+        // "verschwommene Glas"-Optik wie die anderen Karten (Habits,
+        // Tasks, Progress-Kreis) - siehe Kommentar bei --card weiter oben.
+        */
+
+        [data-theme="gray"] .streak-card {
+
+            background: var(--card);
+
+            backdrop-filter: blur(18px);
+
+            -webkit-backdrop-filter: blur(18px);
 
         }
 
@@ -672,6 +721,15 @@
         }
 
 
+        /* NUR IM GRAU-THEME: neutrales Glas statt blauem Tint */
+
+        [data-theme="gray"] .details-button {
+
+            background: rgba(255, 255, 255, 0.1);
+
+        }
+
+
         /* =========================================================
            TAGESZITAT
         ========================================================= */
@@ -700,6 +758,25 @@
         }
 
 
+        /*
+        // NUR IM GRAU-THEME: statt der hellblauen Banner-Farbe eine
+        // dunkle Glas-Karte mit weißer Schrift, passend zum restlichen
+        // Theme (das Zitat ist damit kein "bunter Fremdkörper" mehr).
+        */
+
+        [data-theme="gray"] .quote {
+
+            background: var(--card);
+
+            backdrop-filter: blur(18px);
+
+            -webkit-backdrop-filter: blur(18px);
+
+            color: var(--text);
+
+        }
+
+
         /* =========================================================
            PROGRESS-KREIS (SVG-Version mit weicher Animation)
         ========================================================= */
@@ -720,6 +797,26 @@
             text-align: center;
 
             margin-bottom: 28px;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: Der Progress-Kreis-Hintergrund war bisher
+        // IMMER derselbe feste Dunkelblau-Verlauf, egal welches Theme
+        // aktiv ist (Absicht: der Ring sollte immer gut sichtbar sein).
+        // Im Grau-Theme ersetzen wir das jetzt durch dieselbe
+        // "verschwommene" Glas-Karte wie bei Habits/Tasks/Streak, damit
+        // wirklich kein blauer Farbfleck mehr übrig bleibt.
+        */
+
+        [data-theme="gray"] .progress-card {
+
+            background: var(--card);
+
+            backdrop-filter: blur(20px);
+
+            -webkit-backdrop-filter: blur(20px);
 
         }
 
@@ -943,6 +1040,24 @@
         }
 
 
+        /*
+        // NUR IM GRAU-THEME: die "verschwommene" Glas-Optik (Blur)
+        // ergänzen. background/border kommen bereits automatisch aus
+        // var(--card)/var(--border), die für dieses Theme oben als
+        // halbtransparentes Weiß definiert sind - hier fehlt nur noch
+        // der Weichzeichner, der den typischen "Frosted Glass"-Effekt
+        // erzeugt.
+        */
+
+        [data-theme="gray"] .habit-card {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
         .habit-card.done {
 
             border-color:
@@ -957,10 +1072,22 @@
         // gedeckteren Grauweiß (--habit-done-text), das zwar heller
         // als der Hintergrund bleibt, aber deutlich zurückhaltender
         // wirkt als offene, noch zu erledigende Habits.
+        // ZUSÄTZLICH wird jetzt auch die Karte selbst dunkler/blasser:
+        // eine schwächere Weiß-Transparenz (weniger "Glas") lässt die
+        // Karte optisch mehr in den dunklen Hintergrund zurücktreten,
+        // und die grüne "erledigt"-Border wird gedämpft statt kräftig.
         // In den anderen beiden Themes (Dunkel/Hell) bleibt das
-        // bisherige Verhalten unverändert - nur die grüne Border
-        // zeigt dort "erledigt" an.
+        // bisherige Verhalten unverändert.
         */
+
+        [data-theme="gray"] .habit-card.done {
+
+            background: rgba(255, 255, 255, 0.02);
+
+            border-color: rgba(66, 211, 146, 0.25);
+
+        }
+
 
         [data-theme="gray"] .habit-card.done .habit-name {
 
@@ -971,7 +1098,7 @@
 
         [data-theme="gray"] .habit-card.done .habit-icon {
 
-            opacity: 0.55;
+            opacity: 0.5;
 
         }
 
@@ -980,7 +1107,7 @@
 
             color: var(--habit-done-text);
 
-            opacity: 0.8;
+            opacity: 0.75;
 
         }
 
@@ -1056,6 +1183,15 @@
             font-size: 12px;
 
             background: transparent;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutraler weißlicher statt blaugrauer Rahmen */
+
+        [data-theme="gray"] .habit-check {
+
+            border-color: rgba(255, 255, 255, 0.3);
 
         }
 
@@ -1205,6 +1341,18 @@
         }
 
 
+        /* NUR IM GRAU-THEME: gleiche "verschwommene" Glas-Optik wie
+           bei den Habit-Karten (siehe dortiger Kommentar). */
+
+        [data-theme="gray"] .task {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
         .check-circle {
 
             width: 23px;
@@ -1240,6 +1388,15 @@
             background: var(--green);
 
             border-color: var(--green);
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutraler weißlicher statt blaugrauer Rahmen */
+
+        [data-theme="gray"] .check-circle {
+
+            border-color: rgba(255, 255, 255, 0.3);
 
         }
 
@@ -1501,6 +1658,19 @@
         }
 
 
+        /* NUR IM GRAU-THEME: neutraler Glas-Kreis statt blauem Verlauf */
+
+        [data-theme="gray"] .avatar {
+
+            background: rgba(255, 255, 255, 0.08);
+
+            backdrop-filter: blur(10px);
+
+            -webkit-backdrop-filter: blur(10px);
+
+        }
+
+
         .profile-name {
 
             font-size: 22px;
@@ -1533,6 +1703,17 @@
             overflow: hidden;
 
             margin-bottom: 14px;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
+
+        [data-theme="gray"] .settings-card {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
 
         }
 
@@ -1603,6 +1784,15 @@
 
             background:
                 rgba(74, 168, 255, 0.1);
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutrales Glas statt blauem Tint */
+
+        [data-theme="gray"] .setting-icon {
+
+            background: rgba(255, 255, 255, 0.08);
 
         }
 
@@ -1692,6 +1882,20 @@
 
 
         /*
+        // NUR IM GRAU-THEME: --blue ist hier Weiß (siehe Variablen
+        // oben), der Hintergrund der aktiven Pille wird also weiß -
+        // die Beschriftung ("Blau"/"Hell"/"Grau") braucht deshalb
+        // dunkle statt weiße Schrift, sonst unsichtbar.
+        */
+
+        [data-theme="gray"] .theme-option.active {
+
+            color: #111111;
+
+        }
+
+
+        /*
         // FORMULARFELDER INNERHALB DER EINSTELLUNGEN-KARTEN
         // (z.B. für "Konto löschen"-Bereich, falls du dort mal
         // direkt Felder statt eines Modals einbauen willst).
@@ -1773,6 +1977,15 @@
         }
 
 
+        /* NUR IM GRAU-THEME: neutrales dunkles Glas statt Navy-Blau */
+
+        [data-theme="gray"] .bottom-nav {
+
+            background: rgba(10, 10, 11, 0.85);
+
+        }
+
+
         /*
         // GLEITENDER HINTERGRUND HINTER DEM AKTIVEN NAV-BUTTON
         // Liegt als eigenes Element HINTER den Buttons (z-index: 0)
@@ -1804,6 +2017,15 @@
             pointer-events: none;
 
             z-index: 0;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutrales Weiß-Glas statt blauem Tint */
+
+        [data-theme="gray"] .nav-indicator {
+
+            background: rgba(255, 255, 255, 0.12);
 
         }
 
@@ -1844,6 +2066,15 @@
             transition:
                 background 0.2s,
                 color 0.2s;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutrales Grau statt blaugrauem Farbton */
+
+        [data-theme="gray"] .nav-button {
+
+            color: #8a8a8d;
 
         }
 
@@ -1913,6 +2144,24 @@
 
             transition:
                 transform 0.2s ease;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: --blue ist hier Weiß (siehe Variablen
+        // oben) - der Button-Hintergrund wird dadurch automatisch
+        // weiß. Das Plus-Icon (SVG, nutzt currentColor) braucht
+        // deshalb eine DUNKLE statt weiße Farbe, sonst unsichtbar.
+        // Auch der Leucht-Schatten wird auf neutrales Weiß umgestellt.
+        */
+
+        [data-theme="gray"] .nav-add-button {
+
+            color: #111111;
+
+            box-shadow:
+                0 8px 20px rgba(255, 255, 255, 0.18);
 
         }
 
@@ -2202,6 +2451,15 @@
         }
 
 
+        /* NUR IM GRAU-THEME: kein Farbschimmer, flacher dunkler Hintergrund */
+
+        [data-theme="gray"] .auth-screen {
+
+            background: var(--background);
+
+        }
+
+
         .auth-card {
 
             width: 100%;
@@ -2217,6 +2475,17 @@
             padding: 30px 26px;
 
             text-align: center;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: die verschwommene Glas-Optik ergänzen */
+
+        [data-theme="gray"] .auth-card {
+
+            backdrop-filter: blur(20px);
+
+            -webkit-backdrop-filter: blur(20px);
 
         }
 
@@ -2243,6 +2512,15 @@
             justify-content: center;
 
             font-size: 26px;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutraler Glas-Kreis statt blauem Verlauf */
+
+        [data-theme="gray"] .auth-logo {
+
+            background: rgba(255, 255, 255, 0.08);
 
         }
 
@@ -2356,6 +2634,19 @@
         }
 
 
+        /*
+        // NUR IM GRAU-THEME: --blue ist Weiß, Button-Hintergrund wird
+        // dadurch weiß - Schrift ("Einloggen"/"Registrieren") braucht
+        // deshalb dunkle statt weiße Farbe, sonst unsichtbar.
+        */
+
+        [data-theme="gray"] .auth-submit {
+
+            color: #111111;
+
+        }
+
+
         .auth-switch {
 
             color: var(--muted);
@@ -2438,6 +2729,19 @@
         }
 
 
+        /*
+        // NUR IM GRAU-THEME: --blue ist Weiß, Bubble-Hintergrund wird
+        // dadurch weiß - eigener Nachrichtentext braucht deshalb
+        // dunkle statt weiße Farbe, sonst unsichtbar.
+        */
+
+        [data-theme="gray"] .chat-message.user {
+
+            color: #111111;
+
+        }
+
+
         /* Antworten der KI: links, dezente Kartenfarbe */
 
         .chat-message.ai {
@@ -2449,6 +2753,17 @@
             border: 1px solid var(--border);
 
             border-bottom-left-radius: 4px;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
+
+        [data-theme="gray"] .chat-message.ai {
+
+            backdrop-filter: blur(14px);
+
+            -webkit-backdrop-filter: blur(14px);
 
         }
 
@@ -2479,6 +2794,17 @@
             color: var(--text);
 
             outline: none;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
+
+        [data-theme="gray"] .chat-input-row input {
+
+            backdrop-filter: blur(14px);
+
+            -webkit-backdrop-filter: blur(14px);
 
         }
 
@@ -2515,6 +2841,19 @@
             align-items: center;
 
             justify-content: center;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: --blue ist Weiß, Button-Hintergrund wird
+        // dadurch weiß - das Senden-Symbol braucht deshalb dunkle
+        // statt weiße Farbe, sonst unsichtbar.
+        */
+
+        [data-theme="gray"] .chat-send-button {
+
+            color: #111111;
 
         }
 
@@ -3015,7 +3354,7 @@
                     <div class="theme-select" id="themeSelect">
 
                         <button class="theme-option" data-theme-value="dark" onclick="setTheme('dark')">
-                            Dunkel
+                            Blau
                         </button>
 
                         <button class="theme-option" data-theme-value="light" onclick="setTheme('light')">
