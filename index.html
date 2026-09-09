@@ -1,0 +1,7220 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+
+    <meta charset="UTF-8">
+
+
+    <!--
+        FEHLERANZEIGE FÜR UNTERWEGS
+        Läuft als ALLERERSTES Skript, noch vor allem anderen.
+        Falls irgendwo im restlichen Code ein Fehler auftritt (z.B.
+        weil die Supabase-Bibliothek nicht geladen werden konnte),
+        wird er hier oben als roter Balken direkt auf dem Bildschirm
+        angezeigt - auch auf dem Handy, ganz ohne Entwickler-Tools.
+        Das ist NUR zum Debuggen gedacht und kann später wieder
+        entfernt werden, wenn alles zuverlässig läuft.
+    -->
+
+    <script>
+
+        function showFatalError(
+            text
+        ) {
+
+            let box =
+                document.getElementById(
+                    "fatalErrorBox"
+                );
+
+
+            if (!box) {
+
+                box =
+                    document.createElement(
+                        "div"
+                    );
+
+                box.id =
+                    "fatalErrorBox";
+
+                box.style.cssText =
+                    "position:fixed;top:0;left:0;right:0;z-index:99999;" +
+                    "background:#ff3b3b;color:white;padding:12px 14px;" +
+                    "font-size:12.5px;font-family:monospace;" +
+                    "white-space:pre-wrap;line-height:1.5;";
+
+
+                // document.body existiert an dieser Stelle eventuell
+                // noch nicht (Skript läuft ganz früh) - deshalb notfalls
+                // warten, bis die Seite bereit ist.
+                if (document.body) {
+
+                    document.body.appendChild(
+                        box
+                    );
+
+                }
+
+                else {
+
+                    document.addEventListener(
+                        "DOMContentLoaded",
+                        function () {
+
+                            document.body.appendChild(
+                                box
+                            );
+
+                        }
+                    );
+
+                }
+
+            }
+
+
+            box.textContent +=
+                "⚠️ " + text + "\n";
+
+        }
+
+
+        // Fängt "normale" Fehler ab (z.B. "supabaseClient is not defined")
+        window.addEventListener(
+            "error",
+            function (event) {
+
+                showFatalError(
+                    event.message
+                );
+
+            }
+        );
+
+
+        // Fängt Fehler in async/await-Code ab (z.B. fehlgeschlagene
+        // Netzwerk-Anfragen an Supabase)
+        window.addEventListener(
+            "unhandledrejection",
+            function (event) {
+
+                const reason =
+                    event.reason;
+
+                showFatalError(
+
+                    reason && reason.message
+                        ? reason.message
+                        : String(reason)
+
+                );
+
+            }
+        );
+
+    </script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <meta name="theme-color" content="#071a2b">
+
+    <title>Mein KI-Assistent</title>
+
+
+    <!--
+        TAB-ICON (Favicon)
+        Ein kleines Icon, das im Browser-Tab neben dem Seitentitel
+        angezeigt wird. Es steckt direkt als "data:"-URI hier im
+        Code (base64-codiertes SVG) - dadurch brauchst du keine
+        zusätzliche Bilddatei im GitHub-Repo, alles bleibt in
+        dieser einen index.html.
+    -->
+
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBkMGQwZSIvPgogIDxyZWN0IHg9IjYuNSIgeT0iNiIgd2lkdGg9IjE5IiBoZWlnaHQ9IjIyIiByeD0iMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjVmNWY1IiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cmVjdCB4PSIxMS41IiB5PSIyLjYiIHdpZHRoPSI5IiBoZWlnaHQ9IjYiIHJ4PSIyIiBmaWxsPSIjMGQwZDBlIiBzdHJva2U9IiNmNWY1ZjUiIHN0cm9rZS13aWR0aD0iMiIvPgogIDxwYXRoIGQ9Ik0xMC4zIDE1LjZsMi4xIDIuMSAzLjktNC4zIiBmaWxsPSJub25lIiBzdHJva2U9IiNmNWY1ZjUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPHBhdGggZD0iTTE4LjQgMTQuNmgzLjQiIHN0cm9rZT0iI2Y1ZjVmNSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cGF0aCBkPSJNMTAuMyAyMi40bDIuMSAyLjEgMy45LTQuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjVmNWY1IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xOC40IDIxLjRoMy40IiBzdHJva2U9IiNmNWY1ZjUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=">
+
+
+    <!--
+        SUPABASE
+        Lädt die offizielle Supabase-JavaScript-Bibliothek per CDN
+        (kein npm install / Build-Tool nötig). Danach steht global
+        "window.supabase.createClient(...)" zur Verfügung.
+    -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+    <!--
+        FRÜHE THEME-ANWENDUNG
+        Dieses kleine Skript läuft, bevor die Seite überhaupt
+        gezeichnet wird. Es liest das zuletzt gespeicherte Theme
+        aus localStorage und setzt data-theme sofort - dadurch
+        gibt es kein kurzes "Aufblitzen" des falschen Themes beim
+        Laden der Seite.
+    -->
+
+    <script>
+
+        (function () {
+
+            const savedTheme =
+                localStorage.getItem("theme") ||
+                "dark";
+
+
+            document.documentElement.setAttribute(
+                "data-theme",
+                savedTheme
+            );
+
+        })();
+
+    </script>
+
+
+    <style>
+        /* =========================================================
+           GRUNDEINSTELLUNGEN
+           Diese Werte gelten für die ganze Seite als Basis.
+        ========================================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        :root {
+
+            /*
+            // FARBVARIABLEN - DUNKLES THEME (Standard)
+            // Wenn du die Grundfarben der App ändern willst,
+            // reicht es meistens, hier die Werte anzupassen -
+            // alle anderen Stellen im CSS greifen darauf zu (var(--name)).
+            */
+
+            --background: #071a2b;
+
+            --background-light: #0d2940;
+
+            --card: #102f48;
+
+            --card-light: #143953;
+
+            --border: rgba(255, 255, 255, 0.08);
+
+            --text: #f5f9ff;
+
+            --muted: #8fa8bd;
+
+            --blue: #4aa8ff;
+
+            --blue-light: #72c2ff;
+
+            --green: #42d392;
+
+            --red: #ff6675;
+
+            --yellow: #f7c95b;
+
+        }
+
+
+        /*
+        // FARBVARIABLEN - HELLES THEME
+        // Wird aktiv, sobald <html data-theme="light"> gesetzt ist.
+        // Das übernimmt die Funktion applyTheme() weiter unten im JS,
+        // je nachdem was in den Einstellungen ausgewählt wurde.
+        */
+
+        [data-theme="light"] {
+
+            --background: #eef2f7;
+
+            --background-light: #ffffff;
+
+            --card: #ffffff;
+
+            --card-light: #f2f5f9;
+
+            --border: rgba(16, 32, 47, 0.1);
+
+            --text: #142333;
+
+            --muted: #5c7288;
+
+            --blue: #1c86e6;
+
+            --blue-light: #2f9bff;
+
+            --green: #1f9d67;
+
+            --red: #e0334b;
+
+            --yellow: #caa23a;
+
+        }
+
+
+        /*
+        // FARBVARIABLEN - GRAU/WEISS THEME
+        /*
+        // FARBVARIABLEN - GRAU-THEME (drittes Theme)
+        // Orientiert sich am "dark fintech glass" Look: sehr dunkler,
+        // neutraler Hintergrund OHNE Blaustich, darauf "verschwommene"
+        // helle Glas-Karten (halbtransparentes Weiß + Blur), kräftig
+        // weiße Schrift für wichtige/offene Inhalte.
+        //
+        // WICHTIG: --blue/--blue-light werden hier bewusst NICHT mehr
+        // blau eingefärbt, sondern auf Weiß/Off-White gesetzt, damit
+        // wirklich NICHTS mehr blau erscheint (Buttons, Progress-Ring,
+        // Menü-Indicator usw. hängen alle an diesen Variablen). Weil
+        // dadurch einige Buttons einen WEISSEN statt blauen Hintergrund
+        // bekommen, gibt es weiter unten für jeden betroffenen Button
+        // eine passende [data-theme="gray"]-Regel, die die Schrift/das
+        // Icon-Symbol in diesem Fall auf Dunkel umstellt (sonst wäre
+        // "weißer Text auf weißem Button" unsichtbar).
+        //
+        // --habit-done-text ist eine EXTRA-Variable nur für diese
+        // App - kein Standard-CSS-Name. Sie steuert die Textfarbe von
+        // ERLEDIGTEN Habits: heller als der Hintergrund, aber gedeckter/
+        // "verblasster" als das kräftige Weiß der offenen Habits.
+        */
+
+        [data-theme="gray"] {
+
+            --background: #0d0d0e;
+
+            --background-light: #161617;
+
+            /* Halbtransparentes Weiß statt fester Farbe = Grundlage
+               für den "verschwommenen", gläsernen Karten-Look. */
+            --card: rgba(255, 255, 255, 0.05);
+
+            --card-light: rgba(255, 255, 255, 0.09);
+
+            --border: rgba(255, 255, 255, 0.12);
+
+            --text: #f5f5f5;
+
+            --muted: #98999c;
+
+            --blue: #ffffff;
+
+            --blue-light: #f0f0f0;
+
+            --green: #42d392;
+
+            --red: #ff6675;
+
+            --yellow: #f7c95b;
+
+            --habit-done-text: #85868a;
+
+        }
+
+
+        html {
+            background: var(--background);
+        }
+
+
+        body {
+
+            margin: 0;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "SF Pro Display",
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            background:
+                radial-gradient(circle at 50% -10%,
+                    #16466a 0%,
+                    var(--background) 45%);
+
+            color: var(--text);
+
+            min-height: 100vh;
+
+            /* Platz unten, damit die feste Navigation nichts verdeckt */
+            padding-bottom: 100px;
+
+        }
+
+
+        /*
+        // Im hellen Theme brauchen wir einen helleren Verlauf oben,
+        // sonst würde der dunkelblaue Farbfleck aus dem Dark-Mode
+        // seltsam auf hellem Hintergrund wirken.
+        */
+
+        [data-theme="light"] body {
+
+            background:
+                radial-gradient(circle at 50% -10%,
+                    #d7e6f7 0%,
+                    var(--background) 45%);
+
+        }
+
+
+        /*
+        // Im Grau-Theme bewusst KEIN Farbschimmer oben - flacher,
+        // einheitlicher dunkler Hintergrund, damit die "verschwommenen"
+        // Glas-Karten (siehe --card) der auffällige Kontrast bleiben,
+        // nicht ein zusätzlicher Verlauf im Hintergrund.
+        */
+
+        [data-theme="gray"] body {
+
+            background: var(--background);
+
+        }
+
+
+
+
+        button,
+        input,
+        select {
+
+            font: inherit;
+
+        }
+
+
+        button {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+
+        /* =========================================================
+           APP-CONTAINER
+           Begrenzt die Breite auf großen Bildschirmen.
+        ========================================================= */
+
+        .app {
+
+            width: 100%;
+
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            padding:
+                max(20px, env(safe-area-inset-top)) 18px 110px;
+
+        }
+
+
+        /*
+        // SEITEN (Home / To-Do / Habits / Profil)
+        // Immer nur eine Seite mit der Klasse "active" ist sichtbar.
+        // Das Umschalten übernimmt die Funktion showPage() weiter unten.
+        */
+
+        .page {
+
+            display: none;
+
+            animation:
+                pageIn 0.25s ease;
+
+        }
+
+
+        .page.active {
+            display: block;
+        }
+
+
+        @keyframes pageIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(8px);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+
+            }
+
+        }
+
+
+        /* =========================================================
+           TOP BAR (Pfeile + aktuelles Datum)
+        ========================================================= */
+
+        .top-bar {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .today-info {
+
+            text-align: center;
+
+            flex: 1;
+
+        }
+
+
+        .today-title {
+
+            font-size: 13px;
+
+            color: var(--muted);
+
+            margin-bottom: 3px;
+
+        }
+
+
+        .today-date {
+
+            font-size: 17px;
+
+            font-weight: 700;
+
+        }
+
+
+        .arrow-button {
+
+            width: 38px;
+
+            height: 38px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background:
+                rgba(255, 255, 255, 0.06);
+
+            color: white;
+
+            cursor: pointer;
+
+            font-size: 20px;
+
+        }
+
+
+        /* =========================================================
+           WOCHENLEISTE
+           Zeigt Mo-So an, anklickbar, um selectedDate zu ändern.
+        ========================================================= */
+
+        .week-strip {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(7, 1fr);
+
+            gap: 6px;
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .week-day {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            padding: 6px 2px;
+
+            border-radius: 14px;
+
+            cursor: pointer;
+
+        }
+
+
+        .week-day-name {
+
+            font-size: 11px;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .week-day-number {
+
+            width: 32px;
+
+            height: 32px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            margin: auto;
+
+            border-radius: 50%;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* Der heutige Tag bekommt immer den blauen Kreis */
+
+        .week-day.today .week-day-number {
+
+            background: var(--blue);
+
+            color: white;
+
+            box-shadow:
+                0 0 18px rgba(74, 168, 255, 0.35);
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: --blue ist hier Weiß statt Blau (siehe
+        // Variablen-Definition oben), der Hintergrund des Kreises wird
+        // dadurch automatisch weiß - die Zahl selbst braucht deshalb
+        // eine DUNKLE statt weiße Schriftfarbe, sonst unsichtbar. Auch
+        // der Leucht-Schatten wird von Blau auf neutrales Weiß umgestellt.
+        */
+
+        [data-theme="gray"] .week-day.today .week-day-number {
+
+            color: #111111;
+
+            box-shadow:
+                0 0 16px rgba(255, 255, 255, 0.35);
+
+        }
+
+
+        /* Der gerade ausgewählte Tag (kann auch ein anderer Tag als heute sein) */
+
+        .week-day.selected {
+
+            color: white;
+
+        }
+
+
+        /* =========================================================
+           STREAK-KARTE
+        ========================================================= */
+
+        .streak-card {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            background:
+                linear-gradient(135deg,
+                    rgba(74, 168, 255, 0.13),
+                    rgba(66, 211, 146, 0.06));
+
+            border: 1px solid var(--border);
+
+            border-radius: 18px;
+
+            padding: 15px 16px;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: statt des blau-grünen Verlaufs die gleiche
+        // "verschwommene Glas"-Optik wie die anderen Karten (Habits,
+        // Tasks, Progress-Kreis) - siehe Kommentar bei --card weiter oben.
+        */
+
+        [data-theme="gray"] .streak-card {
+
+            background: var(--card);
+
+            backdrop-filter: blur(18px);
+
+            -webkit-backdrop-filter: blur(18px);
+
+        }
+
+
+        .streak-left {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .streak-fire {
+            font-size: 22px;
+        }
+
+
+        .streak-title {
+
+            font-weight: 700;
+
+            font-size: 14px;
+
+        }
+
+
+        .streak-subtitle {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            margin-top: 3px;
+
+        }
+
+
+        .details-button {
+
+            border: none;
+
+            background:
+                rgba(74, 168, 255, 0.12);
+
+            color: var(--blue-light);
+
+            padding: 8px 12px;
+
+            border-radius: 10px;
+
+            font-size: 12px;
+
+            cursor: pointer;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutrales Glas statt blauem Tint */
+
+        [data-theme="gray"] .details-button {
+
+            background: rgba(255, 255, 255, 0.1);
+
+        }
+
+
+        /* =========================================================
+           TAGESZITAT
+        ========================================================= */
+
+        .quote {
+
+            background:
+                linear-gradient(135deg,
+                    #3c91c7,
+                    #70c6f5);
+
+            color: #082037;
+
+            border-radius: 16px;
+
+            padding: 15px 17px;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+            font-weight: 600;
+
+            margin-bottom: 25px;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: statt der hellblauen Banner-Farbe eine
+        // dunkle Glas-Karte mit weißer Schrift, passend zum restlichen
+        // Theme (das Zitat ist damit kein "bunter Fremdkörper" mehr).
+        */
+
+        [data-theme="gray"] .quote {
+
+            background: var(--card);
+
+            backdrop-filter: blur(18px);
+
+            -webkit-backdrop-filter: blur(18px);
+
+            color: var(--text);
+
+        }
+
+
+        /* =========================================================
+           PROGRESS-KREIS (SVG-Version mit weicher Animation)
+        ========================================================= */
+
+        .progress-card {
+
+            background:
+                linear-gradient(145deg,
+                    #0d2d44,
+                    #0b2539);
+
+            border: 1px solid var(--border);
+
+            border-radius: 24px;
+
+            padding: 25px;
+
+            text-align: center;
+
+            margin-bottom: 28px;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: Der Progress-Kreis-Hintergrund war bisher
+        // IMMER derselbe feste Dunkelblau-Verlauf, egal welches Theme
+        // aktiv ist (Absicht: der Ring sollte immer gut sichtbar sein).
+        // Im Grau-Theme ersetzen wir das jetzt durch dieselbe
+        // "verschwommene" Glas-Karte wie bei Habits/Tasks/Streak, damit
+        // wirklich kein blauer Farbfleck mehr übrig bleibt.
+        */
+
+        [data-theme="gray"] .progress-card {
+
+            background: var(--card);
+
+            backdrop-filter: blur(20px);
+
+            -webkit-backdrop-filter: blur(20px);
+
+        }
+
+
+        .progress-ring {
+
+            width: 220px;
+
+            height: 220px;
+
+            margin: 0 auto 12px;
+
+            position: relative;
+
+        }
+
+
+        .progress-ring svg {
+
+            width: 100%;
+
+            height: 100%;
+
+            /* -90deg dreht den Start des Kreises auf "12 Uhr" statt "3 Uhr" */
+            transform:
+                rotate(-90deg);
+
+        }
+
+
+        .progress-track {
+
+            fill: none;
+
+            stroke:
+                rgba(255, 255, 255, 0.06);
+
+            stroke-width: 9;
+
+        }
+
+
+        .progress-value {
+
+            fill: none;
+
+            stroke: var(--blue);
+
+            stroke-width: 9;
+
+            stroke-linecap: butt;
+
+            /*
+            // DIESE ZEILE ist für die weiche Animation verantwortlich.
+            // Jede Änderung von stroke-dashoffset (siehe JS) wird
+            // automatisch über 0.7 Sekunden sanft animiert.
+            */
+
+            transition:
+                stroke-dashoffset 0.7s ease;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: Der Progress-Ring soll laut Vorgabe in
+        // einem "passenden Weiß" erscheinen statt im blauen Akzent,
+        // damit er zu den anderen "wichtigen" weißen Elementen passt
+        // (z.B. den Namen offener Habits). Der Progress-Card-Hintergrund
+        // bleibt bewusst dunkel (siehe .progress-card oben, absichtlich
+        // theme-unabhängig), damit der weiße Ring weiterhin gut sichtbar
+        // bleibt.
+        */
+
+        [data-theme="gray"] .progress-value {
+
+            stroke: #ffffff;
+
+        }
+
+
+        .progress-center {
+
+            position: absolute;
+
+            inset: 0;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+        .progress-percent {
+
+            font-size: 39px;
+
+            font-weight: 800;
+
+            letter-spacing: -1px;
+
+        }
+
+
+        .progress-label {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            margin-top: 3px;
+
+        }
+
+
+        .progress-summary {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+        }
+
+
+        /* =========================================================
+           ABSCHNITTS-ÜBERSCHRIFTEN (z.B. "Daily Habits", "Meine Aufgaben")
+        ========================================================= */
+
+        .section-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 13px;
+
+        }
+
+
+        .section-title {
+
+            font-size: 20px;
+
+            font-weight: 750;
+
+            margin: 0;
+
+        }
+
+
+        .section-link {
+
+            color: var(--blue-light);
+
+            font-size: 13px;
+
+            cursor: pointer;
+
+            border: none;
+
+            background: none;
+
+        }
+
+
+        /* =========================================================
+           HABITS (Gewohnheiten)
+        ========================================================= */
+
+        .habit-grid {
+
+            display: grid;
+
+            /* Handy: 2 Spalten nebeneinander */
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap: 10px;
+
+            margin-bottom: 28px;
+
+        }
+
+
+        .habit-card {
+
+            position: relative;
+
+            background: var(--card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 17px;
+
+            padding: 15px;
+
+            min-height: 100px;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.15s,
+                border-color 0.2s;
+
+        }
+
+
+        .habit-card:active {
+
+            transform:
+                scale(0.97);
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: die "verschwommene" Glas-Optik (Blur)
+        // ergänzen. background/border kommen bereits automatisch aus
+        // var(--card)/var(--border), die für dieses Theme oben als
+        // halbtransparentes Weiß definiert sind - hier fehlt nur noch
+        // der Weichzeichner, der den typischen "Frosted Glass"-Effekt
+        // erzeugt.
+        */
+
+        [data-theme="gray"] .habit-card {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
+        .habit-card.done {
+
+            border-color:
+                rgba(66, 211, 146, 0.5);
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: Erledigte Habits wirken "verblasst" -
+        // Name und Icon wechseln vom kräftigen Weiß (--text) zu einem
+        // gedeckteren Grauweiß (--habit-done-text), das zwar heller
+        // als der Hintergrund bleibt, aber deutlich zurückhaltender
+        // wirkt als offene, noch zu erledigende Habits.
+        // ZUSÄTZLICH wird jetzt auch die Karte selbst dunkler/blasser:
+        // eine schwächere Weiß-Transparenz (weniger "Glas") lässt die
+        // Karte optisch mehr in den dunklen Hintergrund zurücktreten,
+        // und die grüne "erledigt"-Border wird gedämpft statt kräftig.
+        // In den anderen beiden Themes (Dunkel/Hell) bleibt das
+        // bisherige Verhalten unverändert.
+        */
+
+        [data-theme="gray"] .habit-card.done {
+
+            background: rgba(255, 255, 255, 0.02);
+
+            border-color: rgba(66, 211, 146, 0.25);
+
+        }
+
+
+        [data-theme="gray"] .habit-card.done .habit-name {
+
+            color: var(--habit-done-text);
+
+        }
+
+
+        [data-theme="gray"] .habit-card.done .habit-icon {
+
+            opacity: 0.5;
+
+        }
+
+
+        [data-theme="gray"] .habit-card.done .habit-status {
+
+            color: var(--habit-done-text);
+
+            opacity: 0.75;
+
+        }
+
+
+        .habit-icon {
+
+            font-size: 22px;
+
+            margin-bottom: 11px;
+
+        }
+
+
+        .habit-name {
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            /*
+            // Etwas Platz rechts und links lassen, damit der Text nicht
+            // unter dem Papierkorb- bzw. Häkchen-Button verschwindet.
+            */
+
+            padding-right: 6px;
+
+            /* Sanfter Übergang, falls sich die Farbe beim Abhaken ändert
+               (aktuell nur im Grau-Theme relevant, schadet aber sonst nicht) */
+            transition: color 0.2s ease;
+
+        }
+
+
+        .habit-status {
+
+            color: var(--muted);
+
+            font-size: 11px;
+
+            margin-top: 5px;
+
+            /* Platz lassen, damit der Text nicht unter dem
+               Papierkorb-Button (unten rechts) verschwindet */
+            padding-right: 26px;
+
+        }
+
+
+        /* Häkchen-Kreis oben rechts zum Abhaken des Habits */
+
+        .habit-check {
+
+            position: absolute;
+
+            right: 12px;
+
+            top: 12px;
+
+            width: 25px;
+
+            height: 25px;
+
+            border-radius: 50%;
+
+            border: 2px solid #45627a;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 12px;
+
+            background: transparent;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutraler weißlicher statt blaugrauer Rahmen */
+
+        [data-theme="gray"] .habit-check {
+
+            border-color: rgba(255, 255, 255, 0.3);
+
+        }
+
+
+        .habit-card.done .habit-check {
+
+            background: var(--green);
+
+            border-color: var(--green);
+
+            color: #05271b;
+
+        }
+
+
+        /*
+        // PAPIERKORB-BUTTON zum Löschen eines Habits.
+        // Liegt oben links in der Karte, damit er nicht mit dem
+        // Häkchen oben rechts kollidiert.
+        // Es ist ein eigener <button>, deshalb müssen wir beim Klick
+        // per event.stopPropagation() verhindern, dass zusätzlich
+        // noch das Habit abgehakt wird (siehe JS: deleteHabit()).
+        */
+
+        .habit-delete {
+
+            position: absolute;
+
+            /* Unten rechts in der Karte, unter dem Häkchen (das liegt oben rechts) */
+            right: 10px;
+
+            bottom: 10px;
+
+            width: 25px;
+
+            height: 25px;
+
+            border-radius: 50%;
+
+            border: none;
+
+            background:
+                rgba(255, 255, 255, 0.05);
+
+            color: #b9c9d6;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 12px;
+
+            cursor: pointer;
+
+        }
+
+
+        .habit-delete:hover {
+
+            background:
+                rgba(255, 102, 117, 0.15);
+
+            color: var(--red);
+
+        }
+
+
+        .add-habit-card {
+
+            border:
+                1px dashed #3d6078;
+
+            background:
+                rgba(255, 255, 255, 0.02);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+        }
+
+
+        /* =========================================================
+           AUFGABEN (Tasks)
+        ========================================================= */
+
+        .task-list {
+
+            list-style: none;
+
+            padding: 0;
+
+            margin: 0;
+
+        }
+
+
+        .task {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            background: var(--card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 15px;
+
+            padding: 14px;
+
+            margin-bottom: 9px;
+
+            /*
+            // Diese transition sorgt dafür, dass die Aufgabe beim
+            // Erledigen sanft ausgeblendet wird (siehe .completing unten
+            // und die 1.5 Sekunden Verzögerung im JS-Code).
+            */
+
+            transition:
+                opacity 0.8s ease,
+                transform 0.8s ease;
+
+        }
+
+
+        /* Wird per JS gesetzt, sobald eine Aufgabe abgehakt wurde */
+
+        .task.completing {
+
+            opacity: 0;
+
+            transform:
+                translateX(20px);
+
+        }
+
+
+        /* NUR IM GRAU-THEME: gleiche "verschwommene" Glas-Optik wie
+           bei den Habit-Karten (siehe dortiger Kommentar). */
+
+        [data-theme="gray"] .task {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
+        .check-circle {
+
+            width: 23px;
+
+            height: 23px;
+
+            flex-shrink: 0;
+
+            border-radius: 50%;
+
+            border:
+                2px solid #71899c;
+
+            background: transparent;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            color: #06251a;
+
+            font-size: 12px;
+
+        }
+
+
+        .check-circle.checked {
+
+            background: var(--green);
+
+            border-color: var(--green);
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutraler weißlicher statt blaugrauer Rahmen */
+
+        [data-theme="gray"] .check-circle {
+
+            border-color: rgba(255, 255, 255, 0.3);
+
+        }
+
+
+        .task-info {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+
+        .task-text {
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            line-height: 1.35;
+
+        }
+
+
+        .task-text.completed {
+
+            text-decoration:
+                line-through;
+
+            opacity: 0.5;
+
+        }
+
+
+        .priority-dot {
+
+            font-size: 14px;
+
+        }
+
+
+        .delete-button {
+
+            border: none;
+
+            background: transparent;
+
+            color: #71899c;
+
+            cursor: pointer;
+
+            font-size: 16px;
+
+            padding: 5px;
+
+        }
+
+
+        .empty-state {
+
+            color: var(--muted);
+
+            text-align: center;
+
+            padding: 30px 10px;
+
+            font-size: 13px;
+
+        }
+
+
+        /* =========================================================
+           TO-DO SEITE
+        ========================================================= */
+
+        .page-heading {
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .page-heading h1 {
+
+            font-size: 30px;
+
+            margin: 0 0 5px;
+
+        }
+
+
+        .page-heading p {
+
+            color: var(--muted);
+
+            margin: 0;
+
+            font-size: 13px;
+
+        }
+
+
+        .add-main-button {
+
+            width: 48px;
+
+            height: 48px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-size: 30px;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 8px 25px rgba(74, 168, 255, 0.25);
+
+            /*
+            // Flexbox zentriert das "+"-Zeichen exakt in der Mitte
+            // des Kreises (statt sich auf die Standard-Textausrichtung
+            // eines Buttons zu verlassen, die je nach Schriftart
+            // leicht daneben liegen kann).
+            */
+
+            padding: 0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            /*
+            // line-height: 1 verhindert zusätzlichen Abstand über/unter
+            // dem Zeichen, der die Zentrierung stören könnte.
+            */
+
+            line-height: 1;
+
+        }
+
+
+        /*
+        // SCHWEBENDER "+"-BUTTON AUF DER HOME-SEITE
+        // Liegt fest unten rechts über dem Inhalt (position: fixed),
+        // schwebt über der unteren Navigation und öffnet das
+        // "Neu hinzufügen"-Modal (Aufgabe ODER Habit).
+        // Da dieser Button INNERHALB von #homePage liegt, wird er
+        // automatisch mit versteckt, wenn eine andere Seite aktiv ist
+        // (siehe .page { display: none; } weiter oben).
+        */
+
+        .floating-add-button {
+
+            position: fixed;
+
+            z-index: 60;
+
+            right: 22px;
+
+            /* Genug Abstand zur unteren Navigation lassen */
+            bottom:
+                calc(max(12px, env(safe-area-inset-bottom)) + 67px + 16px);
+
+            width: 56px;
+
+            height: 56px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-size: 32px;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 10px 28px rgba(74, 168, 255, 0.35);
+
+            /* Auch hier: Flexbox zentriert das "+" exakt mittig */
+            padding: 0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            line-height: 1;
+
+        }
+
+
+        .floating-add-button:active {
+
+            transform:
+                scale(0.94);
+
+        }
+
+
+        @media (min-width: 700px) {
+
+            .floating-add-button {
+
+                bottom: 34px;
+
+            }
+
+        }
+
+
+        /* =========================================================
+           PROFIL-SEITE
+        ========================================================= */
+
+        .profile-header {
+
+            text-align: center;
+
+            padding: 10px 0 25px;
+
+        }
+
+
+        .avatar {
+
+            width: 82px;
+
+            height: 82px;
+
+            border-radius: 50%;
+
+            margin: 0 auto 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background:
+                linear-gradient(135deg,
+                    #3b8fd1,
+                    #6bc7ee);
+
+            font-size: 34px;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutraler Glas-Kreis statt blauem Verlauf */
+
+        [data-theme="gray"] .avatar {
+
+            background: rgba(255, 255, 255, 0.08);
+
+            backdrop-filter: blur(10px);
+
+            -webkit-backdrop-filter: blur(10px);
+
+        }
+
+
+        .profile-name {
+
+            font-size: 22px;
+
+            font-weight: 750;
+
+        }
+
+
+        .profile-email {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            margin-top: 4px;
+
+        }
+
+
+        .settings-card {
+
+            background: var(--card);
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 18px;
+
+            overflow: hidden;
+
+            margin-bottom: 14px;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
+
+        [data-theme="gray"] .settings-card {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
+        .settings-title {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            padding: 15px 16px 8px;
+
+        }
+
+
+        .setting-row {
+
+            width: 100%;
+
+            border: none;
+
+            background: transparent;
+
+            color: white;
+
+            padding: 16px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            border-top:
+                1px solid var(--border);
+
+            cursor: pointer;
+
+            text-align: left;
+
+        }
+
+
+        .setting-left {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+        }
+
+
+        .setting-icon {
+
+            width: 32px;
+
+            height: 32px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 9px;
+
+            background:
+                rgba(74, 168, 255, 0.1);
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutrales Glas statt blauem Tint */
+
+        [data-theme="gray"] .setting-icon {
+
+            background: rgba(255, 255, 255, 0.08);
+
+        }
+
+
+        .setting-label {
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+        }
+
+
+        .setting-arrow {
+
+            color: var(--muted);
+
+        }
+
+
+        .logout {
+
+            color: var(--red);
+
+        }
+
+
+        /*
+        // THEME-AUSWAHL (Dunkel / Hell / Grau)
+        // Eine "Segmented Control" - drei nebeneinanderliegende
+        // Buttons in einer Pille, von denen immer genau einer als
+        // aktiv markiert ist. Ersetzt den früheren einfachen
+        // Ein/Aus-Schalter, da wir jetzt DREI statt nur zwei
+        // Theme-Optionen haben.
+        */
+
+        .theme-select {
+
+            display: flex;
+
+            background:
+                rgba(255, 255, 255, 0.06);
+
+            border-radius: 999px;
+
+            padding: 3px;
+
+            gap: 2px;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .theme-option {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            padding: 7px 12px;
+
+            border-radius: 999px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease;
+
+        }
+
+
+        .theme-option.active {
+
+            background: var(--blue);
+
+            color: white;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: --blue ist hier Weiß (siehe Variablen
+        // oben), der Hintergrund der aktiven Pille wird also weiß -
+        // die Beschriftung ("Blau"/"Hell"/"Grau") braucht deshalb
+        // dunkle statt weiße Schrift, sonst unsichtbar.
+        */
+
+        [data-theme="gray"] .theme-option.active {
+
+            color: #111111;
+
+        }
+
+
+        /*
+        // FORMULARFELDER INNERHALB DER EINSTELLUNGEN-KARTEN
+        // (z.B. für "Konto löschen"-Bereich, falls du dort mal
+        // direkt Felder statt eines Modals einbauen willst).
+        */
+
+        .settings-note {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            padding: 0 16px 16px;
+
+            line-height: 1.5;
+
+        }
+
+
+        /*
+        // GEFAHRENZONE
+        // Deutlich abgesetzter Bereich für "zerstörerische" Aktionen
+        // wie das endgültige Löschen des Kontos.
+        */
+
+        .danger-zone-title {
+
+            color: var(--red);
+
+        }
+
+
+        /* =========================================================
+           UNTERE NAVIGATION
+        ========================================================= */
+
+        .bottom-nav {
+
+            position: fixed;
+
+            z-index: 50;
+
+            left: 50%;
+
+            bottom:
+                max(12px, env(safe-area-inset-bottom));
+
+            transform:
+                translateX(-50%);
+
+            width:
+                min(94%, 520px);
+
+            height: 67px;
+
+            background:
+                rgba(10, 34, 52, 0.92);
+
+            backdrop-filter:
+                blur(20px);
+
+            -webkit-backdrop-filter:
+                blur(20px);
+
+            border:
+                1px solid rgba(255, 255, 255, 0.08);
+
+            border-radius: 22px;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(5, 1fr);
+
+            padding: 6px;
+
+            box-shadow:
+                0 15px 40px rgba(0, 0, 0, 0.35);
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutrales dunkles Glas statt Navy-Blau */
+
+        [data-theme="gray"] .bottom-nav {
+
+            background: rgba(10, 10, 11, 0.85);
+
+        }
+
+
+        /*
+        // GLEITENDER HINTERGRUND HINTER DEM AKTIVEN NAV-BUTTON
+        // Liegt als eigenes Element HINTER den Buttons (z-index: 0)
+        // und wird per JavaScript (moveNavIndicator()) exakt auf die
+        // Position/Breite des gerade aktiven Buttons geschoben.
+        // "transition" sorgt für die weiche Gleitbewegung.
+        // "pointer-events: none" ist wichtig, damit Klicks weiterhin
+        // ganz normal bei den Buttons ankommen und nicht vom
+        // Indicator "abgefangen" werden.
+        */
+
+        .nav-indicator {
+
+            position: absolute;
+
+            top: 6px;
+
+            bottom: 6px;
+
+            background:
+                rgba(74, 168, 255, 0.13);
+
+            border-radius: 17px;
+
+            transition:
+                transform 0.3s ease,
+                width 0.3s ease;
+
+            pointer-events: none;
+
+            z-index: 0;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutrales Weiß-Glas statt blauem Tint */
+
+        [data-theme="gray"] .nav-indicator {
+
+            background: rgba(255, 255, 255, 0.12);
+
+        }
+
+
+        .nav-button {  /* änderungen für alle 4 Buttons des Navigationsmenüs */
+
+            /*
+            // position: relative + z-index: 1 sorgen dafür, dass die
+            // Buttons SICHTBAR ÜBER dem .nav-indicator liegen (der
+            // sonst optisch darüber liegen und Text/Icons verdecken
+            // könnte).
+            */
+
+            position: relative;
+
+            z-index: 1;
+
+            border: none;
+
+            background: transparent;
+
+            color: #7893a8;
+
+            border-radius: 17px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 4px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s,
+                color 0.2s;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutrales Grau statt blaugrauem Farbton */
+
+        [data-theme="gray"] .nav-button {
+
+            color: #8a8a8d;
+
+        }
+
+
+        .nav-button.active {
+
+            /*
+            // Kein eigener Hintergrund mehr nötig - das übernimmt
+            // jetzt der gleitende .nav-indicator dahinter.
+            */
+
+            background: transparent;
+
+            color: var(--blue-light);
+
+        }
+
+        
+
+
+        /*
+           PLUS-BUTTON IN DER UNTEREN NAVIGATION
+           Zwischen KI und Habits.
+           top: -4px verschiebt ihn minimal nach oben.
+        */
+
+        .nav-add-button {
+
+            position: relative;
+
+            top: -4px;
+
+            width: 48px;
+
+            height: 48px;
+
+            align-self: center;
+
+            justify-self: center;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-size: 30px;
+
+            font-weight: 300;
+
+            line-height: 1;
+
+            padding: 0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 8px 22px rgba(74, 168, 255, 0.35);
+
+            transition:
+                transform 0.2s ease;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: --blue ist hier Weiß (siehe Variablen
+        // oben) - der Button-Hintergrund wird dadurch automatisch
+        // weiß. Das Plus-Icon (SVG, nutzt currentColor) braucht
+        // deshalb eine DUNKLE statt weiße Farbe, sonst unsichtbar.
+        // Auch der Leucht-Schatten wird auf neutrales Weiß umgestellt.
+        */
+
+        [data-theme="gray"] .nav-add-button {
+
+            color: #111111;
+
+            box-shadow:
+                0 8px 20px rgba(255, 255, 255, 0.18);
+
+        }
+
+
+        .nav-add-button:active {
+
+            transform: scale(0.92);
+
+        }
+
+        
+
+        .nav-icon svg {
+            width: 28px;
+            height: 28px;
+
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+
+        .nav-label {
+
+            font-size: 9px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =========================================================
+           MODAL (Popup-Fenster für "Neu hinzufügen")
+        ========================================================= */
+
+        .modal {
+
+            display: none;
+
+            position: fixed;
+
+            z-index: 100;
+
+            inset: 0;
+
+            background:
+                rgba(0, 0, 0, 0.65);
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 18px;
+
+        }
+
+
+        .modal.show {
+
+            display: flex;
+
+        }
+
+
+        .modal-content {
+
+            width: 100%;
+
+            max-width: 450px;
+
+            background: #f7f9fc;
+
+            color: #142333;
+
+            border-radius: 23px;
+
+            padding: 23px;
+
+            animation:
+                modalIn 0.2s ease;
+
+        }
+
+
+        @keyframes modalIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    scale(0.96) translateY(10px);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    scale(1) translateY(0);
+
+            }
+
+        }
+
+
+        .modal-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .modal-header h2 {
+
+            margin: 0;
+
+            font-size: 21px;
+
+        }
+
+
+        .close-button {
+
+            border: none;
+
+            background: transparent;
+
+            font-size: 28px;
+
+            color: #65717d;
+
+            cursor: pointer;
+
+        }
+
+
+        .modal-content label {
+
+            display: block;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .modal-content input,
+        .modal-content select {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border:
+                1px solid #d9e0e7;
+
+            border-radius: 11px;
+
+            margin-bottom: 17px;
+
+            background: white;
+
+            color: #172534;
+
+            outline: none;
+
+        }
+
+
+        .modal-content input:focus,
+        .modal-content select:focus {
+
+            border-color: var(--blue);
+
+        }
+
+
+        /*
+        // Diese beiden Blöcke (Priorität / Symbol) werden per JS
+        // ein- und ausgeblendet, je nachdem ob man eine Aufgabe
+        // oder ein Habit anlegt. Siehe Funktion updateAddModalFields().
+        */
+
+        #priorityField,
+        #iconField {
+
+            display: block;
+
+        }
+
+
+        .modal-buttons {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 9px;
+
+            margin-top: 5px;
+
+        }
+
+
+        .modal-button {
+
+            border: none;
+
+            padding: 12px 17px;
+
+            border-radius: 11px;
+
+            cursor: pointer;
+
+            font-weight: 700;
+
+        }
+
+
+        .cancel-button {
+
+            background: #e5e9ee;
+
+            color: #34414e;
+
+        }
+
+
+        .create-button {
+
+            background: #1688df;
+
+            color: white;
+
+        }
+
+
+        /* =========================================================
+           LOGIN / REGISTRIERUNG
+           Voller Bildschirm, wird angezeigt solange man nicht
+           eingeloggt ist. Blendet die eigentliche App komplett aus
+           (siehe checkAuthState() im JS).
+        ========================================================= */
+
+        .auth-screen {
+
+            /*
+            // Wichtig: "display" wird per JS zwischen "none" und "flex"
+            // umgeschaltet (siehe checkAuthState()). Der Startwert hier
+            // ist "none", damit beim allerersten Laden kein kurzes
+            // Aufblitzen der Login-Maske passiert, falls man doch
+            // schon eingeloggt ist.
+            */
+
+            display: none;
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 200;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 22px;
+
+            background:
+                radial-gradient(circle at 50% -10%,
+                    #16466a 0%,
+                    var(--background) 45%);
+
+        }
+
+
+        /* NUR IM GRAU-THEME: kein Farbschimmer, flacher dunkler Hintergrund */
+
+        [data-theme="gray"] .auth-screen {
+
+            background: var(--background);
+
+        }
+
+
+        .auth-card {
+
+            width: 100%;
+
+            max-width: 380px;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 24px;
+
+            padding: 30px 26px;
+
+            text-align: center;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: die verschwommene Glas-Optik ergänzen */
+
+        [data-theme="gray"] .auth-card {
+
+            backdrop-filter: blur(20px);
+
+            -webkit-backdrop-filter: blur(20px);
+
+        }
+
+
+        .auth-logo {
+
+            width: 60px;
+
+            height: 60px;
+
+            margin: 0 auto 16px;
+
+            border-radius: 50%;
+
+            background:
+                linear-gradient(135deg,
+                    #3b8fd1,
+                    #6bc7ee);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 26px;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutraler Glas-Kreis statt blauem Verlauf */
+
+        [data-theme="gray"] .auth-logo {
+
+            background: rgba(255, 255, 255, 0.08);
+
+        }
+
+
+        .auth-card h1 {
+
+            font-size: 22px;
+
+            margin: 0 0 6px;
+
+        }
+
+
+        .auth-card p {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            margin: 0 0 22px;
+
+        }
+
+
+        .auth-card label {
+
+            display: block;
+
+            text-align: left;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            color: var(--muted);
+
+            margin-bottom: 6px;
+
+        }
+
+
+        .auth-card input {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border-radius: 11px;
+
+            border: 1px solid var(--border);
+
+            background: var(--card-light);
+
+            color: var(--text);
+
+            margin-bottom: 15px;
+
+            outline: none;
+
+        }
+
+
+        .auth-card input:focus {
+
+            border-color: var(--blue);
+
+        }
+
+
+        .auth-error {
+
+            background: rgba(255, 102, 117, 0.12);
+
+            color: var(--red);
+
+            font-size: 12.5px;
+
+            border-radius: 10px;
+
+            padding: 10px 12px;
+
+            margin-bottom: 15px;
+
+            text-align: left;
+
+            line-height: 1.4;
+
+        }
+
+
+        .auth-submit {
+
+            width: 100%;
+
+            border: none;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-weight: 700;
+
+            padding: 14px;
+
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: --blue ist Weiß, Button-Hintergrund wird
+        // dadurch weiß - Schrift ("Einloggen"/"Registrieren") braucht
+        // deshalb dunkle statt weiße Farbe, sonst unsichtbar.
+        */
+
+        [data-theme="gray"] .auth-submit {
+
+            color: #111111;
+
+        }
+
+
+        .auth-switch {
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            margin: 18px 0 0;
+
+        }
+
+
+        .auth-switch button {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--blue-light);
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            padding: 0;
+
+        }
+
+
+        /* =========================================================
+           KI-CHAT SEITE
+        ========================================================= */
+
+        /*
+        // Der Nachrichtenverlauf. overflow-y sorgt dafür, dass die
+        // Seite scrollt statt beliebig lang zu werden.
+        */
+
+        .chat-window {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 10px;
+
+            min-height: 300px;
+
+            margin-bottom: 16px;
+
+        }
+
+
+        .chat-message {
+
+            max-width: 80%;
+
+            padding: 12px 15px;
+
+            border-radius: 16px;
+
+            font-size: 14px;
+
+            line-height: 1.45;
+
+        }
+
+
+        /* Nachrichten von dir selbst: rechts, blau */
+
+        .chat-message.user {
+
+            align-self: flex-end;
+
+            background: var(--blue);
+
+            color: white;
+
+            border-bottom-right-radius: 4px;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: --blue ist Weiß, Bubble-Hintergrund wird
+        // dadurch weiß - eigener Nachrichtentext braucht deshalb
+        // dunkle statt weiße Farbe, sonst unsichtbar.
+        */
+
+        [data-theme="gray"] .chat-message.user {
+
+            color: #111111;
+
+        }
+
+
+        /* Antworten der KI: links, dezente Kartenfarbe */
+
+        .chat-message.ai {
+
+            align-self: flex-start;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-bottom-left-radius: 4px;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
+
+        [data-theme="gray"] .chat-message.ai {
+
+            backdrop-filter: blur(14px);
+
+            -webkit-backdrop-filter: blur(14px);
+
+        }
+
+
+        .chat-input-row {
+
+            display: flex;
+
+            gap: 10px;
+
+            align-items: center;
+
+        }
+
+
+        .chat-input-row input {
+
+            flex: 1;
+
+            padding: 14px 16px;
+
+            border-radius: 14px;
+
+            border: 1px solid var(--border);
+
+            background: var(--card);
+
+            color: var(--text);
+
+            outline: none;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
+
+        [data-theme="gray"] .chat-input-row input {
+
+            backdrop-filter: blur(14px);
+
+            -webkit-backdrop-filter: blur(14px);
+
+        }
+
+
+        .chat-input-row input:focus {
+
+            border-color: var(--blue);
+
+        }
+
+
+        .chat-send-button {
+
+            width: 48px;
+
+            height: 48px;
+
+            flex-shrink: 0;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: var(--blue);
+
+            color: white;
+
+            font-size: 18px;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+        /*
+        // NUR IM GRAU-THEME: --blue ist Weiß, Button-Hintergrund wird
+        // dadurch weiß - das Senden-Symbol braucht deshalb dunkle
+        // statt weiße Farbe, sonst unsichtbar.
+        */
+
+        [data-theme="gray"] .chat-send-button {
+
+            color: #111111;
+
+        }
+
+
+        .chat-hint {
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+            text-align: center;
+
+            margin-top: 12px;
+
+        }
+
+
+        /* =========================================================
+           DESKTOP-ANPASSUNGEN
+        ========================================================= */
+
+        @media (min-width: 700px) {
+
+            .app {
+
+                padding-top: 35px;
+
+            }
+
+
+            .habit-grid {
+
+                /* Ab Desktop-Breite: 3 Spalten statt 2 */
+                grid-template-columns:
+                    repeat(3, 1fr);
+
+            }
+
+
+            .bottom-nav {
+
+                bottom: 20px;
+
+            }
+
+        }
+
+
+        @media (max-width: 380px) {
+
+            .progress-ring {
+
+                width: 190px;
+
+                height: 190px;
+
+            }
+
+
+            .habit-card {
+
+                padding: 12px;
+
+            }
+
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="app">
+
+
+        <!-- =====================================
+         HOME-SEITE
+    ====================================== -->
+
+        <main class="page active" id="homePage">
+
+
+            <div class="top-bar">
+
+                <button class="arrow-button" onclick="changeDay(-1)">
+                    ‹
+                </button>
+
+
+                <div class="today-info">
+
+                    <div class="today-title" id="topDayTitle">
+                        Heute
+                    </div>
+
+                    <div class="today-date" id="topDate">
+                    </div>
+
+                </div>
+
+
+                <button class="arrow-button" onclick="changeDay(1)">
+                    ›
+                </button>
+
+            </div>
+
+
+            <div class="week-strip" id="weekStrip"></div>
+
+
+            <div class="streak-card">
+
+                <div class="streak-left">
+
+                    <div class="streak-fire">
+                        🔥
+                    </div>
+
+                    <div>
+
+                        <div class="streak-title">
+                            <span id="streakNumber">0</span>
+                            Tage Streak
+                        </div>
+
+                        <div class="streak-subtitle">
+                            Weiter so!
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <button class="details-button" onclick="showHabitPage()">
+                    Details
+                </button>
+
+            </div>
+
+
+            <div class="quote">
+
+                💭
+                <span id="dailyQuote">
+                    My mind is calm, my heart is open,
+                    my spirit is strong.
+                </span>
+
+            </div>
+
+
+            <!-- FORTSCHRITTS-KREIS -->
+
+            <div class="progress-card">
+
+                <div class="progress-ring">
+
+                    <svg viewBox="0 0 220 220">
+
+                        <circle class="progress-track" cx="110" cy="110" r="91"></circle>
+
+                        <circle class="progress-value" id="progressCircle" cx="110" cy="110" r="91"></circle>
+
+                    </svg>
+
+
+                    <div class="progress-center">
+
+                        <div class="progress-percent" id="progressPercent">
+                            0%
+                        </div>
+
+                        <div class="progress-label">
+                            Daily Progress
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="progress-summary" id="progressSummary">
+                    0 von 0 Habits erledigt
+                </div>
+
+            </div>
+
+
+            <!-- HABITS -->
+
+            <div class="section-header">
+
+                <h2 class="section-title">
+                    Daily Habits
+                </h2>
+
+                <button class="section-link" onclick="showHabitPage()">
+                    Alle
+                </button>
+
+            </div>
+
+
+            <div class="habit-grid" id="homeHabitGrid"></div>
+
+
+            <!-- AUFGABEN -->
+
+            <div class="section-header">
+
+                <h2 class="section-title">
+                    Meine Aufgaben
+                </h2>
+
+                <button class="section-link" onclick="showTodoPage()">
+                    Alle
+                </button>
+
+            </div>
+
+
+            <ul class="task-list" id="homeTaskList"></ul>
+
+        </main>
+
+
+        <!-- =====================================
+         TO-DO SEITE
+    ====================================== -->
+
+        <main class="page" id="todoPage">
+
+            <div class="page-heading">
+
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    justify-content:space-between;
+                    gap:15px;
+                ">
+
+                    <div>
+
+                        <h1>
+                            Meine Aufgaben
+                        </h1>
+
+                        <p>
+                            Alles, was heute oder später
+                            erledigt werden muss.
+                        </p>
+
+                    </div>
+
+
+                    <button class="add-main-button" onclick="openAddModal('todo')">
+                        +
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <ul class="task-list" id="todoTaskList"></ul>
+
+        </main>
+
+
+        <!-- =====================================
+         HABITS SEITE
+    ====================================== -->
+
+        <main class="page" id="habitPage">
+
+            <div class="page-heading">
+
+                <h1>
+                    Daily Habits
+                </h1>
+
+                <p>
+                    Kleine Gewohnheiten,
+                    große Fortschritte.
+                </p>
+
+            </div>
+
+
+            <div class="progress-card">
+
+                <div class="progress-ring">
+
+                    <svg viewBox="0 0 220 220">
+
+                        <circle class="progress-track" cx="110" cy="110" r="91"></circle>
+
+                        <circle class="progress-value" id="habitProgressCircle" cx="110" cy="110" r="91"></circle>
+
+                    </svg>
+
+
+                    <div class="progress-center">
+
+                        <div class="progress-percent" id="habitProgressPercent">
+                            0%
+                        </div>
+
+                        <div class="progress-label">
+                            Heute
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="progress-summary" id="habitProgressSummary">
+                    0 von 0 erledigt
+                </div>
+
+            </div>
+
+
+            <div class="section-header">
+
+                <h2 class="section-title">
+                    Deine Habits
+                </h2>
+
+            </div>
+
+
+            <div class="habit-grid" id="habitPageGrid"></div>
+
+        </main>
+
+
+        <!-- =====================================
+         KI-CHAT SEITE
+         Platzhalter-Chat: Nachrichten werden aktuell nur lokal
+         gespeichert und mit einer Beispiel-Antwort beantwortet.
+         Sobald eine echte KI-Anbindung (z.B. per API) existiert,
+         wird nur die Funktion sendChatMessage() im JS angepasst.
+    ====================================== -->
+
+        <main class="page" id="aiPage">
+
+            <div class="page-heading">
+
+                <h1>
+                    KI-Assistent
+                </h1>
+
+                <p>
+                    Schreib mir etwas - sobald ich mit einer echten
+                    KI verbunden bin, antworte ich dir hier direkt.
+                </p>
+
+            </div>
+
+
+            <div class="chat-window" id="chatWindow"></div>
+
+
+            <div class="chat-input-row">
+
+                <input id="chatInput" type="text" placeholder="Nachricht schreiben..."
+                    onkeydown="handleChatKeydown(event)">
+
+                <button class="chat-send-button" onclick="sendChatMessage()" aria-label="Senden">
+                    ➤
+                </button>
+
+            </div>
+
+
+            <div class="chat-hint">
+                Noch keine echte KI verbunden - das kommt als Nächstes.
+            </div>
+
+
+        </main>
+
+
+        <!-- =====================================
+         EINSTELLUNGEN-SEITE
+         (früher "Profil" - jetzt mit echtem Account,
+         Theme-Schalter und weiteren Einstellungen)
+    ====================================== -->
+
+        <main class="page" id="settingsPage">
+
+            <div class="profile-header">
+
+                <div class="avatar">
+                    👤
+                </div>
+
+                <div class="profile-name" id="accountEmailDisplay">
+                    Nicht angemeldet
+                </div>
+
+                <div class="profile-email">
+                    Dein persönlicher Account
+                </div>
+
+            </div>
+
+
+            <!-- ACCOUNT: E-Mail und Passwort ändern -->
+
+            <div class="settings-card">
+
+                <div class="settings-title">
+                    ACCOUNT
+                </div>
+
+
+                <button class="setting-row" onclick="openAccountModal('email')">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            📧
+                        </div>
+
+                        <div class="setting-label">
+                            E-Mail ändern
+                        </div>
+
+                    </div>
+
+                    <div class="setting-arrow">
+                        ›
+                    </div>
+
+                </button>
+
+
+                <button class="setting-row" onclick="openAccountModal('password')">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            🔐
+                        </div>
+
+                        <div class="setting-label">
+                            Passwort ändern
+                        </div>
+
+                    </div>
+
+                    <div class="setting-arrow">
+                        ›
+                    </div>
+
+                </button>
+
+            </div>
+
+
+            <!-- APP: Erscheinungsbild + Benachrichtigungen -->
+
+            <div class="settings-card">
+
+                <div class="settings-title">
+                    APP
+                </div>
+
+
+            <!--
+                Erscheinungsbild-Zeile: drei Buttons (Dunkel/Hell/Grau)
+                in einer Pille. setTheme() im JS setzt das gewählte
+                Theme und markiert den passenden Button als "active".
+            -->
+
+                <div class="setting-row">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            🎨
+                        </div>
+
+                        <div class="setting-label">
+                            Erscheinungsbild
+                        </div>
+
+                    </div>
+
+
+                    <div class="theme-select" id="themeSelect">
+
+                        <button class="theme-option" data-theme-value="dark" onclick="setTheme('dark')">
+                            Blau
+                        </button>
+
+                        <button class="theme-option" data-theme-value="light" onclick="setTheme('light')">
+                            Hell
+                        </button>
+
+                        <button class="theme-option" data-theme-value="gray" onclick="setTheme('gray')">
+                            Grau
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <button class="setting-row" onclick="showAccountMessage()">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            🔔
+                        </div>
+
+                        <div class="setting-label">
+                            Benachrichtigungen
+                        </div>
+
+                    </div>
+
+                    <div class="setting-arrow">
+                        ›
+                    </div>
+
+                </button>
+
+            </div>
+
+
+            <!-- Abmelden -->
+
+            <div class="settings-card">
+
+                <button class="setting-row logout" onclick="logout()">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            🚪
+                        </div>
+
+                        <div class="setting-label">
+                            Abmelden
+                        </div>
+
+                    </div>
+
+                </button>
+
+            </div>
+
+
+            <!--
+            GEFAHRENZONE: Alle Daten löschen.
+            WICHTIG: Löscht Aufgaben/Habits/Einstellungen, NICHT den
+            Login selbst - das echte Löschen eines Supabase-Accounts
+            braucht eine serverseitige Funktion (siehe deleteAccount()
+            im JS-Code weiter unten für Details).
+        -->
+
+            <div class="settings-card">
+
+                <button class="setting-row logout" onclick="deleteAccount()">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            🗑️
+                        </div>
+
+                        <div class="setting-label danger-zone-title">
+                            Alle meine Daten löschen
+                        </div>
+
+                    </div>
+
+                </button>
+
+                <div class="settings-note">
+                    Löscht alle deine Aufgaben, Habits und Einstellungen
+                    unwiderruflich und meldet dich ab. Dein Login (E-Mail +
+                    Passwort) bleibt bestehen - das komplette Löschen eines
+                    Accounts erfordert später eine serverseitige Funktion.
+                </div>
+
+            </div>
+
+
+        </main>
+
+
+    </div>
+
+
+    <!-- =====================================
+     UNTERE NAVIGATION
+====================================== -->
+
+    <nav class="bottom-nav">
+
+
+        <!--
+            Gleitender Hintergrund hinter dem aktiven Button.
+            Muss VOR den Buttons im HTML stehen und liegt per
+            z-index dank .nav-button { z-index: 1; } trotzdem
+            optisch dahinter.
+        -->
+
+        <div class="nav-indicator" id="navIndicator"></div>
+
+
+
+        <button class="nav-button active" id="navHome" onclick="showPage('home')">
+
+            <div class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 11.5L12 4l9 7.5" />
+                    <path d="M5 10v10h14V10" />
+                </svg>
+            </div>
+
+            <div class="nav-label">
+                Home
+            </div>
+
+        </button>
+
+
+        <button class="nav-button" id="navAI" onclick="showPage('ai')">
+
+            <div class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+            </div>
+
+            <div class="nav-label">
+                KI
+            </div>
+
+        </button>
+
+
+        <button class="nav-add-button" onclick="openAddModal()" aria-label="Neu hinzufügen" title="Neu hinzufügen">
+
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+
+        </button>
+
+
+        <button class="nav-button" id="navHabit" onclick="showPage('habit')">
+
+            <div class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                </svg>
+            </div>
+
+            <div class="nav-label">
+                Habits
+            </div>
+
+        </button>
+
+
+        <button class="nav-button" id="navSettings" onclick="showPage('settings')">
+
+            <div class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </div>
+
+            <div class="nav-label">
+                Einstellungen
+            </div>
+
+        </button>
+
+
+    </nav>
+
+
+    <!-- =====================================
+     "NEU HINZUFÜGEN"-MODAL
+     Ein gemeinsames Fenster für Aufgaben UND Habits.
+     Über das Dropdown "Typ" wird entschieden, welche
+     Zusatzfelder angezeigt werden (Priorität oder Symbol).
+====================================== -->
+
+    <div class="modal" id="addModal">
+
+        <div class="modal-content">
+
+
+            <div class="modal-header">
+
+                <h2>
+                    Hinzufügen
+                </h2>
+
+                <button class="close-button" onclick="closeAddModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <label>
+                Typ
+            </label>
+
+            <select id="addType" onchange="updateAddModalFields()">
+
+                <option value="todo">
+                    📝 Aufgabe
+                </option>
+
+                <option value="habit">
+                    🔥 Daily Habit
+                </option>
+
+            </select>
+
+
+            <label>
+                Name
+            </label>
+
+            <input id="newItemName" type="text" placeholder="Was möchtest du hinzufügen?">
+
+
+            <!-- Wird nur bei Typ "Aufgabe" angezeigt -->
+
+            <div id="priorityField">
+
+                <label>
+                    Priorität
+                </label>
+
+                <select id="newPriority">
+
+                    <option value="low">
+                        🟢 Niedrig
+                    </option>
+
+                    <option value="medium" selected>
+                        🟡 Mittel
+                    </option>
+
+                    <option value="high">
+                        🔴 Hoch
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- Wird nur bei Typ "Daily Habit" angezeigt -->
+
+            <div id="iconField">
+
+                <label>
+                    Symbol
+                </label>
+
+                <select id="newIcon">
+
+                    <option value="💧">
+                        💧 Wasser
+                    </option>
+
+                    <option value="🍎">
+                        🍎 Ernährung
+                    </option>
+
+                    <option value="🏋️">
+                        🏋️ Gym
+                    </option>
+
+                    <option value="📚">
+                        📚 Lernen
+                    </option>
+
+                    <option value="🧘">
+                        🧘 Meditation
+                    </option>
+
+                    <option value="📖">
+                        📖 Lesen
+                    </option>
+
+                    <option value="😴">
+                        😴 Schlafen
+                    </option>
+
+                    <option value="☀️">
+                        ☀️ Morgenroutine
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="modal-buttons">
+
+                <button class="modal-button cancel-button" onclick="closeAddModal()">
+                    Abbrechen
+                </button>
+
+                <button class="modal-button create-button" onclick="createItem()">
+                    Erstellen
+                </button>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+     ACCOUNT-MODAL
+     Ein gemeinsames Fenster für "E-Mail ändern" UND
+     "Passwort ändern". Welcher Block sichtbar ist, steuert
+     die Funktion openAccountModal('email' | 'password').
+====================================== -->
+
+    <div class="modal" id="accountModal">
+
+        <div class="modal-content">
+
+
+            <div class="modal-header">
+
+                <h2 id="accountModalTitle">
+                    E-Mail ändern
+                </h2>
+
+                <button class="close-button" onclick="closeAccountModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <!-- Wird nur angezeigt, wenn die E-Mail geändert wird -->
+
+            <div id="accountEmailFields">
+
+                <label>
+                    Neue E-Mail-Adresse
+                </label>
+
+                <input id="newEmailInput" type="email" placeholder="neue@email.de">
+
+            </div>
+
+
+            <!-- Wird nur angezeigt, wenn das Passwort geändert wird -->
+
+            <div id="accountPasswordFields">
+
+                <label>
+                    Aktuelles Passwort
+                </label>
+
+                <input id="currentPasswordInput" type="password" placeholder="Aktuelles Passwort">
+
+                <label>
+                    Neues Passwort
+                </label>
+
+                <input id="newPasswordInput" type="password" placeholder="Mindestens 6 Zeichen">
+
+                <label>
+                    Neues Passwort bestätigen
+                </label>
+
+                <input id="newPasswordConfirmInput" type="password" placeholder="Wiederholen">
+
+            </div>
+
+
+            <!-- Fehlermeldungen (z.B. "Passwort falsch") werden hier eingeblendet -->
+
+            <div class="auth-error" id="accountModalError" style="display:none;"></div>
+
+
+            <div class="modal-buttons">
+
+                <button class="modal-button cancel-button" onclick="closeAccountModal()">
+                    Abbrechen
+                </button>
+
+                <button class="modal-button create-button" onclick="saveAccountChange()">
+                    Speichern
+                </button>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+     LOGIN / REGISTRIERUNG
+     Voller Bildschirm, überdeckt die komplette App solange
+     man nicht eingeloggt ist. Wird von checkAuthState() im
+     JS ein- bzw. ausgeblendet.
+
+     WICHTIG (Sicherheitshinweis fürs Verständnis):
+     E-Mail und Passwort werden hier nur im Browser
+     (localStorage) gespeichert - unverschlüsselt. Das reicht
+     für eine lokale Demo/Prototyp-App völlig aus, ist aber
+     KEINE echte Account-Sicherheit. Für eine "richtige"
+     Anmeldung bräuchte man später ein echtes Backend, das
+     Passwörter sicher (gehasht) auf einem Server speichert.
+====================================== -->
+
+    <div class="auth-screen" id="authScreen">
+
+        <div class="auth-card">
+
+            <div class="auth-logo">
+                🤖
+            </div>
+
+            <h1 id="authTitle">
+                Willkommen zurück
+            </h1>
+
+            <p id="authSubtitle">
+                Melde dich mit deinem Account an.
+            </p>
+
+
+            <!-- Fehlermeldungen (z.B. "E-Mail oder Passwort falsch") -->
+
+            <div class="auth-error" id="authError" style="display:none;"></div>
+
+
+            <label>
+                E-Mail
+            </label>
+
+            <input id="authEmail" type="email" placeholder="deine@email.de">
+
+            <label>
+                Passwort
+            </label>
+
+            <input id="authPassword" type="password" placeholder="Passwort">
+
+
+            <!-- Nur im Registrierungs-Modus sichtbar -->
+
+            <div id="authConfirmField">
+
+                <label>
+                    Passwort bestätigen
+                </label>
+
+                <input id="authPasswordConfirm" type="password" placeholder="Passwort wiederholen">
+
+            </div>
+
+
+            <button class="auth-submit" id="authSubmitButton" onclick="handleAuthSubmit()">
+                Einloggen
+            </button>
+
+            <p class="auth-switch" id="authSwitchText">
+                Noch keinen Account?
+                <button onclick="switchAuthMode()">
+                    Registrieren
+                </button>
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+
+        /* =========================================================
+           SUPABASE VERBINDUNG
+           Der "publishable key" ist absichtlich NICHT geheim - er darf
+           im Frontend stehen. Er kann NUR das, was die Row-Level-
+           Security-Regeln in Supabase erlauben (siehe supabaseClient-setup.sql):
+           jeder Nutzer sieht/bearbeitet ausschließlich seine eigenen Zeilen.
+           Der "secret key" darf NIEMALS hier im Frontend-Code landen!
+        ========================================================= */
+
+        const SUPABASE_URL =
+            "https://ouyzmnqwnfbvnjtnadtz.supabase.co";
+
+        const SUPABASE_PUBLISHABLE_KEY =
+            "sb_publishable_wjWYAQqW0YHt-1aDkk2w-Q_cWrlzikZ";
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_PUBLISHABLE_KEY
+            );
+
+
+        /* =========================================================
+           DATEN
+           tasks und habits starten LEER und werden erst nach dem
+           Login mit loadUserData() aus Supabase geladen (siehe weiter
+           unten). Nur der Chatverlauf bleibt weiterhin lokal im
+           Browser (localStorage) - das war für den KI-Chat nicht
+           gefordert und ist unkritisch, falls sich mal wer anders
+           im selben Browser anmeldet, sieht er höchstens alte
+           Chat-Nachrichten, aber keine fremden Aufgaben/Habits.
+        ========================================================= */
+
+
+        // Liste aller Aufgaben: { id, text, priority, completed }
+        // "id" ist die UUID der Zeile in der Supabase-Tabelle "tasks".
+        let tasks = [];
+
+
+        // Liste aller Habits: { id, text, icon, completedDates: [...] }
+        // "id" ist die UUID der Zeile in der Supabase-Tabelle "habits".
+        // completedDates speichert für JEDEN Tag einzeln, ob das
+        // Habit erledigt wurde - dadurch kann man in der Woche
+        // zurückblättern und sieht den richtigen Stand pro Tag.
+        let habits = [];
+
+
+        // Der Tag, der gerade auf der Home-Seite ausgewählt ist
+        // (durch Klick auf die Pfeile oder auf einen Wochentag).
+        let selectedDate =
+            new Date();
+
+
+        // Account-Daten des eingeloggten Nutzers: { id, email }.
+        // WICHTIG: Das Passwort steht hier absichtlich NICHT drin -
+        // Supabase Auth kümmert sich serverseitig sicher (gehasht)
+        // um die Passwort-Prüfung, das Frontend bekommt es nie zu sehen.
+        let account = null;
+
+
+        // Ob man GERADE eingeloggt ist. Wird beim Start anhand der
+        // laufenden Supabase-Sitzung geprüft (siehe checkAuthState()).
+        let isLoggedIn = false;
+
+
+        // Steuert, ob der Login-Bildschirm im Login- oder im
+        // Registrierungs-Modus angezeigt wird ("login" | "register").
+        let authMode = "login";
+
+
+        // Merkt sich, ob im Account-Modal gerade die E-Mail oder das
+        // Passwort geändert wird ("email" | "password").
+        let accountModalAction = "email";
+
+
+        // Nachrichtenverlauf der KI-Chat-Seite: { sender, text }
+        // sender ist entweder "user" oder "ai". Bleibt bewusst lokal
+        // im Browser (siehe Hinweis oben).
+        let chatMessages =
+            JSON.parse(
+                localStorage.getItem("chatMessages")
+            ) || [];
+
+
+        // Tageszitate - wechseln automatisch je nach Kalendertag
+        const quotes = [
+
+            "My mind is calm, my heart is open, my spirit is strong.",
+
+            "Kleine Schritte führen zu großen Veränderungen.",
+
+            "Du musst nicht perfekt sein. Du musst nur anfangen.",
+
+            "Heute ist ein guter Tag, um etwas für dich zu tun.",
+
+            "Consistency beats motivation.",
+
+            "Focus on what you can control.",
+
+            "Dein zukünftiges Ich wird dir dafür danken."
+
+        ];
+
+
+        // Habits, die für einen brandneuen Account einmalig angelegt
+        // werden (siehe loadUserData() weiter unten).
+        const defaultHabits = [
+
+            {
+                text: "Frühstück",
+                icon: "🍎"
+            },
+
+            {
+                text: "Schule",
+                icon: "📚"
+            },
+
+            {
+                text: "Gym",
+                icon: "🏋️"
+            },
+
+            {
+                text: "Wasser trinken",
+                icon: "💧"
+            }
+
+        ];
+
+
+        /* =========================================================
+           SPEICHERN (nur noch für den lokalen Chatverlauf - alles
+           andere läuft jetzt direkt über Supabase-Aufrufe in den
+           jeweiligen Funktionen weiter unten, z.B. toggleHabit(),
+           createItem(), handleAuthSubmit() usw.)
+        ========================================================= */
+
+
+        function saveChatMessages() {
+
+            localStorage.setItem(
+                "chatMessages",
+                JSON.stringify(chatMessages)
+            );
+
+        }
+
+
+        /* =========================================================
+           DATUMS-HILFSFUNKTIONEN
+        ========================================================= */
+
+
+        // Wandelt ein Datum in einen eindeutigen Text-Schlüssel um,
+        // z.B. "2026-08-25". Damit können wir Tage in Arrays
+        // wiederfinden (z.B. in habit.completedDates).
+        function dateKey(date) {
+
+            const year =
+                date.getFullYear();
+
+            const month =
+                String(
+                    date.getMonth() + 1
+                ).padStart(2, "0");
+
+            const day =
+                String(
+                    date.getDate()
+                ).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+
+        }
+
+
+        function isToday(date) {
+
+            return (
+                dateKey(date) ===
+                dateKey(new Date())
+            );
+
+        }
+
+
+        function formatDate(date) {
+
+            return date.toLocaleDateString(
+                "de-DE",
+                {
+                    day: "numeric",
+                    month: "short"
+                }
+            );
+
+        }
+
+
+        /* =========================================================
+           NUTZERDATEN AUS SUPABASE LADEN
+           Wird nach jedem erfolgreichen Login aufgerufen. Holt Habits,
+           Aufgaben und das gespeicherte Theme aus der Datenbank -
+           Row Level Security sorgt automatisch dafür, dass hier NUR
+           die Zeilen des gerade eingeloggten Nutzers zurückkommen.
+        ========================================================= */
+
+
+        async function loadUserData() {
+
+
+            // --- HABITS LADEN ---
+
+            const habitsResult =
+                await supabaseClient
+                    .from("habits")
+                    .select("*")
+                    .order(
+                        "created_at",
+                        { ascending: true }
+                    );
+
+
+            if (habitsResult.error) {
+
+                console.error(
+                    "Fehler beim Laden der Habits:",
+                    habitsResult.error
+                );
+
+                habits = [];
+
+            }
+
+            else {
+
+                // Die Datenbank-Spalte heißt "completed_dates"
+                // (snake_case), im JS-Code nutzen wir weiterhin
+                // "completedDates" (camelCase) wie bisher.
+                habits =
+                    habitsResult.data.map(
+                        function (row) {
+
+                            return {
+
+                                id:
+                                    row.id,
+
+                                text:
+                                    row.text,
+
+                                icon:
+                                    row.icon,
+
+                                completedDates:
+                                    row.completed_dates || []
+
+                            };
+
+                        }
+                    );
+
+            }
+
+
+            // Ist das ein brandneuer Account ohne eigene Habits?
+            // Dann einmalig die Standard-Habits in der Datenbank anlegen.
+            if (habits.length === 0) {
+
+                for (
+                    const defaultHabit of defaultHabits
+                ) {
+
+                    const insertResult =
+                        await supabaseClient
+                            .from("habits")
+                            .insert({
+
+                                user_id:
+                                    account.id,
+
+                                text:
+                                    defaultHabit.text,
+
+                                icon:
+                                    defaultHabit.icon,
+
+                                completed_dates: []
+
+                            })
+                            .select()
+                            .single();
+
+
+                    if (!insertResult.error) {
+
+                        habits.push({
+
+                            id:
+                                insertResult.data.id,
+
+                            text:
+                                insertResult.data.text,
+
+                            icon:
+                                insertResult.data.icon,
+
+                            completedDates: []
+
+                        });
+
+                    }
+
+                }
+
+            }
+
+
+            // --- AUFGABEN LADEN ---
+
+            const tasksResult =
+                await supabaseClient
+                    .from("tasks")
+                    .select("*")
+                    .order(
+                        "created_at",
+                        { ascending: true }
+                    );
+
+
+            if (tasksResult.error) {
+
+                console.error(
+                    "Fehler beim Laden der Aufgaben:",
+                    tasksResult.error
+                );
+
+                tasks = [];
+
+            }
+
+            else {
+
+                tasks =
+                    tasksResult.data.map(
+                        function (row) {
+
+                            return {
+
+                                id:
+                                    row.id,
+
+                                text:
+                                    row.text,
+
+                                priority:
+                                    row.priority,
+
+                                completed:
+                                    row.completed
+
+                            };
+
+                        }
+                    );
+
+            }
+
+
+            // --- THEME LADEN ---
+
+            const settingsResult =
+                await supabaseClient
+                    .from("settings")
+                    .select("*")
+                    .maybeSingle();
+
+
+            if (
+                settingsResult.data
+            ) {
+
+                applyTheme(
+                    settingsResult.data.theme
+                );
+
+            }
+
+            else {
+
+                // Noch keine Settings-Zeile für diesen Account ->
+                // eine anlegen, mit dem aktuell sichtbaren Theme.
+                await supabaseClient
+                    .from("settings")
+                    .insert({
+
+                        user_id:
+                            account.id,
+
+                        theme:
+                            document.documentElement.getAttribute(
+                                "data-theme"
+                            ) || "dark"
+
+                    });
+
+            }
+
+
+            renderAll();
+
+        }
+
+
+        /* =========================================================
+           NAVIGATION ZWISCHEN DEN SEITEN
+        ========================================================= */
+
+
+        /*
+        // GLEITENDER NAV-INDICATOR
+        // Berechnet Breite und Position des gerade aktiven Nav-Buttons
+        // (offsetWidth / offsetLeft) und verschiebt den Indicator
+        // per CSS-transform dorthin. Die eigentliche Gleitbewegung
+        // übernimmt die "transition"-Eigenschaft von .nav-indicator
+        // im CSS - hier setzen wir nur das ZIEL der Bewegung.
+        */
+
+        function moveNavIndicator(buttonId) {
+
+            const indicator =
+                document.getElementById(
+                    "navIndicator"
+                );
+
+            const button =
+                document.getElementById(
+                    buttonId
+                );
+
+
+            // Falls z.B. gerade eine Seite ohne eigenen Nav-Button
+            // aktiv ist (siehe "todo" weiter unten), gibt es keinen
+            // Button zum Anpeilen - dann einfach nichts tun.
+            if (!indicator || !button) {
+                return;
+            }
+
+
+            indicator.style.width =
+                button.offsetWidth + "px";
+
+            indicator.style.transform =
+                "translateX(" + button.offsetLeft + "px)";
+
+        }
+
+
+        function showPage(page) {
+
+
+            const pages = {
+
+                home:
+                    "homePage",
+
+                todo:
+                    "todoPage",
+
+                ai:
+                    "aiPage",
+
+                habit:
+                    "habitPage",
+
+                settings:
+                    "settingsPage"
+
+            };
+
+
+            // Erst alle Seiten verstecken ...
+            Object.values(pages)
+                .forEach(
+                    function (id) {
+
+                        document
+                            .getElementById(id)
+                            .classList.remove(
+                                "active"
+                            );
+
+                    }
+                );
+
+
+            // ... dann nur die gewünschte Seite wieder anzeigen.
+            document
+                .getElementById(
+                    pages[page]
+                )
+                .classList.add(
+                    "active"
+                );
+
+
+            // Den passenden Button in der unteren Navigation hervorheben
+            document
+                .querySelectorAll(
+                    ".nav-button"
+                )
+                .forEach(
+                    function (button) {
+
+                        button.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+
+            // Nicht jede Seite hat einen eigenen Button in der unteren
+            // Navigation - z.B. "todo" wird nur über den "Alle"-Link auf
+            // der Home-Seite erreicht. Für solche Seiten bleibt einfach
+            // kein Nav-Button hervorgehoben.
+            const navButton = {
+
+                home: "navHome",
+
+                ai: "navAI",
+
+                habit: "navHabit",
+
+                settings: "navSettings"
+
+            };
+
+
+            if (navButton[page]) {
+
+                document
+                    .getElementById(
+                        navButton[page]
+                    )
+                    .classList.add(
+                        "active"
+                    );
+
+
+                moveNavIndicator(
+                    navButton[page]
+                );
+
+            }
+
+
+            window.scrollTo(
+                {
+                    top: 0,
+                    behavior: "smooth"
+                }
+            );
+
+
+            renderAll();
+
+        }
+
+
+        function showTodoPage() {
+
+            showPage("todo");
+
+        }
+
+
+        function showHabitPage() {
+
+            showPage("habit");
+
+        }
+
+
+        /* =========================================================
+           WOCHENLEISTE
+        ========================================================= */
+
+
+        function renderWeek() {
+
+
+            const strip =
+                document.getElementById(
+                    "weekStrip"
+                );
+
+
+            strip.innerHTML = "";
+
+
+            // Wir berechnen immer die Woche der "echten" heutigen Woche
+            // (nicht der gerade ausgewählten), damit die Woche beim
+            // Blättern zwischen Tagen nicht "springt".
+            const current =
+                new Date();
+
+
+            const day =
+                current.getDay();
+
+
+            // getDay() liefert 0 = Sonntag ... 6 = Samstag.
+            // Wir wollen aber Montag als ersten Tag der Woche,
+            // deshalb rechnen wir den Versatz zum Montag aus.
+            const mondayOffset =
+                day === 0
+                    ? -6
+                    : 1 - day;
+
+
+            const monday =
+                new Date(current);
+
+
+            monday.setDate(
+                current.getDate() +
+                mondayOffset
+            );
+
+
+            const names = [
+
+                "Mo",
+                "Di",
+                "Mi",
+                "Do",
+                "Fr",
+                "Sa",
+                "So"
+
+            ];
+
+
+            for (
+                let i = 0;
+                i < 7;
+                i++
+            ) {
+
+
+                const date =
+                    new Date(monday);
+
+
+                date.setDate(
+                    monday.getDate() + i
+                );
+
+
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                button.className =
+                    "week-day";
+
+
+                if (isToday(date)) {
+
+                    button.classList.add(
+                        "today"
+                    );
+
+                }
+
+
+                if (
+                    dateKey(date) ===
+                    dateKey(selectedDate)
+                ) {
+
+                    button.classList.add(
+                        "selected"
+                    );
+
+                }
+
+
+                button.innerHTML = `
+
+                <div class="week-day-name">
+                    ${names[i]}
+                </div>
+
+                <div class="week-day-number">
+                    ${date.getDate()}
+                </div>
+
+            `;
+
+
+                // Klick auf einen Wochentag wählt diesen Tag aus
+                button.onclick =
+                    function () {
+
+                        selectedDate =
+                            new Date(date);
+
+                        renderAll();
+
+                    };
+
+
+                strip.appendChild(
+                    button
+                );
+
+            }
+
+
+            document.getElementById(
+                "topDate"
+            ).textContent =
+                formatDate(
+                    selectedDate
+                );
+
+
+            document.getElementById(
+                "topDayTitle"
+            ).textContent =
+                isToday(selectedDate)
+                    ? "Heute"
+                    : selectedDate.toLocaleDateString(
+                        "de-DE",
+                        {
+                            weekday: "long"
+                        }
+                    );
+
+        }
+
+
+        // Wird von den Pfeil-Buttons oben aufgerufen (-1 = ein Tag zurück,
+        // +1 = ein Tag vor).
+        function changeDay(amount) {
+
+            selectedDate.setDate(
+                selectedDate.getDate() +
+                amount
+            );
+
+
+            renderAll();
+
+        }
+
+
+        /* =========================================================
+           HABIT-STATUS (pro ausgewähltem Tag)
+        ========================================================= */
+
+
+        function isHabitCompleted(
+            habit
+        ) {
+
+            return habit.completedDates
+                .includes(
+                    dateKey(selectedDate)
+                );
+
+        }
+
+
+        async function toggleHabit(
+            id
+        ) {
+
+
+            const habit =
+                habits.find(
+                    function (item) {
+
+                        return item.id === id;
+
+                    }
+                );
+
+
+            if (!habit) {
+                return;
+            }
+
+
+            const key =
+                dateKey(selectedDate);
+
+
+            const index =
+                habit.completedDates.indexOf(
+                    key
+                );
+
+
+            // Erst lokal ändern, damit der Klick sich sofort reaktionsschnell
+            // anfühlt (die App muss nicht erst auf die Antwort vom Server warten).
+            if (index === -1) {
+
+                // Tag ist noch nicht erledigt -> hinzufügen
+                habit.completedDates.push(
+                    key
+                );
+
+            }
+
+            else {
+
+                // Tag war schon erledigt -> wieder entfernen (Klick = Umschalten)
+                habit.completedDates.splice(
+                    index,
+                    1
+                );
+
+            }
+
+
+            renderAll();
+
+
+            // Jetzt den neuen Stand auch dauerhaft in Supabase speichern.
+            const updateResult =
+                await supabaseClient
+                    .from("habits")
+                    .update({
+
+                        completed_dates:
+                            habit.completedDates
+
+                    })
+                    .eq(
+                        "id",
+                        habit.id
+                    );
+
+
+            if (updateResult.error) {
+
+                console.error(
+                    "Fehler beim Speichern des Habits:",
+                    updateResult.error
+                );
+
+            }
+
+        }
+
+
+        /* =========================================================
+           HABIT LÖSCHEN
+           Wird über den Papierkorb-Button auf der Habit-Karte aufgerufen.
+        ========================================================= */
+
+
+        async function deleteHabit(
+            id,
+            event
+        ) {
+
+            // WICHTIG: Verhindert, dass der Klick auf den Papierkorb
+            // zusätzlich noch die Karte "anklickt" und das Habit
+            // dadurch versehentlich abgehakt wird.
+            if (event) {
+
+                event.stopPropagation();
+
+            }
+
+
+            const confirmed =
+                confirm(
+                    "Dieses Habit wirklich löschen? Der gesamte Verlauf geht dabei verloren."
+                );
+
+
+            if (!confirmed) {
+                return;
+            }
+
+
+            habits =
+                habits.filter(
+                    function (habit) {
+
+                        return habit.id !== id;
+
+                    }
+                );
+
+
+            renderAll();
+
+
+            const deleteResult =
+                await supabaseClient
+                    .from("habits")
+                    .delete()
+                    .eq(
+                        "id",
+                        id
+                    );
+
+
+            if (deleteResult.error) {
+
+                console.error(
+                    "Fehler beim Löschen des Habits:",
+                    deleteResult.error
+                );
+
+            }
+
+        }
+
+
+        /* =========================================================
+           FORTSCHRITT BERECHNEN
+        ========================================================= */
+
+
+        function getHabitProgress() {
+
+
+            if (habits.length === 0) {
+
+                return {
+
+                    completed: 0,
+
+                    total: 0,
+
+                    percentage: 0
+
+                };
+
+            }
+
+
+            const completed =
+                habits.filter(
+                    function (habit) {
+
+                        return isHabitCompleted(
+                            habit
+                        );
+
+                    }
+                ).length;
+
+
+            const percentage =
+                Math.round(
+                    (
+                        completed /
+                        habits.length
+                    ) * 100
+                );
+
+
+            return {
+
+                completed:
+                    completed,
+
+                total:
+                    habits.length,
+
+                percentage:
+                    percentage
+
+            };
+
+        }
+
+
+        /* =========================================================
+           FORTSCHRITTS-KREIS AKTUALISIEREN (mit Animation)
+    
+           Funktionsweise (SVG "stroke-dasharray"-Trick):
+           1. stroke-dasharray = gesamter Kreisumfang
+              -> macht aus dem Kreisrand quasi einen einzigen langen "Strich".
+           2. stroke-dashoffset verschiebt, wo dieser Strich beginnt.
+              offset = 0            -> kompletter Kreis sichtbar (100%)
+              offset = Umfang       -> Kreis komplett "versteckt" (0%)
+           3. Die CSS-Regel "transition: stroke-dashoffset 0.7s ease;"
+              (siehe .progress-value oben im <style>) sorgt dafür, dass
+              der Browser jede Änderung von stroke-dashoffset automatisch
+              über 0.7 Sekunden weich animiert.
+        ========================================================= */
+
+
+        function updateProgress(
+            circleId,
+            percentId,
+            summaryId,
+            label
+        ) {
+
+
+            const progress =
+                getHabitProgress();
+
+
+            const circle =
+                document.getElementById(
+                    circleId
+                );
+
+
+            // Muss zum "r"-Wert (Radius) der <circle>-Elemente im HTML passen!
+            const radius = 91;
+
+
+            const circumference =
+                2 *
+                Math.PI *
+                radius;
+
+
+            circle.style.strokeDasharray =
+                circumference;
+
+
+            const offset =
+                circumference -
+                (
+                    progress.percentage /
+                    100
+                ) *
+                circumference;
+
+
+            circle.style.strokeDashoffset =
+                offset;
+
+
+            document.getElementById(
+                percentId
+            ).textContent =
+                progress.percentage + "%";
+
+
+            document.getElementById(
+                summaryId
+            ).textContent =
+                `${progress.completed} von ${progress.total} ${label} erledigt`;
+
+        }
+
+
+        /* =========================================================
+           HABITS RENDERN (als Karten anzeigen)
+        ========================================================= */
+
+
+        function createHabitCard(
+            habit
+        ) {
+
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            const completed =
+                isHabitCompleted(
+                    habit
+                );
+
+
+            card.className =
+                "habit-card";
+
+
+            if (completed) {
+
+                card.classList.add(
+                    "done"
+                );
+
+            }
+
+
+            card.innerHTML = `
+
+            <button
+                class="habit-delete"
+                title="Habit löschen"
+            >
+                🗑️
+            </button>
+
+            <div class="habit-icon">
+                ${habit.icon}
+            </div>
+
+            <div class="habit-name">
+                ${escapeHtml(habit.text)}
+            </div>
+
+            <div class="habit-status">
+                ${completed
+                    ? "Erledigt ✓"
+                    : "Noch offen"
+                }
+            </div>
+
+            <div class="habit-check">
+                ${completed
+                    ? "✓"
+                    : ""
+                }
+            </div>
+
+        `;
+
+
+            // Klick irgendwo auf die Karte (außer dem Papierkorb) hakt ab
+            card.onclick =
+                function () {
+
+                    toggleHabit(
+                        habit.id
+                    );
+
+                };
+
+
+            // Der Papierkorb-Button bekommt seinen eigenen Klick-Handler.
+            // event wird an deleteHabit() weitergegeben, damit dort
+            // stopPropagation() aufgerufen werden kann.
+            const deleteButton =
+                card.querySelector(
+                    ".habit-delete"
+                );
+
+
+            deleteButton.onclick =
+                function (event) {
+
+                    deleteHabit(
+                        habit.id,
+                        event
+                    );
+
+                };
+
+
+            return card;
+
+        }
+
+
+        function renderHabits() {
+
+
+            const homeGrid =
+                document.getElementById(
+                    "homeHabitGrid"
+                );
+
+
+            const habitGrid =
+                document.getElementById(
+                    "habitPageGrid"
+                );
+
+
+            homeGrid.innerHTML = "";
+
+            habitGrid.innerHTML = "";
+
+
+            habits.forEach(
+                function (habit) {
+
+
+                    // Für Home und Habit-Seite brauchen wir jeweils eine
+                    // eigene Karte (ein DOM-Element kann nicht an zwei
+                    // Stellen gleichzeitig angezeigt werden).
+                    const homeCard =
+                        createHabitCard(
+                            habit
+                        );
+
+
+                    const pageCard =
+                        createHabitCard(
+                            habit
+                        );
+
+
+                    homeGrid.appendChild(
+                        homeCard
+                    );
+
+
+                    habitGrid.appendChild(
+                        pageCard
+                    );
+
+                }
+            );
+
+
+            // "+ Habit hinzufügen"-Karte ganz am Ende der Habits-Seite
+            const addCard =
+                document.createElement(
+                    "div"
+                );
+
+
+            addCard.className =
+                "habit-card add-habit-card";
+
+
+            addCard.textContent =
+                "+ Habit hinzufügen";
+
+
+            addCard.onclick =
+                function () {
+
+                    openAddModal("habit");
+
+                };
+
+
+            habitGrid.appendChild(
+                addCard
+            );
+
+
+            updateProgress(
+                "progressCircle",
+                "progressPercent",
+                "progressSummary",
+                "Habits"
+            );
+
+
+            updateProgress(
+                "habitProgressCircle",
+                "habitProgressPercent",
+                "habitProgressSummary",
+                "Habits"
+            );
+
+        }
+
+
+        /* =========================================================
+           AUFGABEN RENDERN
+        ========================================================= */
+
+
+        function createTaskElement(
+            taskData,
+            index
+        ) {
+
+
+            const task =
+                document.createElement(
+                    "li"
+                );
+
+
+            task.className =
+                "task";
+
+
+            const checkCircle =
+                document.createElement(
+                    "button"
+                );
+
+
+            checkCircle.className =
+                "check-circle";
+
+
+            if (taskData.completed) {
+
+                checkCircle.classList.add(
+                    "checked"
+                );
+
+                checkCircle.textContent =
+                    "✓";
+
+            }
+
+
+            const taskInfo =
+                document.createElement(
+                    "div"
+                );
+
+
+            taskInfo.className =
+                "task-info";
+
+
+            const text =
+                document.createElement(
+                    "div"
+                );
+
+
+            text.className =
+                "task-text";
+
+
+            text.textContent =
+                taskData.text;
+
+
+            if (taskData.completed) {
+
+                text.classList.add(
+                    "completed"
+                );
+
+            }
+
+
+            taskInfo.appendChild(
+                text
+            );
+
+
+            const priority =
+                document.createElement(
+                    "div"
+                );
+
+
+            priority.className =
+                "priority-dot";
+
+
+            if (
+                taskData.priority ===
+                "high"
+            ) {
+
+                priority.textContent =
+                    "🔴";
+
+            }
+
+            else if (
+                taskData.priority ===
+                "medium"
+            ) {
+
+                priority.textContent =
+                    "🟡";
+
+            }
+
+            else {
+
+                priority.textContent =
+                    "🟢";
+
+            }
+
+
+            const deleteButton =
+                document.createElement(
+                    "button"
+                );
+
+
+            deleteButton.className =
+                "delete-button";
+
+
+            deleteButton.textContent =
+                "🗑️";
+
+
+            /*
+            // AUFGABE ERLEDIGEN (mit Animation)
+            // Ablauf:
+            // 1. Sofort visuell abhaken (Häkchen, durchgestrichener Text).
+            // 2. Klasse "completing" hinzufügen -> CSS lässt die Zeile
+            //    ausblenden und leicht nach rechts rutschen (siehe .task.completing).
+            // 3. Nach 1.5 Sekunden (also NACHDEM die Animation zu sehen war)
+            //    wird die Aufgabe endgültig aus dem Array entfernt und
+            //    alles neu gerendert.
+            */
+
+            checkCircle.onclick =
+                async function () {
+
+
+                    if (
+                        tasks[index] &&
+                        tasks[index].completed
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (!tasks[index]) {
+                        return;
+                    }
+
+
+                    tasks[index].completed =
+                        true;
+
+
+                    task.classList.add(
+                        "completing"
+                    );
+
+
+                    checkCircle.classList.add(
+                        "checked"
+                    );
+
+
+                    checkCircle.textContent =
+                        "✓";
+
+
+                    text.classList.add(
+                        "completed"
+                    );
+
+
+                    // In Supabase als erledigt markieren
+                    const updateResult =
+                        await supabaseClient
+                            .from("tasks")
+                            .update({
+                                completed: true
+                            })
+                            .eq(
+                                "id",
+                                taskData.id
+                            );
+
+
+                    if (updateResult.error) {
+
+                        console.error(
+                            "Fehler beim Erledigen der Aufgabe:",
+                            updateResult.error
+                        );
+
+                    }
+
+
+                    setTimeout(
+                        async function () {
+
+
+                            const taskIndex =
+                                tasks.indexOf(
+                                    taskData
+                                );
+
+
+                            if (
+                                taskIndex !== -1
+                            ) {
+
+                                tasks.splice(
+                                    taskIndex,
+                                    1
+                                );
+
+                            }
+
+
+                            renderAll();
+
+
+                            // Erledigte Aufgabe endgültig aus der
+                            // Datenbank entfernen.
+                            const deleteResult =
+                                await supabaseClient
+                                    .from("tasks")
+                                    .delete()
+                                    .eq(
+                                        "id",
+                                        taskData.id
+                                    );
+
+
+                            if (deleteResult.error) {
+
+                                console.error(
+                                    "Fehler beim Entfernen der Aufgabe:",
+                                    deleteResult.error
+                                );
+
+                            }
+
+
+                        },
+                        1500
+                    );
+
+                };
+
+
+            deleteButton.onclick =
+                async function () {
+
+
+                    const taskIndex =
+                        tasks.indexOf(
+                            taskData
+                        );
+
+
+                    if (
+                        taskIndex !== -1
+                    ) {
+
+                        tasks.splice(
+                            taskIndex,
+                            1
+                        );
+
+                    }
+
+
+                    renderAll();
+
+
+                    const deleteResult =
+                        await supabaseClient
+                            .from("tasks")
+                            .delete()
+                            .eq(
+                                "id",
+                                taskData.id
+                            );
+
+
+                    if (deleteResult.error) {
+
+                        console.error(
+                            "Fehler beim Löschen der Aufgabe:",
+                            deleteResult.error
+                        );
+
+                    }
+
+                };
+
+
+            task.appendChild(
+                checkCircle
+            );
+
+
+            task.appendChild(
+                taskInfo
+            );
+
+
+            task.appendChild(
+                priority
+            );
+
+
+            task.appendChild(
+                deleteButton
+            );
+
+
+            return task;
+
+        }
+
+
+        function renderTasks() {
+
+
+            const homeList =
+                document.getElementById(
+                    "homeTaskList"
+                );
+
+
+            const todoList =
+                document.getElementById(
+                    "todoTaskList"
+                );
+
+
+            homeList.innerHTML = "";
+
+            todoList.innerHTML = "";
+
+
+            if (tasks.length === 0) {
+
+
+                const emptyHome =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                emptyHome.className =
+                    "empty-state";
+
+
+                emptyHome.textContent =
+                    "Keine offenen Aufgaben 🎉";
+
+
+                homeList.appendChild(
+                    emptyHome
+                );
+
+
+                const emptyTodo =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                emptyTodo.className =
+                    "empty-state";
+
+
+                emptyTodo.textContent =
+                    "Du hast momentan keine offenen Aufgaben.";
+
+
+                todoList.appendChild(
+                    emptyTodo
+                );
+
+
+                return;
+
+            }
+
+
+            tasks.forEach(
+                function (taskData, index) {
+
+
+                    homeList.appendChild(
+                        createTaskElement(
+                            taskData,
+                            index
+                        )
+                    );
+
+
+                    todoList.appendChild(
+                        createTaskElement(
+                            taskData,
+                            index
+                        )
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =========================================================
+           GEMEINSAMES MODAL: "NEU HINZUFÜGEN"
+           Ein einziges Popup für Aufgaben UND Habits.
+           Das Dropdown "Typ" entscheidet, was am Ende passiert.
+        ========================================================= */
+
+
+        // Öffnet das Modal. Optional kann ein Start-Typ übergeben werden,
+        // z.B. openAddModal('habit') von der "+"-Karte bei den Habits.
+        function openAddModal(
+            startType
+        ) {
+
+
+            if (startType) {
+
+                document.getElementById(
+                    "addType"
+                ).value =
+                    startType;
+
+            }
+
+
+            updateAddModalFields();
+
+
+            document
+                .getElementById(
+                    "addModal"
+                )
+                .classList.add(
+                    "show"
+                );
+
+
+            setTimeout(
+                function () {
+
+                    document
+                        .getElementById(
+                            "newItemName"
+                        )
+                        .focus();
+
+                },
+                100
+            );
+
+        }
+
+
+        function closeAddModal() {
+
+            document
+                .getElementById(
+                    "addModal"
+                )
+                .classList.remove(
+                    "show"
+                );
+
+
+            // Formular zurücksetzen, damit beim nächsten Öffnen
+            // nicht die alten Werte stehen bleiben.
+            document.getElementById(
+                "newItemName"
+            ).value = "";
+
+
+            document.getElementById(
+                "newPriority"
+            ).value =
+                "medium";
+
+        }
+
+
+        // Blendet je nach gewähltem Typ das Prioritäts- oder
+        // das Symbol-Feld ein bzw. aus.
+        function updateAddModalFields() {
+
+
+            const type =
+                document.getElementById(
+                    "addType"
+                ).value;
+
+
+            const priorityField =
+                document.getElementById(
+                    "priorityField"
+                );
+
+
+            const iconField =
+                document.getElementById(
+                    "iconField"
+                );
+
+
+            if (type === "habit") {
+
+                priorityField.style.display =
+                    "none";
+
+                iconField.style.display =
+                    "block";
+
+            }
+
+            else {
+
+                priorityField.style.display =
+                    "block";
+
+                iconField.style.display =
+                    "none";
+
+            }
+
+        }
+
+
+        // Liest das Formular aus und legt je nach Typ entweder
+        // eine neue Aufgabe oder ein neues Habit an.
+        async function createItem() {
+
+
+            const type =
+                document.getElementById(
+                    "addType"
+                ).value;
+
+
+            const name =
+                document.getElementById(
+                    "newItemName"
+                ).value.trim();
+
+
+            if (name === "") {
+
+                return;
+
+            }
+
+
+            // WICHTIG: Priorität und Symbol müssen HIER, vor dem
+            // Schließen des Fensters, ausgelesen werden - closeAddModal()
+            // setzt die Formularfelder zurück (u.a. Priorität auf
+            // "medium"), damit beim nächsten Öffnen kein alter Wert
+            // mehr drinsteht. Würden wir erst NACH closeAddModal()
+            // auslesen, bekämen wir also immer schon den
+            // zurückgesetzten Wert statt der echten Auswahl.
+            const selectedPriority =
+                document.getElementById(
+                    "newPriority"
+                ).value;
+
+
+            const selectedIcon =
+                document.getElementById(
+                    "newIcon"
+                ).value;
+
+
+            // Das Fenster schon vorab schließen, damit sich die App
+            // reaktionsschnell anfühlt (wir warten nicht erst auf
+            // die Antwort vom Server).
+            closeAddModal();
+
+
+            if (type === "habit") {
+
+
+                const insertResult =
+                    await supabaseClient
+                        .from("habits")
+                        .insert({
+
+                            user_id:
+                                account.id,
+
+                            text:
+                                name,
+
+                            icon:
+                                selectedIcon,
+
+                            completed_dates: []
+
+                        })
+                        .select()
+                        .single();
+
+
+                if (insertResult.error) {
+
+                    console.error(
+                        "Fehler beim Anlegen des Habits:",
+                        insertResult.error
+                    );
+
+                    alert(
+                        "Das Habit konnte nicht gespeichert werden."
+                    );
+
+                    return;
+
+                }
+
+
+                habits.push({
+
+                    id:
+                        insertResult.data.id,
+
+                    text:
+                        name,
+
+                    icon:
+                        selectedIcon,
+
+                    completedDates:
+                        []
+
+                });
+
+            }
+
+            else {
+
+
+                const insertResult =
+                    await supabaseClient
+                        .from("tasks")
+                        .insert({
+
+                            user_id:
+                                account.id,
+
+                            text:
+                                name,
+
+                            priority:
+                                selectedPriority,
+
+                            completed: false
+
+                        })
+                        .select()
+                        .single();
+
+
+                if (insertResult.error) {
+
+                    console.error(
+                        "Fehler beim Anlegen der Aufgabe:",
+                        insertResult.error
+                    );
+
+                    alert(
+                        "Die Aufgabe konnte nicht gespeichert werden."
+                    );
+
+                    return;
+
+                }
+
+
+                tasks.push({
+
+                    id:
+                        insertResult.data.id,
+
+                    text:
+                        name,
+
+                    priority:
+                        selectedPriority,
+
+                    completed:
+                        false
+
+                });
+
+            }
+
+
+            renderAll();
+
+        }
+
+
+        /* =========================================================
+           STREAK BERECHNEN
+           Zählt rückwärts ab heute, an wie vielen Tagen IN FOLGE
+           ALLE Habits erledigt wurden. Sobald ein Tag fehlt, stoppt
+           die Zählung.
+        ========================================================= */
+
+
+        function calculateStreak() {
+
+
+            let streak = 0;
+
+
+            const today =
+                new Date();
+
+
+            // Wir schauen maximal 365 Tage zurück (mehr braucht kein
+            // realistischer Streak).
+            for (
+                let i = 0;
+                i < 365;
+                i++
+            ) {
+
+
+                const date =
+                    new Date(today);
+
+
+                date.setDate(
+                    today.getDate() - i
+                );
+
+
+                const key =
+                    dateKey(date);
+
+
+                // "completed" ist nur true, wenn es Habits gibt UND
+                // WIRKLICH JEDES einzelne Habit an diesem Tag erledigt wurde.
+                const completed =
+                    habits.length > 0 &&
+                    habits.every(
+                        function (habit) {
+
+                            return habit.completedDates
+                                .includes(key);
+
+                        }
+                    );
+
+
+                if (completed) {
+
+                    streak++;
+
+                }
+
+                else {
+
+                    break;
+
+                }
+
+            }
+
+
+            return streak;
+
+        }
+
+
+        /* =========================================================
+           LOGIN / REGISTRIERUNG
+        ========================================================= */
+
+
+        // Ganz einfache E-Mail-Prüfung: irgendwas @ irgendwas . irgendwas
+        function isValidEmail(
+            email
+        ) {
+
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                email
+            );
+
+        }
+
+
+        // Zeigt einen Login/Registrierungs-Fehler im roten Kasten an
+        function showAuthError(
+            message
+        ) {
+
+            const errorBox =
+                document.getElementById(
+                    "authError"
+                );
+
+            errorBox.textContent =
+                message;
+
+            errorBox.style.display =
+                "block";
+
+        }
+
+
+        function hideAuthError() {
+
+            document.getElementById(
+                "authError"
+            ).style.display =
+                "none";
+
+        }
+
+
+        // Wechselt zwischen Login- und Registrierungs-Ansicht und
+        // passt Überschrift, Button-Text und das "Passwort bestätigen"-
+        // Feld entsprechend an.
+        function switchAuthMode() {
+
+            authMode =
+                authMode === "login"
+                    ? "register"
+                    : "login";
+
+            renderAuthMode();
+
+        }
+
+
+        function renderAuthMode() {
+
+
+            hideAuthError();
+
+
+            const confirmField =
+                document.getElementById(
+                    "authConfirmField"
+                );
+
+
+            if (authMode === "register") {
+
+                document.getElementById(
+                    "authTitle"
+                ).textContent =
+                    "Konto erstellen";
+
+                document.getElementById(
+                    "authSubtitle"
+                ).textContent =
+                    "Lege einen Account mit E-Mail und Passwort an.";
+
+                document.getElementById(
+                    "authSubmitButton"
+                ).textContent =
+                    "Registrieren";
+
+                document.getElementById(
+                    "authSwitchText"
+                ).innerHTML =
+                    'Schon einen Account? <button onclick="switchAuthMode()">Einloggen</button>';
+
+                confirmField.style.display =
+                    "block";
+
+            }
+
+            else {
+
+                document.getElementById(
+                    "authTitle"
+                ).textContent =
+                    "Willkommen zurück";
+
+                document.getElementById(
+                    "authSubtitle"
+                ).textContent =
+                    "Melde dich mit deinem Account an.";
+
+                document.getElementById(
+                    "authSubmitButton"
+                ).textContent =
+                    "Einloggen";
+
+                document.getElementById(
+                    "authSwitchText"
+                ).innerHTML =
+                    'Noch keinen Account? <button onclick="switchAuthMode()">Registrieren</button>';
+
+                confirmField.style.display =
+                    "none";
+
+            }
+
+        }
+
+
+        // Wird beim Klick auf "Einloggen"/"Registrieren" ausgeführt.
+        // Wird beim Klick auf "Einloggen"/"Registrieren" ausgeführt.
+        async function handleAuthSubmit() {
+
+
+            hideAuthError();
+
+
+            const email =
+                document.getElementById(
+                    "authEmail"
+                ).value.trim().toLowerCase();
+
+
+            const password =
+                document.getElementById(
+                    "authPassword"
+                ).value;
+
+
+            if (
+                email === "" ||
+                password === ""
+            ) {
+
+                showAuthError(
+                    "Bitte E-Mail und Passwort ausfüllen."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !isValidEmail(email)
+            ) {
+
+                showAuthError(
+                    "Bitte eine gültige E-Mail-Adresse eingeben."
+                );
+
+                return;
+
+            }
+
+
+            if (authMode === "register") {
+
+
+                const confirmPassword =
+                    document.getElementById(
+                        "authPasswordConfirm"
+                    ).value;
+
+
+                if (password.length < 6) {
+
+                    showAuthError(
+                        "Das Passwort muss mindestens 6 Zeichen lang sein."
+                    );
+
+                    return;
+
+                }
+
+
+                if (
+                    password !== confirmPassword
+                ) {
+
+                    showAuthError(
+                        "Die Passwörter stimmen nicht überein."
+                    );
+
+                    return;
+
+                }
+
+
+                // Registrierung bei Supabase. Das Passwort wird NIE im
+                // Klartext irgendwo gespeichert - Supabase kümmert sich
+                // serverseitig sicher (gehasht) darum.
+                const signUpResult =
+                    await supabaseClient.auth.signUp({
+
+                        email:
+                            email,
+
+                        password:
+                            password
+
+                    });
+
+
+                if (signUpResult.error) {
+
+                    showAuthError(
+                        signUpResult.error.message
+                    );
+
+                    return;
+
+                }
+
+
+                // Falls in Supabase "E-Mail bestätigen" aktiviert ist,
+                // gibt es nach signUp() noch KEINE Sitzung - der Nutzer
+                // muss erst auf einen Link in seiner Mailbox klicken.
+                if (!signUpResult.data.session) {
+
+                    showAuthError(
+                        "Fast geschafft! Bitte bestätige deine E-Mail-Adresse über den Link, den wir dir geschickt haben, und logge dich danach ein."
+                    );
+
+                    authMode = "login";
+
+                    renderAuthMode();
+
+                    return;
+
+                }
+
+
+                finishAuthAndEnterApp();
+
+            }
+
+            else {
+
+
+                // Login bei Supabase. Supabase prüft E-Mail und Passwort
+                // selbst serverseitig und gibt bei Erfolg eine Sitzung zurück.
+                const signInResult =
+                    await supabaseClient.auth.signInWithPassword({
+
+                        email:
+                            email,
+
+                        password:
+                            password
+
+                    });
+
+
+                if (signInResult.error) {
+
+                    showAuthError(
+                        "E-Mail oder Passwort ist falsch."
+                    );
+
+                    return;
+
+                }
+
+
+                finishAuthAndEnterApp();
+
+            }
+
+        }
+
+
+        // Räumt das Login-Formular auf, lädt die Daten des Accounts
+        // und zeigt danach die eigentliche App an.
+        async function finishAuthAndEnterApp() {
+
+            document.getElementById(
+                "authEmail"
+            ).value = "";
+
+            document.getElementById(
+                "authPassword"
+            ).value = "";
+
+            document.getElementById(
+                "authPasswordConfirm"
+            ).value = "";
+
+            hideAuthError();
+
+            await checkAuthState();
+
+            showPage("home");
+
+        }
+
+
+        async function logout() {
+
+
+            const confirmed =
+                confirm(
+                    "Möchtest du dich wirklich abmelden?"
+                );
+
+
+            if (!confirmed) {
+                return;
+            }
+
+
+            await supabaseClient.auth.signOut();
+
+
+            account = null;
+
+            isLoggedIn = false;
+
+            authMode = "login";
+
+
+            checkAuthState();
+
+        }
+
+
+        // Löscht ALLE Daten (Habits, Aufgaben, Theme-Einstellung) des
+        // Accounts und meldet danach ab.
+        //
+        // WICHTIG: Das Login selbst (E-Mail + Passwort bei Supabase)
+        // bleibt dabei bestehen! Einen Nutzer-Account komplett zu
+        // löschen, geht aus Sicherheitsgründen NICHT mit dem
+        // "publishable key" im Frontend - das darf nur eine Funktion
+        // mit dem "secret key" auf einem Server tun (z.B. eine Supabase
+        // Edge Function). Das wäre ein guter nächster Ausbauschritt.
+        async function deleteAccount() {
+
+
+            const confirmed =
+                confirm(
+                    "Wirklich alle deine Aufgaben, Habits und Einstellungen löschen? Das kann nicht rückgängig gemacht werden. (Dein Login bleibt bestehen.)"
+                );
+
+
+            if (!confirmed) {
+                return;
+            }
+
+
+            await supabaseClient
+                .from("habits")
+                .delete()
+                .eq(
+                    "user_id",
+                    account.id
+                );
+
+
+            await supabaseClient
+                .from("tasks")
+                .delete()
+                .eq(
+                    "user_id",
+                    account.id
+                );
+
+
+            await supabaseClient
+                .from("settings")
+                .delete()
+                .eq(
+                    "user_id",
+                    account.id
+                );
+
+
+            alert(
+                "Deine Daten wurden gelöscht. Du wirst jetzt abgemeldet."
+            );
+
+
+            logout();
+
+        }
+
+
+        // Zeigt entweder die App (eingeloggt) oder den Login/Registrierungs-
+        // Bildschirm (nicht eingeloggt) an. Prüft dafür die aktuell
+        // laufende Supabase-Sitzung. Wird beim Start der App UND nach
+        // jeder Änderung am Login-Status aufgerufen.
+        async function checkAuthState() {
+
+
+            const authScreen =
+                document.getElementById(
+                    "authScreen"
+                );
+
+
+            const appContainer =
+                document.querySelector(
+                    ".app"
+                );
+
+
+            const bottomNav =
+                document.querySelector(
+                    ".bottom-nav"
+                );
+
+
+            // Supabase merkt sich die Sitzung selbst (in seinem eigenen
+            // localStorage-Bereich) - deshalb bleibt man nach dem
+            // Neuladen der Seite automatisch eingeloggt.
+            const sessionResult =
+                await supabaseClient.auth.getSession();
+
+
+            const session =
+                sessionResult.data.session;
+
+
+            if (session) {
+
+
+                account = {
+
+                    id:
+                        session.user.id,
+
+                    email:
+                        session.user.email
+
+                };
+
+
+                isLoggedIn = true;
+
+
+                authScreen.style.display =
+                    "none";
+
+                appContainer.style.display =
+                    "";
+
+                bottomNav.style.display =
+                    "";
+
+
+                // WICHTIG: Muss NACH "bottomNav.style.display = ''"
+                // passieren - solange die Navigation noch display:none
+                // hat, wäre offsetWidth/offsetLeft des Buttons 0 und
+                // der Indicator würde falsch positioniert.
+                moveNavIndicator(
+                    "navHome"
+                );
+
+
+                renderAccountInfo();
+
+
+                await loadUserData();
+
+            }
+
+            else {
+
+
+                account = null;
+
+                isLoggedIn = false;
+
+
+                renderAuthMode();
+
+
+                authScreen.style.display =
+                    "flex";
+
+                appContainer.style.display =
+                    "none";
+
+                bottomNav.style.display =
+                    "none";
+
+            }
+
+        }
+
+
+        /* =========================================================
+           ACCOUNT-EINSTELLUNGEN (E-Mail / Passwort ändern)
+        ========================================================= */
+
+
+        function renderAccountInfo() {
+
+            document.getElementById(
+                "accountEmailDisplay"
+            ).textContent =
+                account
+                    ? account.email
+                    : "Nicht angemeldet";
+
+        }
+
+
+        // Öffnet das Account-Modal im gewünschten Modus und blendet
+        // nur die dazu passenden Eingabefelder ein.
+        function openAccountModal(
+            action
+        ) {
+
+
+            accountModalAction =
+                action;
+
+
+            document.getElementById(
+                "accountModalError"
+            ).style.display =
+                "none";
+
+
+            // Formularfelder leeren
+            document.getElementById(
+                "newEmailInput"
+            ).value = "";
+
+            document.getElementById(
+                "currentPasswordInput"
+            ).value = "";
+
+            document.getElementById(
+                "newPasswordInput"
+            ).value = "";
+
+            document.getElementById(
+                "newPasswordConfirmInput"
+            ).value = "";
+
+
+            const emailFields =
+                document.getElementById(
+                    "accountEmailFields"
+                );
+
+
+            const passwordFields =
+                document.getElementById(
+                    "accountPasswordFields"
+                );
+
+
+            if (action === "password") {
+
+                document.getElementById(
+                    "accountModalTitle"
+                ).textContent =
+                    "Passwort ändern";
+
+                emailFields.style.display =
+                    "none";
+
+                passwordFields.style.display =
+                    "block";
+
+            }
+
+            else {
+
+                document.getElementById(
+                    "accountModalTitle"
+                ).textContent =
+                    "E-Mail ändern";
+
+                emailFields.style.display =
+                    "block";
+
+                passwordFields.style.display =
+                    "none";
+
+            }
+
+
+            document
+                .getElementById(
+                    "accountModal"
+                )
+                .classList.add(
+                    "show"
+                );
+
+        }
+
+
+        function closeAccountModal() {
+
+            document
+                .getElementById(
+                    "accountModal"
+                )
+                .classList.remove(
+                    "show"
+                );
+
+        }
+
+
+        function showAccountModalError(
+            message
+        ) {
+
+            const errorBox =
+                document.getElementById(
+                    "accountModalError"
+                );
+
+            errorBox.textContent =
+                message;
+
+            errorBox.style.display =
+                "block";
+
+        }
+
+
+        // Liest das Account-Modal aus und speichert je nach Modus
+        // entweder die neue E-Mail oder das neue Passwort - direkt
+        // über Supabase Auth (supabaseClient.auth.updateUser). Supabase
+        // prüft dabei automatisch, ob man gerade eingeloggt ist.
+        async function saveAccountChange() {
+
+
+            if (!account) {
+                return;
+            }
+
+
+            if (accountModalAction === "email") {
+
+
+                const newEmail =
+                    document.getElementById(
+                        "newEmailInput"
+                    ).value.trim().toLowerCase();
+
+
+                if (
+                    !isValidEmail(newEmail)
+                ) {
+
+                    showAccountModalError(
+                        "Bitte eine gültige E-Mail-Adresse eingeben."
+                    );
+
+                    return;
+
+                }
+
+
+                const updateResult =
+                    await supabaseClient.auth.updateUser({
+
+                        email:
+                            newEmail
+
+                    });
+
+
+                if (updateResult.error) {
+
+                    showAccountModalError(
+                        updateResult.error.message
+                    );
+
+                    return;
+
+                }
+
+
+                // Bei aktivierter E-Mail-Bestätigung ändert sich die
+                // E-Mail erst, NACHDEM der Nutzer den Bestätigungs-Link
+                // in seiner (alten UND neuen) Mailbox angeklickt hat.
+                alert(
+                    "Falls die E-Mail-Bestätigung aktiv ist, prüfe deine Mailbox, um die Änderung abzuschließen."
+                );
+
+
+                closeAccountModal();
+
+            }
+
+            else {
+
+
+                const currentPassword =
+                    document.getElementById(
+                        "currentPasswordInput"
+                    ).value;
+
+
+                const newPassword =
+                    document.getElementById(
+                        "newPasswordInput"
+                    ).value;
+
+
+                const newPasswordConfirm =
+                    document.getElementById(
+                        "newPasswordConfirmInput"
+                    ).value;
+
+
+                // Das "aktuelle Passwort" prüfen wir, indem wir uns
+                // testweise damit einloggen. Supabase hat keinen
+                // direkten "check password"-Aufruf im Frontend.
+                const checkResult =
+                    await supabaseClient.auth.signInWithPassword({
+
+                        email:
+                            account.email,
+
+                        password:
+                            currentPassword
+
+                    });
+
+
+                if (checkResult.error) {
+
+                    showAccountModalError(
+                        "Das aktuelle Passwort ist falsch."
+                    );
+
+                    return;
+
+                }
+
+
+                if (newPassword.length < 6) {
+
+                    showAccountModalError(
+                        "Das neue Passwort muss mindestens 6 Zeichen lang sein."
+                    );
+
+                    return;
+
+                }
+
+
+                if (
+                    newPassword !==
+                    newPasswordConfirm
+                ) {
+
+                    showAccountModalError(
+                        "Die neuen Passwörter stimmen nicht überein."
+                    );
+
+                    return;
+
+                }
+
+
+                const updateResult =
+                    await supabaseClient.auth.updateUser({
+
+                        password:
+                            newPassword
+
+                    });
+
+
+                if (updateResult.error) {
+
+                    showAccountModalError(
+                        updateResult.error.message
+                    );
+
+                    return;
+
+                }
+
+
+                closeAccountModal();
+
+                alert(
+                    "Passwort erfolgreich geändert."
+                );
+
+            }
+
+        }
+
+
+        function showAccountMessage() {
+
+            alert(
+                "Diese Einstellung kommt als Nächstes."
+            );
+
+        }
+
+
+        /* =========================================================
+           THEME (Dunkel/Hell)
+        ========================================================= */
+
+
+        // Setzt data-theme auf <html>. "persist" steuert, ob die Wahl
+        // auch dauerhaft gespeichert werden soll (in Supabase, wenn
+        // eingeloggt, sonst nur lokal) - beim allerersten Laden der
+        // Seite (vor dem Login) wollen wir NICHT gleich in die
+        // Datenbank schreiben, deshalb persist=false in diesem Fall.
+        function applyTheme(
+            theme,
+            persist
+        ) {
+
+            document.documentElement.setAttribute(
+                "data-theme",
+                theme
+            );
+
+
+            localStorage.setItem(
+                "theme",
+                theme
+            );
+
+
+            // Die drei Buttons in den Einstellungen mit dem echten
+            // Theme synchron halten (falls sie gerade sichtbar sind):
+            // genau der Button, der zum aktuellen Theme passt,
+            // bekommt die Klasse "active", alle anderen verlieren sie.
+            document
+                .querySelectorAll(
+                    ".theme-option"
+                )
+                .forEach(
+                    function (button) {
+
+                        button.classList.toggle(
+                            "active",
+                            button.dataset.themeValue === theme
+                        );
+
+                    }
+                );
+
+
+            if (persist && account) {
+
+                supabaseClient
+                    .from("settings")
+                    .update({
+                        theme: theme
+                    })
+                    .eq(
+                        "user_id",
+                        account.id
+                    )
+                    .then(
+                        function (result) {
+
+                            if (result.error) {
+
+                                console.error(
+                                    "Fehler beim Speichern des Themes:",
+                                    result.error
+                                );
+
+                            }
+
+                        }
+                    );
+
+            }
+
+        }
+
+
+        // Wird beim Klick auf einen der drei Theme-Buttons
+        // (Dunkel/Hell/Grau) in den Einstellungen aufgerufen.
+        function setTheme(theme) {
+
+            applyTheme(
+                theme,
+                true
+            );
+
+        }
+
+
+        /* =========================================================
+           KI-CHAT
+        ========================================================= */
+
+
+        function renderChat() {
+
+
+            const chatWindow =
+                document.getElementById(
+                    "chatWindow"
+                );
+
+
+            chatWindow.innerHTML = "";
+
+
+            if (chatMessages.length === 0) {
+
+
+                const empty =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                empty.className =
+                    "empty-state";
+
+
+                empty.textContent =
+                    "Schreib mir eine Nachricht, um loszulegen 👋";
+
+
+                chatWindow.appendChild(
+                    empty
+                );
+
+
+                return;
+
+            }
+
+
+            chatMessages.forEach(
+                function (message) {
+
+
+                    const bubble =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    bubble.className =
+                        "chat-message " +
+                        message.sender;
+
+
+                    // textContent statt innerHTML, damit eingegebener
+                    // Text nicht versehentlich als HTML interpretiert wird.
+                    bubble.textContent =
+                        message.text;
+
+
+                    chatWindow.appendChild(
+                        bubble
+                    );
+
+                }
+            );
+
+
+            // Automatisch ganz nach unten scrollen, zur neuesten Nachricht.
+            chatWindow.scrollTop =
+                chatWindow.scrollHeight;
+
+        }
+
+
+        function handleChatKeydown(
+            event
+        ) {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                sendChatMessage();
+
+            }
+
+        }
+
+
+        // Fügt die eigene Nachricht hinzu und lässt (aktuell) eine
+        // Platzhalter-Antwort folgen. Sobald eine echte KI angebunden
+        // ist, muss nur der setTimeout-Block hier unten durch einen
+        // echten API-Aufruf ersetzt werden.
+        function sendChatMessage() {
+
+
+            const input =
+                document.getElementById(
+                    "chatInput"
+                );
+
+
+            const text =
+                input.value.trim();
+
+
+            if (text === "") {
+                return;
+            }
+
+
+            chatMessages.push({
+
+                sender:
+                    "user",
+
+                text:
+                    text
+
+            });
+
+
+            input.value = "";
+
+
+            saveChatMessages();
+
+            renderChat();
+
+
+            setTimeout(
+                function () {
+
+
+                    chatMessages.push({
+
+                        sender:
+                            "ai",
+
+                        text:
+                            "Der KI-Assistent ist noch nicht verbunden. Diese Funktion kommt als Nächstes!"
+
+                    });
+
+
+                    saveChatMessages();
+
+                    renderChat();
+
+
+                },
+                500
+            );
+
+        }
+
+
+        /* =========================================================
+           TAGESZITAT
+        ========================================================= */
+
+
+        function renderQuote() {
+
+
+            const day =
+                new Date().getDate();
+
+
+            const quote =
+                quotes[
+                day %
+                quotes.length
+                ];
+
+
+            document.getElementById(
+                "dailyQuote"
+            ).textContent =
+                quote;
+
+        }
+
+
+        /* =========================================================
+           ALLES NEU RENDERN
+           Diese Funktion wird nach JEDER Datenänderung aufgerufen,
+           damit die Anzeige immer zum aktuellen Stand passt.
+        ========================================================= */
+
+
+        function renderAll() {
+
+
+            renderWeek();
+
+            renderHabits();
+
+            renderTasks();
+
+            renderAccountInfo();
+
+            renderChat();
+
+            renderQuote();
+
+
+            document.getElementById(
+                "streakNumber"
+            ).textContent =
+                calculateStreak();
+
+        }
+
+
+        /* =========================================================
+           TASTATUR-STEUERUNG
+           ESC schließt Modals, ENTER bestätigt ein offenes Modal
+           bzw. das Login/Registrierungs-Formular.
+        ========================================================= */
+
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+
+                    closeAddModal();
+
+                    closeAccountModal();
+
+                }
+
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+
+                    const addModal =
+                        document.getElementById(
+                            "addModal"
+                        );
+
+
+                    if (
+                        addModal.classList
+                            .contains("show")
+                    ) {
+
+                        createItem();
+
+                        return;
+
+                    }
+
+
+                    const accountModal =
+                        document.getElementById(
+                            "accountModal"
+                        );
+
+
+                    if (
+                        accountModal.classList
+                            .contains("show")
+                    ) {
+
+                        saveAccountChange();
+
+                        return;
+
+                    }
+
+
+                    const authScreen =
+                        document.getElementById(
+                            "authScreen"
+                        );
+
+
+                    if (
+                        authScreen.style.display ===
+                        "flex"
+                    ) {
+
+                        handleAuthSubmit();
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           HTML-SICHERHEIT
+           Verhindert, dass eingegebener Text versehentlich als
+           HTML-Code interpretiert wird (z.B. wenn jemand
+           "<b>Test</b>" als Habit-Namen eingibt).
+        ========================================================= */
+
+
+        function escapeHtml(
+            text
+        ) {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.textContent =
+                text;
+
+
+            return div.innerHTML;
+
+        }
+
+
+        /* =========================================================
+           APP STARTEN
+        ========================================================= */
+
+
+        // Gespeichertes Theme (lokal gecacht) sofort anzeigen, damit es
+        // beim Laden nicht "flackert". persist=false, weil wir hier nur
+        // lesen, nicht schreiben wollen (und ohnehin noch kein Account
+        // bekannt ist).
+        applyTheme(
+            localStorage.getItem("theme") ||
+            "dark",
+            false
+        );
+
+
+        renderAll();
+
+
+        // Prüft, ob bereits eine Supabase-Sitzung existiert (Login von
+        // vorher) und lädt in diesem Fall automatisch alle Daten des
+        // Accounts - sonst wird der Login/Registrierungs-Bildschirm
+        // angezeigt. Das ist der eigentliche Startpunkt der App.
+        checkAuthState();
+
+
+    </script>
+
+
+</body>
+
+</html>
