@@ -157,6 +157,19 @@
 
 
     <!--
+        WEB APP MANIFEST
+        Beschreibt die App für das Handy: Name, Farben, Icons - und
+        vor allem "display": "standalone".
+
+        WICHTIG: Ohne diese Datei und ohne "standalone" erlaubt Apple
+        auf dem iPhone GAR KEINE Benachrichtigungen. Die manifest.json
+        muss deshalb im gleichen Ordner liegen wie diese index.html.
+    -->
+
+    <link rel="manifest" href="manifest.json">
+
+
+    <!--
         Name, der unter dem Icon auf dem Home-Bildschirm steht.
         Ohne diese Zeile würde iOS den kompletten <title> nehmen
         und ihn abschneiden.
@@ -793,48 +806,99 @@
 
 
         /* =========================================================
-           TAGESZITAT
+           UPDATE-HINWEIS
+           Wird auf der Home-Seite eingeblendet, wenn die App eine
+           neuere Version hat als beim letzten Öffnen - erklärt in
+           einem Satz, was neu ist. Lässt sich wegtippen.
         ========================================================= */
 
-        .quote {
+        .update-banner {
 
-            background:
-                linear-gradient(135deg,
-                    #3c91c7,
-                    #70c6f5);
+            display: flex;
 
-            color: #082037;
+            align-items: flex-start;
+
+            gap: 11px;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
 
             border-radius: 16px;
 
-            padding: 15px 17px;
-
-            font-size: 14px;
-
-            line-height: 1.5;
-
-            font-weight: 600;
+            padding: 14px 15px;
 
             margin-bottom: 25px;
 
         }
 
 
-        /*
-        // NUR IM GRAU-THEME: statt der hellblauen Banner-Farbe eine
-        // dunkle Glas-Karte mit weißer Schrift, passend zum restlichen
-        // Theme (das Zitat ist damit kein "bunter Fremdkörper" mehr).
-        */
-
-        [data-theme="gray"] .quote {
-
-            background: var(--card);
+        [data-theme="gray"] .update-banner {
 
             backdrop-filter: blur(18px);
 
             -webkit-backdrop-filter: blur(18px);
 
-            color: var(--text);
+        }
+
+
+        .update-banner-icon {
+
+            font-size: 18px;
+
+            line-height: 1.3;
+
+        }
+
+
+        .update-banner-text {
+
+            flex: 1;
+
+            min-width: 0;
+
+        }
+
+
+        .update-banner-title {
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            margin-bottom: 3px;
+
+        }
+
+
+        .update-banner-body {
+
+            font-size: 12.5px;
+
+            line-height: 1.45;
+
+            color: var(--muted);
+
+        }
+
+
+        .update-banner-close {
+
+            flex-shrink: 0;
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            font-size: 19px;
+
+            line-height: 1;
+
+            cursor: pointer;
+
+            padding: 0 2px;
 
         }
 
@@ -3486,13 +3550,30 @@
             </div>
 
 
-            <div class="quote">
+            <!--
+                UPDATE-HINWEIS
+                Normalerweise unsichtbar. Er taucht nur auf, wenn die
+                App seit dem letzten Öffnen eine neue Version bekommen
+                hat - befüllt wird er von showUpdateBanner() im JS.
+            -->
 
-                💭
-                <span id="dailyQuote">
-                    My mind is calm, my heart is open,
-                    my spirit is strong.
-                </span>
+            <div class="update-banner" id="updateBanner" style="display: none;">
+
+                <div class="update-banner-icon">
+                    ✨
+                </div>
+
+                <div class="update-banner-text">
+
+                    <div class="update-banner-title" id="updateBannerTitle"></div>
+
+                    <div class="update-banner-body" id="updateBannerBody"></div>
+
+                </div>
+
+                <button class="update-banner-close" onclick="dismissUpdateBanner()" aria-label="Hinweis schließen">
+                    ×
+                </button>
 
             </div>
 
@@ -3992,7 +4073,14 @@
                 </div>
 
 
-                <button class="setting-row" onclick="showAccountMessage()">
+                <!--
+                    Der Klick hier ist der EINZIGE Weg, die Erlaubnis
+                    für Benachrichtigungen anzufragen: Apple erlaubt die
+                    Nachfrage nur direkt aus einem echten Fingertipp
+                    heraus, nicht automatisch beim Laden der Seite.
+                -->
+
+                <button class="setting-row" onclick="requestNotificationPermission()">
 
                     <div class="setting-left">
 
@@ -4002,6 +4090,34 @@
 
                         <div class="setting-label">
                             Benachrichtigungen
+                        </div>
+
+                    </div>
+
+                    <div class="setting-arrow" id="notificationStatus">
+                        Aus
+                    </div>
+
+                </button>
+
+
+                <!--
+                    Schickt eine echte Push-Nachricht über den Server.
+                    Damit kannst du testen, ob auch bei GESCHLOSSENER
+                    App etwas ankommt - das geht nur über den Server,
+                    nicht über die App selbst.
+                -->
+
+                <button class="setting-row" onclick="sendTestPush()">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            📨
+                        </div>
+
+                        <div class="setting-label">
+                            Test-Benachrichtigung
                         </div>
 
                     </div>
@@ -4599,24 +4715,41 @@
         let notesLoadError = null;
 
 
-        // Tageszitate - wechseln automatisch je nach Kalendertag
-        const quotes = [
+        /*
+        // VERSIONS-VERLAUF DER APP
+        //
+        // Der oberste Eintrag ist immer die aktuelle Version. Wenn du
+        // etwas Neues einbaust, trägst du hier oben einen neuen Eintrag
+        // mit einer um 1 höheren "version" ein - fertig. Die App merkt
+        // beim nächsten Öffnen automatisch, dass es etwas Neues gibt,
+        // zeigt den Hinweis auf der Home-Seite und schickt (falls
+        // erlaubt) eine Benachrichtigung aufs Handy.
+        */
 
-            "My mind is calm, my heart is open, my spirit is strong.",
+        const APP_UPDATES = [
 
-            "Kleine Schritte führen zu großen Veränderungen.",
+            {
+                version: 3,
 
-            "Du musst nicht perfekt sein. Du musst nur anfangen.",
+                title: "Notizen-Funktion hinzugefügt",
 
-            "Heute ist ein guter Tag, um etwas für dich zu tun.",
+                text: "Du kannst jetzt Notizen schreiben und formatieren - der neue Tab ist unten in der Leiste."
+            },
 
-            "Consistency beats motivation.",
+            {
+                version: 2,
 
-            "Focus on what you can control.",
+                title: "Neues Design in der Navigation",
 
-            "Dein zukünftiges Ich wird dir dafür danken."
+                text: "Die untere Leiste hat jetzt einheitliche Symbole und die App ein eigenes Icon."
+            }
 
         ];
+
+
+        // Die aktuelle Version ist immer der oberste Eintrag oben.
+        const APP_VERSION =
+            APP_UPDATES[0].version;
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -4928,6 +5061,20 @@
             // --- NOTIZEN LADEN ---
 
             await loadNotes();
+
+
+            /*
+            // Falls Benachrichtigungen bereits erlaubt sind: die
+            // Push-Anmeldung dieses Geräts auffrischen. Die vom
+            // Push-Dienst vergebene Adresse kann sich nämlich ändern
+            // (z.B. nach längerer Zeit ohne Nutzung) - dann wäre der
+            // Eintrag in der Datenbank veraltet und es käme nichts mehr an.
+            //
+            // Kein "await": das darf ruhig im Hintergrund laufen, die
+            // App muss nicht darauf warten.
+            */
+
+            subscribeToPush();
 
 
             renderAll();
@@ -8646,28 +8793,686 @@
 
 
         /* =========================================================
-           TAGESZITAT
+           BENACHRICHTIGUNGEN
+
+           WICHTIG ZU WISSEN (vor allem für das iPhone):
+
+           Damit Benachrichtigungen auf dem iPhone überhaupt erlaubt
+           sind, müssen DREI Dinge zusammenkommen:
+
+           1. Die Seite muss über HTTPS laufen (GitHub Pages tut das).
+           2. Die App muss über Safari zum Home-Bildschirm hinzugefügt
+              worden sein. In einem normalen Safari-Tab verweigert
+              Apple Benachrichtigungen komplett.
+           3. Es muss einen "Service Worker" geben (service-worker.js)
+              und eine manifest.json mit "display": "standalone".
+
+           Außerdem darf die Nachfrage nach der Erlaubnis NUR direkt
+           aus einem echten Fingertipp heraus passieren - deshalb
+           hängt sie am Button in den Einstellungen und läuft nicht
+           automatisch beim Start.
+
+           WAS DIESE VERSION KANN: eine Benachrichtigung, wenn du die
+           App geöffnet hast und es seit dem letzten Mal ein Update gab.
+           WAS SIE (NOCH) NICHT KANN: Benachrichtigungen schicken,
+           während die App geschlossen ist - dafür bräuchte es einen
+           Server, der die Nachricht aktiv verschickt (siehe Hinweis
+           in der Anleitung).
         ========================================================= */
 
 
-        function renderQuote() {
+        /*
+        // ÖFFENTLICHER VAPID-SCHLÜSSEL
+        //
+        // Dieser Schlüssel darf im Frontend stehen - genau wie der
+        // Supabase-"publishable key" ist er absichtlich öffentlich.
+        // Er ist die "Adresse", mit der sich dein Handy beim Push-Dienst
+        // von Apple anmeldet.
+        //
+        // Der zugehörige GEHEIME Schlüssel liegt ausschließlich in
+        // Supabase (Edge Functions -> Secrets) und darf NIE hier landen -
+        // sonst könnte jeder in deinem Namen Benachrichtigungen an
+        // deine Nutzer schicken.
+        */
+
+        const VAPID_PUBLIC_KEY =
+            "BFV1SdwCiqJYX_53o9EP7yJlVoKMpUY8CeTBLo5Ogji8mKcZfxQ08tGAgkwdBynjPEMwvBZ-bPcamjwFUjgWP9E";
 
 
-            const day =
-                new Date().getDate();
+        // Merkt sich den registrierten Service Worker, damit wir ihn
+        // später zum Anzeigen von Benachrichtigungen nutzen können.
+        let serviceWorkerRegistration = null;
 
 
-            const quote =
-                quotes[
-                day %
-                quotes.length
-                ];
+        // Prüft, ob dieser Browser Benachrichtigungen überhaupt kennt.
+        function notificationsSupported() {
+
+            return (
+                "Notification" in window &&
+                "serviceWorker" in navigator
+            );
+
+        }
+
+
+        /*
+        // Registriert den Service Worker - eine kleine Datei, die im
+        // Hintergrund läuft und Benachrichtigungen anzeigen darf.
+        // Läuft direkt beim Start, ganz ohne Nachfrage: registrieren
+        // allein zeigt noch nichts an und stört den Nutzer nicht.
+        */
+
+        async function registerServiceWorker() {
+
+            if (!("serviceWorker" in navigator)) {
+
+                return;
+
+            }
+
+
+            try {
+
+                // Bewusst ein RELATIVER Pfad ("service-worker.js" statt
+                // "/service-worker.js") - dadurch funktioniert es auch,
+                // wenn die App bei GitHub Pages in einem Unterordner liegt.
+                serviceWorkerRegistration =
+                    await navigator.serviceWorker.register(
+                        "service-worker.js"
+                    );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Service Worker konnte nicht registriert werden:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        /*
+        // Zeigt eine echte Benachrichtigung an.
+        //
+        // Auf dem iPhone MUSS das über den Service Worker laufen
+        // (registration.showNotification). Der sonst übliche Weg
+        // "new Notification(...)" wird von Safari auf dem iPhone
+        // nicht unterstützt und würde dort einfach nichts tun.
+        */
+
+        async function showNotification(
+            title,
+            body
+        ) {
+
+            if (!notificationsSupported()) {
+
+                return false;
+
+            }
+
+
+            if (Notification.permission !== "granted") {
+
+                return false;
+
+            }
+
+
+            // Falls die Registrierung beim Start noch nicht fertig war,
+            // hier noch einmal nachfragen.
+            if (!serviceWorkerRegistration) {
+
+                try {
+
+                    serviceWorkerRegistration =
+                        await navigator.serviceWorker.ready;
+
+                }
+
+                catch (error) {
+
+                    return false;
+
+                }
+
+            }
+
+
+            try {
+
+                await serviceWorkerRegistration.showNotification(
+                    title,
+                    {
+
+                        body:
+                            body,
+
+                        icon:
+                            "icon-192.png",
+
+                        badge:
+                            "icon-192.png",
+
+                        // Gleiches "tag" = eine neue Benachrichtigung
+                        // ersetzt die alte, statt sich zu stapeln.
+                        tag:
+                            "app-update"
+
+                    }
+                );
+
+                return true;
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Benachrichtigung konnte nicht angezeigt werden:",
+                    error
+                );
+
+                return false;
+
+            }
+
+        }
+
+
+        /*
+        // Fragt den Nutzer um Erlaubnis. Wird NUR vom Button in den
+        // Einstellungen aufgerufen (echter Fingertipp - siehe oben).
+        */
+
+        async function requestNotificationPermission() {
+
+            if (!notificationsSupported()) {
+
+                alert(
+                    "Dieser Browser unterstützt keine Benachrichtigungen.\n\n" +
+                    "Auf dem iPhone musst du die App zuerst über Safari mit " +
+                    "\"Teilen\" -> \"Zum Home-Bildschirm\" speichern und dann " +
+                    "von dort öffnen."
+                );
+
+                return;
+
+            }
+
+
+            if (Notification.permission === "denied") {
+
+                alert(
+                    "Benachrichtigungen sind für diese App blockiert.\n\n" +
+                    "Du kannst sie in den Einstellungen deines Handys wieder " +
+                    "erlauben (Einstellungen -> Mitteilungen -> KI-Assistent)."
+                );
+
+                return;
+
+            }
+
+
+            if (Notification.permission === "granted") {
+
+                // Schon erlaubt - dann sicherheitshalber prüfen, ob
+                // dieses Gerät auch wirklich beim Push-Dienst angemeldet ist.
+                const angemeldet =
+                    await subscribeToPush();
+
+                renderNotificationStatus();
+
+
+                alert(
+                    angemeldet
+                        ? "Benachrichtigungen sind aktiv und dieses Gerät ist angemeldet.\n\nMit \"Test-Benachrichtigung\" kannst du es ausprobieren."
+                        : "Benachrichtigungen sind erlaubt, aber die Anmeldung beim Push-Dienst hat nicht geklappt. Prüfe, ob die Tabelle \"push_subscriptions\" in Supabase existiert."
+                );
+
+                return;
+
+            }
+
+
+            const result =
+                await Notification.requestPermission();
+
+
+            renderNotificationStatus();
+
+
+            if (result === "granted") {
+
+                await subscribeToPush();
+
+
+                await showNotification(
+                    "Benachrichtigungen aktiv",
+                    "Ab jetzt sagt dir die App Bescheid, wenn es etwas Neues gibt."
+                );
+
+            }
+
+            else {
+
+                alert(
+                    "Ohne deine Erlaubnis kann die App dir leider nichts schicken. " +
+                    "Du kannst das hier jederzeit wieder ändern."
+                );
+
+            }
+
+        }
+
+
+        /* ---------------------------------------------------------
+           ECHTE PUSH-BENACHRICHTIGUNGEN
+
+           Bis hierher konnte die App nur etwas anzeigen, WÄHREND sie
+           offen ist. Damit auch bei geschlossener App etwas ankommt,
+           muss sich das Gerät beim Push-Dienst anmelden (bei iPhones
+           ist das Apple). Das Ergebnis dieser Anmeldung - eine Art
+           Briefkasten-Adresse - speichern wir in Supabase, damit der
+           Server später weiß, wohin er schicken soll.
+        --------------------------------------------------------- */
+
+
+        /*
+        // Der Browser erwartet den VAPID-Schlüssel nicht als Text,
+        // sondern als Folge von Bytes. Diese Funktion rechnet das um.
+        // (Standard-Hilfsfunktion, die in fast jeder Push-Anleitung
+        //  in genau dieser Form vorkommt.)
+        */
+
+        function urlBase64ToUint8Array(base64String) {
+
+            const padding =
+                "=".repeat(
+                    (4 - base64String.length % 4) % 4
+                );
+
+
+            const base64 =
+                (base64String + padding)
+                    .replace(/-/g, "+")
+                    .replace(/_/g, "/");
+
+
+            const rawData =
+                atob(base64);
+
+
+            const outputArray =
+                new Uint8Array(rawData.length);
+
+
+            for (
+                let i = 0;
+                i < rawData.length;
+                i++
+            ) {
+
+                outputArray[i] =
+                    rawData.charCodeAt(i);
+
+            }
+
+
+            return outputArray;
+
+        }
+
+
+        /*
+        // Meldet dieses Gerät beim Push-Dienst an und speichert die
+        // Adresse in Supabase. Wird aufgerufen, sobald die Erlaubnis
+        // erteilt ist - und bei jedem Start noch einmal, weil sich die
+        // Adresse gelegentlich ändert.
+        */
+
+        async function subscribeToPush() {
+
+            if (!notificationsSupported()) {
+
+                return false;
+
+            }
+
+
+            if (Notification.permission !== "granted") {
+
+                return false;
+
+            }
+
+
+            if (!account) {
+
+                return false;
+
+            }
+
+
+            try {
+
+                if (!serviceWorkerRegistration) {
+
+                    serviceWorkerRegistration =
+                        await navigator.serviceWorker.ready;
+
+                }
+
+
+                // Gibt es schon eine Anmeldung? Dann diese nehmen,
+                // sonst eine neue erstellen.
+                let subscription =
+                    await serviceWorkerRegistration
+                        .pushManager
+                        .getSubscription();
+
+
+                if (!subscription) {
+
+                    subscription =
+                        await serviceWorkerRegistration
+                            .pushManager
+                            .subscribe({
+
+                                // Pflicht: Jede Push-Nachricht MUSS für
+                                // den Nutzer sichtbar sein. Stille
+                                // Hintergrund-Pushes verbietet Apple.
+                                userVisibleOnly: true,
+
+                                applicationServerKey:
+                                    urlBase64ToUint8Array(
+                                        VAPID_PUBLIC_KEY
+                                    )
+
+                            });
+
+                }
+
+
+                // Die Anmeldung in ein einfaches Objekt umwandeln,
+                // damit wir die Schlüssel auslesen können.
+                const raw =
+                    subscription.toJSON();
+
+
+                const saveResult =
+                    await supabaseClient
+                        .from("push_subscriptions")
+                        .upsert(
+                            {
+
+                                user_id:
+                                    account.id,
+
+                                endpoint:
+                                    raw.endpoint,
+
+                                p256dh:
+                                    raw.keys.p256dh,
+
+                                auth:
+                                    raw.keys.auth
+
+                            },
+                            {
+                                // Ist dieses Gerät schon eingetragen,
+                                // wird der Eintrag aktualisiert statt
+                                // ein zweiter angelegt.
+                                onConflict: "endpoint"
+                            }
+                        );
+
+
+                if (saveResult.error) {
+
+                    console.error(
+                        "Push-Anmeldung konnte nicht gespeichert werden:",
+                        saveResult.error
+                    );
+
+                    return false;
+
+                }
+
+
+                return true;
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Push-Anmeldung fehlgeschlagen:",
+                    error
+                );
+
+                return false;
+
+            }
+
+        }
+
+
+        /*
+        // Schickt eine ECHTE Push-Nachricht über den Server an alle
+        // Geräte dieses Nutzers. Anders als showNotification() kommt
+        // diese auch an, wenn die App geschlossen ist.
+        */
+
+        async function sendTestPush() {
+
+            const result =
+                await supabaseClient.functions.invoke(
+                    "send-push",
+                    {
+                        body: {
+
+                            title:
+                                "Test aus der Ferne",
+
+                            body:
+                                "Diese Nachricht kam vom Server - sie funktioniert auch bei geschlossener App."
+
+                        }
+                    }
+                );
+
+
+            if (result.error) {
+
+                console.error(
+                    "Test-Push fehlgeschlagen:",
+                    result.error
+                );
+
+                alert(
+                    "Der Server konnte die Nachricht nicht schicken.\n\n" +
+                    "Prüfe, ob die Edge Function \"send-push\" in Supabase " +
+                    "angelegt ist und die VAPID-Schlüssel als Secrets hinterlegt sind."
+                );
+
+                return;
+
+            }
+
+
+            if (result.data && result.data.sent > 0) {
+
+                alert(
+                    "Der Server hat die Nachricht an " + result.data.sent +
+                    " Gerät(e) geschickt.\n\nTipp: Schließe die App komplett " +
+                    "und lass sie dir dann noch einmal schicken - so siehst du, " +
+                    "dass es auch ohne geöffnete App klappt."
+                );
+
+            }
+
+            else {
+
+                alert(
+                    "Es ist noch kein Gerät angemeldet.\n\n" +
+                    (result.data && result.data.hinweis
+                        ? result.data.hinweis
+                        : "Erlaube die Benachrichtigungen zuerst in dieser App.")
+                );
+
+            }
+
+        }
+
+
+        // Schreibt den aktuellen Status neben die Zeile in den Einstellungen
+        function renderNotificationStatus() {
+
+            const label =
+                document.getElementById(
+                    "notificationStatus"
+                );
+
+
+            if (!label) {
+                return;
+            }
+
+
+            if (!notificationsSupported()) {
+
+                label.textContent =
+                    "Nicht verfügbar";
+
+                return;
+
+            }
+
+
+            if (Notification.permission === "granted") {
+
+                label.textContent =
+                    "An";
+
+            }
+
+            else if (Notification.permission === "denied") {
+
+                label.textContent =
+                    "Blockiert";
+
+            }
+
+            else {
+
+                label.textContent =
+                    "Aus";
+
+            }
+
+        }
+
+
+        /* =========================================================
+           UPDATE-HINWEIS
+
+           Vergleicht die aktuelle Version der App (APP_VERSION) mit
+           der Version, die beim letzten Öffnen aktuell war. Ist sie
+           neuer, wird der Hinweis auf der Home-Seite angezeigt und
+           eine Benachrichtigung geschickt.
+        ========================================================= */
+
+
+        function showUpdateBanner(update) {
+
+            document.getElementById(
+                "updateBannerTitle"
+            ).textContent =
+                "Update: " + update.title;
 
 
             document.getElementById(
-                "dailyQuote"
+                "updateBannerBody"
             ).textContent =
-                quote;
+                update.text;
+
+
+            document.getElementById(
+                "updateBanner"
+            ).style.display =
+                "flex";
+
+        }
+
+
+        function dismissUpdateBanner() {
+
+            document.getElementById(
+                "updateBanner"
+            ).style.display =
+                "none";
+
+        }
+
+
+        async function checkForUpdate() {
+
+            const stored =
+                localStorage.getItem(
+                    "lastSeenVersion"
+                );
+
+
+            // FALL 1: Die App wird zum allerersten Mal geöffnet.
+            // Dann gibt es nichts "Neues" zu melden - wir merken uns
+            // nur still die aktuelle Version.
+            if (stored === null) {
+
+                localStorage.setItem(
+                    "lastSeenVersion",
+                    String(APP_VERSION)
+                );
+
+                return;
+
+            }
+
+
+            const lastSeen =
+                Number(stored);
+
+
+            // FALL 2: Alles beim Alten.
+            if (lastSeen >= APP_VERSION) {
+
+                return;
+
+            }
+
+
+            // FALL 3: Es gab ein Update. Den neuesten Eintrag anzeigen.
+            const update =
+                APP_UPDATES[0];
+
+
+            showUpdateBanner(update);
+
+
+            await showNotification(
+                "Update: " + update.title,
+                update.text
+            );
+
+
+            localStorage.setItem(
+                "lastSeenVersion",
+                String(APP_VERSION)
+            );
 
         }
 
@@ -8694,7 +9499,7 @@
 
             renderChat();
 
-            renderQuote();
+            renderNotificationStatus();
 
 
             document.getElementById(
@@ -8843,6 +9648,28 @@
         // Accounts - sonst wird der Login/Registrierungs-Bildschirm
         // angezeigt. Das ist der eigentliche Startpunkt der App.
         checkAuthState();
+
+
+        /*
+        // Den Service Worker registrieren und danach prüfen, ob es
+        // seit dem letzten Öffnen ein Update gab.
+        //
+        // Die Reihenfolge ist wichtig: erst muss der Service Worker
+        // bereit sein, sonst könnte die Benachrichtigung noch nicht
+        // angezeigt werden. Deshalb hängt checkForUpdate() hier mit
+        // .then() hinten dran.
+        */
+
+        registerServiceWorker()
+            .then(
+                function () {
+
+                    renderNotificationStatus();
+
+                    checkForUpdate();
+
+                }
+            );
 
 
     </script>
