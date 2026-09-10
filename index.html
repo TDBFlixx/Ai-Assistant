@@ -2934,6 +2934,432 @@
 
 
         /* =========================================================
+           NOTIZEN
+           Aufbau wie in der Apple-Notizen-App: erst eine Liste aller
+           Notizen, beim Antippen öffnet sich der Editor für EINE Notiz.
+           Beide Ansichten liegen auf derselben "Seite" und werden per
+           JavaScript umgeschaltet (siehe openNote() / closeNote()).
+        ========================================================= */
+
+
+        /* --- ANSICHT 1: Liste aller Notizen --- */
+
+        .notes-list {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 9px;
+
+        }
+
+
+        .note-item {
+
+            position: relative;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 15px;
+
+            /* Rechts extra Platz lassen, damit der Text nicht unter
+               dem Papierkorb-Button verschwindet. */
+            padding: 14px 46px 14px 15px;
+
+            cursor: pointer;
+
+            transition: transform 0.15s;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: gleiche "verschwommene" Glas-Optik wie
+           bei den Habit- und Aufgaben-Karten. */
+
+        [data-theme="gray"] .note-item {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
+        .note-item:active {
+
+            transform: scale(0.985);
+
+        }
+
+
+        .note-item-title {
+
+            font-size: 15px;
+
+            font-weight: 700;
+
+            margin-bottom: 4px;
+
+            /* Zu lange Titel abschneiden statt umbrechen */
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+
+        }
+
+
+        .note-item-meta {
+
+            display: flex;
+
+            gap: 9px;
+
+            font-size: 12px;
+
+            color: var(--muted);
+
+            /* min-width: 0 ist nötig, damit die Vorschau innerhalb
+               des Flex-Containers überhaupt abgeschnitten werden kann. */
+            min-width: 0;
+
+        }
+
+
+        .note-item-date {
+
+            flex-shrink: 0;
+
+        }
+
+
+        .note-item-preview {
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+
+        }
+
+
+        .note-item-delete {
+
+            position: absolute;
+
+            right: 11px;
+
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 28px;
+
+            height: 28px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: rgba(255, 255, 255, 0.05);
+
+            color: #b9c9d6;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 12px;
+
+            cursor: pointer;
+
+        }
+
+
+        .note-item-delete:hover {
+
+            background: rgba(255, 102, 117, 0.15);
+
+            color: var(--red);
+
+        }
+
+
+        /* --- ANSICHT 2: Editor für eine einzelne Notiz --- */
+
+        .note-editor-bar {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 14px;
+
+        }
+
+
+        .note-back-button {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--blue-light);
+
+            font-size: 15px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            padding: 6px 0;
+
+        }
+
+
+        .note-editor-delete {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--red);
+
+            font-size: 17px;
+
+            cursor: pointer;
+
+            padding: 6px;
+
+        }
+
+
+        /*
+        // FORMATIERUNGS-LEISTE
+        // overflow-x: auto sorgt dafür, dass die Leiste auf schmalen
+        // Handys seitlich scrollbar wird, statt in zwei Zeilen
+        // umzubrechen.
+        */
+
+        .note-toolbar {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 4px;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 14px;
+
+            padding: 6px;
+
+            margin-bottom: 12px;
+
+            overflow-x: auto;
+
+        }
+
+
+        [data-theme="gray"] .note-toolbar {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
+        .note-tool {
+
+            /* Verhindert, dass die Buttons beim Scrollen zusammengequetscht werden */
+            flex-shrink: 0;
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--text);
+
+            padding: 8px 11px;
+
+            border-radius: 9px;
+
+            cursor: pointer;
+
+            font-size: 13px;
+
+            white-space: nowrap;
+
+        }
+
+
+        .note-tool:hover {
+
+            background: rgba(255, 255, 255, 0.07);
+
+        }
+
+
+        /*
+        // "active" markiert die Formatierung, die an der aktuellen
+        // Cursor-Position gerade gilt (siehe updateToolbarState()).
+        */
+
+        .note-tool.active {
+
+            background: var(--blue);
+
+            color: white;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: --blue ist hier Weiß, deshalb dunkle Schrift */
+
+        [data-theme="gray"] .note-tool.active {
+
+            color: #111111;
+
+        }
+
+
+        .note-tool-bold {
+
+            font-weight: 800;
+
+        }
+
+
+        .note-tool-italic {
+
+            font-style: italic;
+
+        }
+
+
+        .note-tool-underline {
+
+            text-decoration: underline;
+
+        }
+
+
+        .note-toolbar-divider {
+
+            flex-shrink: 0;
+
+            width: 1px;
+
+            align-self: stretch;
+
+            background: var(--border);
+
+            margin: 0 3px;
+
+        }
+
+
+        /*
+        // DAS EIGENTLICHE SCHREIBFELD
+        // contenteditable="true" im HTML macht aus diesem normalen
+        // <div> ein beschreibbares Feld, in dem - anders als bei einem
+        // <textarea> - auch Formatierungen wie Fett oder Überschriften
+        // möglich sind.
+        */
+
+        .note-editor {
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 16px;
+
+            padding: 16px;
+
+            min-height: 320px;
+
+            color: var(--text);
+
+            font-size: 15px;
+
+            line-height: 1.55;
+
+            outline: none;
+
+        }
+
+
+        [data-theme="gray"] .note-editor {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
+        /*
+        // Platzhaltertext bei leerer Notiz. Ein contenteditable-Feld
+        // kennt kein "placeholder"-Attribut wie ein <input>, deshalb
+        // blenden wir den Text über CSS ein, solange das Feld leer ist.
+        */
+
+        .note-editor:empty::before {
+
+            content: attr(data-placeholder);
+
+            color: var(--muted);
+
+        }
+
+
+        /* Die Textformate innerhalb der Notiz */
+
+        .note-editor h2 {
+
+            font-size: 21px;
+
+            font-weight: 750;
+
+            margin: 0 0 8px;
+
+        }
+
+
+        .note-editor h3 {
+
+            font-size: 17px;
+
+            font-weight: 700;
+
+            margin: 0 0 6px;
+
+        }
+
+
+        .note-editor p,
+        .note-editor div {
+
+            margin: 0 0 4px;
+
+        }
+
+
+        /* =========================================================
            DESKTOP-ANPASSUNGEN
         ========================================================= */
 
@@ -3306,6 +3732,140 @@
 
 
         <!-- =====================================
+         NOTIZEN-SEITE
+         Enthält ZWEI Ansichten, die per JavaScript umgeschaltet
+         werden (genau wie in der Apple-Notizen-App):
+
+         1. notesListView  - die Liste aller Notizen
+         2. noteEditorView - der Editor für eine einzelne Notiz
+
+         Immer nur eine der beiden ist sichtbar; das steuern die
+         Funktionen openNote() und closeNote() weiter unten im JS.
+    ====================================== -->
+
+        <main class="page" id="notesPage">
+
+
+            <!-- ===== ANSICHT 1: LISTE ALLER NOTIZEN ===== -->
+
+            <div id="notesListView">
+
+
+                <div class="page-heading">
+
+                    <h1>
+                        Notizen
+                    </h1>
+
+                    <p>
+                        Alle deine Gedanken an einem Ort.
+                    </p>
+
+                </div>
+
+
+                <div class="notes-list" id="notesList"></div>
+
+
+                <!--
+                    Hier gibt es bewusst KEINEN eigenen "+"-Button:
+                    der große "+" in der unteren Leiste legt auf dieser
+                    Seite automatisch eine neue Notiz an (siehe
+                    openAddModal() im JS). Zwei "+"-Buttons direkt
+                    nebeneinander wären nur verwirrend.
+                -->
+
+
+            </div>
+
+
+            <!-- ===== ANSICHT 2: EDITOR FÜR EINE NOTIZ ===== -->
+
+            <div id="noteEditorView" style="display: none;">
+
+
+                <div class="note-editor-bar">
+
+                    <button class="note-back-button" onclick="closeNote()">
+                        ‹ Notizen
+                    </button>
+
+                    <button class="note-editor-delete" onclick="deleteCurrentNote()" title="Notiz löschen">
+                        🗑️
+                    </button>
+
+                </div>
+
+
+                <!--
+                    FORMATIERUNGS-LEISTE
+
+                    WICHTIG: Jeder Button hat onmousedown="event.preventDefault()".
+                    Ohne das würde beim Klick der Cursor aus dem Schreibfeld
+                    springen - und dann wüsste der Browser gar nicht mehr,
+                    welcher Text überhaupt formatiert werden soll.
+
+                    F / K / U stehen (wie in Word auf Deutsch) für
+                    Fett / Kursiv / Unterstrichen.
+                -->
+
+                <div class="note-toolbar">
+
+                    <button class="note-tool" data-block="h2" title="Überschrift"
+                        onmousedown="event.preventDefault()" onclick="setBlockFormat('h2')">
+                        Überschrift
+                    </button>
+
+                    <button class="note-tool" data-block="h3" title="Unterüberschrift"
+                        onmousedown="event.preventDefault()" onclick="setBlockFormat('h3')">
+                        Unterüberschrift
+                    </button>
+
+                    <button class="note-tool" data-block="div" title="Normaler Text"
+                        onmousedown="event.preventDefault()" onclick="setBlockFormat('div')">
+                        Text
+                    </button>
+
+
+                    <div class="note-toolbar-divider"></div>
+
+
+                    <button class="note-tool note-tool-bold" data-command="bold" title="Fett"
+                        onmousedown="event.preventDefault()" onclick="formatText('bold')">
+                        F
+                    </button>
+
+                    <button class="note-tool note-tool-italic" data-command="italic" title="Kursiv"
+                        onmousedown="event.preventDefault()" onclick="formatText('italic')">
+                        K
+                    </button>
+
+                    <button class="note-tool note-tool-underline" data-command="underline" title="Unterstrichen"
+                        onmousedown="event.preventDefault()" onclick="formatText('underline')">
+                        U
+                    </button>
+
+                </div>
+
+
+                <!--
+                    contenteditable="true" macht aus diesem <div> ein
+                    beschreibbares Feld, in dem auch Formatierungen
+                    möglich sind (anders als bei einem <textarea>).
+                -->
+
+                <div class="note-editor" id="noteEditor" contenteditable="true"
+                    data-placeholder="Schreib hier deine Notiz..." oninput="handleNoteInput()"
+                    onkeyup="updateToolbarState()" onmouseup="updateToolbarState()"></div>
+
+
+            </div>
+
+
+        </main>
+
+
+        <!-- =====================================
          EINSTELLUNGEN-SEITE
          (früher "Profil" - jetzt mit echtem Account,
          Theme-Schalter und weiteren Einstellungen)
@@ -3579,16 +4139,26 @@
         </button>
 
 
-        <button class="nav-button" id="navHabit" onclick="showPage('habit')">
+        <!--
+            NOTIZEN statt Habits in der unteren Leiste.
+            Die Habits-Seite gibt es weiterhin - sie wird jetzt über
+            die Home-Seite erreicht ("Alle" neben "Daily Habits" oder
+            der "Details"-Button in der Streak-Karte).
+        -->
+
+        <button class="nav-button" id="navNotes" onclick="showPage('notes')">
 
             <div class="nav-icon">
                 <svg viewBox="0 0 24 24">
-                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 3v5h5" />
+                    <path d="M9 13h6" />
+                    <path d="M9 17h4" />
                 </svg>
             </div>
 
             <div class="nav-label">
-                Habits
+                Notizen
             </div>
 
         </button>
@@ -4006,6 +4576,29 @@
             ) || [];
 
 
+        // Liste aller Notizen: { id, title, content, updatedAt }
+        // "content" ist HTML (also z.B. "<h2>Titel</h2><div>Text</div>"),
+        // weil im Editor ja auch Formatierungen möglich sind.
+        let notes = [];
+
+
+        // Welche Notiz gerade im Editor geöffnet ist.
+        // null bedeutet: es ist die Liste sichtbar, kein Editor.
+        let currentNoteId = null;
+
+
+        // Timer fürs automatische Speichern beim Tippen. Ohne ihn
+        // würde bei JEDEM Tastendruck eine Anfrage an Supabase gehen -
+        // stattdessen wird nur gespeichert, wenn man kurz pausiert.
+        let noteSaveTimer = null;
+
+
+        // Merkt sich einen Fehler beim Laden der Notizen, damit die
+        // Liste einen verständlichen Hinweis anzeigen kann (statt
+        // einfach leer zu bleiben).
+        let notesLoadError = null;
+
+
         // Tageszitate - wechseln automatisch je nach Kalendertag
         const quotes = [
 
@@ -4332,6 +4925,11 @@
             }
 
 
+            // --- NOTIZEN LADEN ---
+
+            await loadNotes();
+
+
             renderAll();
 
         }
@@ -4384,6 +4982,17 @@
         function showPage(page) {
 
 
+            // Falls gerade eine Notiz im Editor offen ist: erst
+            // speichern und zurück zur Notizliste, bevor wir die
+            // Seite wechseln - sonst wäre beim nächsten Öffnen der
+            // Notizen-Seite noch der alte Editor sichtbar.
+            if (currentNoteId) {
+
+                closeNote();
+
+            }
+
+
             const pages = {
 
                 home:
@@ -4397,6 +5006,9 @@
 
                 habit:
                     "habitPage",
+
+                notes:
+                    "notesPage",
 
                 settings:
                     "settingsPage"
@@ -4455,7 +5067,7 @@
 
                 ai: "navAI",
 
-                habit: "navHabit",
+                notes: "navNotes",
 
                 settings: "navSettings"
 
@@ -5629,6 +6241,28 @@
         ) {
 
 
+            /*
+            // Der "+"-Button in der unteren Leiste passt sich der
+            // aktuellen Seite an: Ist die Notizen-Seite offen, legt er
+            // direkt eine neue Notiz an, statt das Aufgaben-Fenster zu
+            // öffnen. Aufrufe MIT Typ (z.B. openAddModal('habit') von
+            // der Habits-Seite) sind davon nicht betroffen.
+            */
+
+            if (
+                !startType &&
+                document
+                    .getElementById("notesPage")
+                    .classList.contains("active")
+            ) {
+
+                createNote();
+
+                return;
+
+            }
+
+
             if (startType) {
 
                 document.getElementById(
@@ -6373,6 +7007,15 @@
 
 
             await supabaseClient
+                .from("notes")
+                .delete()
+                .eq(
+                    "user_id",
+                    account.id
+                );
+
+
+            await supabaseClient
                 .from("settings")
                 .delete()
                 .eq(
@@ -7064,6 +7707,945 @@
 
 
         /* =========================================================
+           NOTIZEN
+
+           Ablauf im Überblick:
+           - loadNotes()        holt alle Notizen aus Supabase
+           - renderNotesList()  zeichnet die Liste
+           - createNote()       legt eine neue (leere) Notiz an
+           - openNote()         öffnet den Editor für eine Notiz
+           - handleNoteInput()  wird bei JEDEM Tastendruck aufgerufen
+                                und plant das Speichern
+           - saveCurrentNote()  schreibt den Text wirklich in die DB
+           - closeNote()        speichert sofort und geht zurück zur Liste
+        ========================================================= */
+
+
+        async function loadNotes() {
+
+            const result =
+                await supabaseClient
+                    .from("notes")
+                    .select("*")
+                    .order(
+                        "updated_at",
+                        { ascending: false }
+                    );
+
+
+            if (result.error) {
+
+                console.error(
+                    "Fehler beim Laden der Notizen:",
+                    result.error
+                );
+
+                // Der häufigste Grund: die Tabelle "notes" wurde in
+                // Supabase noch nicht angelegt (siehe notes-tabelle.sql).
+                notesLoadError =
+                    result.error.message;
+
+                notes = [];
+
+                return;
+
+            }
+
+
+            notesLoadError = null;
+
+
+            notes =
+                result.data.map(
+                    function (row) {
+
+                        return {
+
+                            id:
+                                row.id,
+
+                            title:
+                                row.title || "",
+
+                            content:
+                                row.content || "",
+
+                            updatedAt:
+                                row.updated_at
+
+                        };
+
+                    }
+                );
+
+        }
+
+
+        /* ---------------------------------------------------------
+           HILFSFUNKTIONEN FÜR TITEL UND VORSCHAU
+
+           Wie in der Apple-Notizen-App gibt es kein eigenes Titelfeld:
+           die ERSTE Zeile der Notiz ist automatisch der Titel, der
+           Rest wird als graue Vorschau darunter angezeigt.
+        --------------------------------------------------------- */
+
+
+        // Wandelt das HTML der Notiz in reinen Text um. Die schließenden
+        // Block-Tags werden vorher durch Zeilenumbrüche ersetzt, damit
+        // aus "<div>a</div><div>b</div>" auch wirklich zwei Zeilen werden.
+        function noteTextFrom(html) {
+
+            const temp =
+                document.createElement("div");
+
+            temp.innerHTML =
+                String(html || "")
+                    .replace(
+                        /<\/(div|p|h1|h2|h3|li)>/gi,
+                        "\n"
+                    )
+                    .replace(
+                        /<br\s*\/?>/gi,
+                        "\n"
+                    );
+
+            return temp.textContent || "";
+
+        }
+
+
+        // Alle nicht-leeren Zeilen einer Notiz als Array
+        function noteLinesFrom(html) {
+
+            return noteTextFrom(html)
+                .split("\n")
+                .map(
+                    function (line) {
+
+                        return line.trim();
+
+                    }
+                )
+                .filter(
+                    function (line) {
+
+                        return line !== "";
+
+                    }
+                );
+
+        }
+
+
+        function noteTitleFrom(html) {
+
+            const lines =
+                noteLinesFrom(html);
+
+            if (lines.length === 0) {
+
+                return "";
+
+            }
+
+            return lines[0].slice(0, 60);
+
+        }
+
+
+        function notePreviewFrom(html) {
+
+            const lines =
+                noteLinesFrom(html);
+
+            const rest =
+                lines.slice(1).join(" ");
+
+            if (rest === "") {
+
+                return "Keine weiteren Inhalte";
+
+            }
+
+            return rest.slice(0, 90);
+
+        }
+
+
+        // Heute -> nur die Uhrzeit, sonst das Datum (wie bei Apple)
+        function formatNoteDate(value) {
+
+            if (!value) {
+
+                return "";
+
+            }
+
+
+            const date =
+                new Date(value);
+
+
+            if (isToday(date)) {
+
+                return date.toLocaleTimeString(
+                    "de-DE",
+                    {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                );
+
+            }
+
+
+            return formatDate(date);
+
+        }
+
+
+        /* ---------------------------------------------------------
+           LISTE ZEICHNEN
+        --------------------------------------------------------- */
+
+
+        function renderNotesList() {
+
+            const list =
+                document.getElementById(
+                    "notesList"
+                );
+
+
+            if (!list) {
+                return;
+            }
+
+
+            list.innerHTML = "";
+
+
+            // Fall 1: Die Notizen konnten gar nicht geladen werden
+            if (notesLoadError) {
+
+                const errorBox =
+                    document.createElement("div");
+
+                errorBox.className =
+                    "empty-state";
+
+                errorBox.textContent =
+                    "Notizen konnten nicht geladen werden. Fehlt in Supabase noch die Tabelle \"notes\"? (" +
+                    notesLoadError + ")";
+
+                list.appendChild(errorBox);
+
+                return;
+
+            }
+
+
+            // Fall 2: Es gibt noch keine Notizen
+            if (notes.length === 0) {
+
+                const empty =
+                    document.createElement("div");
+
+                empty.className =
+                    "empty-state";
+
+                empty.textContent =
+                    "Noch keine Notizen - tippe unten auf das + und leg los.";
+
+                list.appendChild(empty);
+
+                return;
+
+            }
+
+
+            // Fall 3: Notizen anzeigen
+            notes.forEach(
+                function (note) {
+
+
+                    const item =
+                        document.createElement("div");
+
+                    item.className =
+                        "note-item";
+
+
+                    const title =
+                        document.createElement("div");
+
+                    title.className =
+                        "note-item-title";
+
+                    // textContent (nicht innerHTML!) - dadurch kann
+                    // eingetippter Text nie als HTML interpretiert werden.
+                    title.textContent =
+                        note.title || "Neue Notiz";
+
+
+                    const meta =
+                        document.createElement("div");
+
+                    meta.className =
+                        "note-item-meta";
+
+
+                    const date =
+                        document.createElement("div");
+
+                    date.className =
+                        "note-item-date";
+
+                    date.textContent =
+                        formatNoteDate(note.updatedAt);
+
+
+                    const preview =
+                        document.createElement("div");
+
+                    preview.className =
+                        "note-item-preview";
+
+                    preview.textContent =
+                        notePreviewFrom(note.content);
+
+
+                    meta.appendChild(date);
+
+                    meta.appendChild(preview);
+
+
+                    const deleteButton =
+                        document.createElement("button");
+
+                    deleteButton.className =
+                        "note-item-delete";
+
+                    deleteButton.textContent =
+                        "🗑️";
+
+                    deleteButton.title =
+                        "Notiz löschen";
+
+                    deleteButton.onclick =
+                        function (event) {
+
+                            deleteNote(
+                                note.id,
+                                event
+                            );
+
+                        };
+
+
+                    item.appendChild(title);
+
+                    item.appendChild(meta);
+
+                    item.appendChild(deleteButton);
+
+
+                    item.onclick =
+                        function () {
+
+                            openNote(note.id);
+
+                        };
+
+
+                    list.appendChild(item);
+
+                }
+            );
+
+        }
+
+
+        /* ---------------------------------------------------------
+           NEUE NOTIZ ANLEGEN
+        --------------------------------------------------------- */
+
+
+        async function createNote() {
+
+            if (!account) {
+                return;
+            }
+
+
+            const insertResult =
+                await supabaseClient
+                    .from("notes")
+                    .insert({
+
+                        user_id:
+                            account.id,
+
+                        title: "",
+
+                        content: ""
+
+                    })
+                    .select()
+                    .single();
+
+
+            if (insertResult.error) {
+
+                console.error(
+                    "Fehler beim Anlegen der Notiz:",
+                    insertResult.error
+                );
+
+                alert(
+                    "Die Notiz konnte nicht angelegt werden. Existiert die Tabelle \"notes\" in Supabase schon?"
+                );
+
+                return;
+
+            }
+
+
+            // Neueste Notiz kommt ganz nach oben
+            notes.unshift({
+
+                id:
+                    insertResult.data.id,
+
+                title: "",
+
+                content: "",
+
+                updatedAt:
+                    insertResult.data.updated_at ||
+                    new Date().toISOString()
+
+            });
+
+
+            renderNotesList();
+
+            openNote(
+                insertResult.data.id
+            );
+
+        }
+
+
+        /* ---------------------------------------------------------
+           EDITOR ÖFFNEN / SCHLIESSEN
+        --------------------------------------------------------- */
+
+
+        function openNote(id) {
+
+            const note =
+                notes.find(
+                    function (item) {
+
+                        return item.id === id;
+
+                    }
+                );
+
+
+            if (!note) {
+                return;
+            }
+
+
+            currentNoteId = id;
+
+
+            const editor =
+                document.getElementById(
+                    "noteEditor"
+                );
+
+            editor.innerHTML =
+                note.content || "";
+
+
+            document.getElementById(
+                "notesListView"
+            ).style.display = "none";
+
+            document.getElementById(
+                "noteEditorView"
+            ).style.display = "block";
+
+
+            editor.focus();
+
+            updateToolbarState();
+
+        }
+
+
+        async function closeNote() {
+
+            // Einen eventuell noch laufenden Speicher-Timer abbrechen
+            // und stattdessen SOFORT speichern.
+            if (noteSaveTimer) {
+
+                clearTimeout(noteSaveTimer);
+
+                noteSaveTimer = null;
+
+            }
+
+
+            await saveCurrentNote();
+
+
+            currentNoteId = null;
+
+
+            document.getElementById(
+                "noteEditorView"
+            ).style.display = "none";
+
+            document.getElementById(
+                "notesListView"
+            ).style.display = "block";
+
+
+            renderNotesList();
+
+        }
+
+
+        /* ---------------------------------------------------------
+           SPEICHERN
+        --------------------------------------------------------- */
+
+
+        // Wird bei jedem Tastendruck im Editor aufgerufen.
+        function handleNoteInput() {
+
+            updateToolbarState();
+
+
+            if (noteSaveTimer) {
+
+                clearTimeout(noteSaveTimer);
+
+            }
+
+
+            // Erst 800 Millisekunden nach dem letzten Tastendruck
+            // wird wirklich gespeichert.
+            noteSaveTimer =
+                setTimeout(
+                    saveCurrentNote,
+                    800
+                );
+
+        }
+
+
+        async function saveCurrentNote() {
+
+            if (!currentNoteId) {
+                return;
+            }
+
+
+            const note =
+                notes.find(
+                    function (item) {
+
+                        return item.id === currentNoteId;
+
+                    }
+                );
+
+
+            if (!note) {
+                return;
+            }
+
+
+            const editor =
+                document.getElementById(
+                    "noteEditor"
+                );
+
+
+            let content =
+                editor.innerHTML;
+
+
+            // Ein "leeres" contenteditable enthält je nach Browser
+            // trotzdem ein <br> - das zählen wir als leer, damit die
+            // Notiz nicht als "beschrieben" gilt.
+            if (
+                content === "<br>" ||
+                content === "<div><br></div>"
+            ) {
+
+                content = "";
+
+            }
+
+
+            // Nichts geändert? Dann sparen wir uns die Anfrage.
+            if (content === note.content) {
+
+                return;
+
+            }
+
+
+            note.content = content;
+
+            note.title = noteTitleFrom(content);
+
+            note.updatedAt = new Date().toISOString();
+
+
+            // Zuletzt bearbeitete Notiz wandert nach oben
+            notes.sort(
+                function (a, b) {
+
+                    return a.updatedAt < b.updatedAt
+                        ? 1
+                        : -1;
+
+                }
+            );
+
+
+            const result =
+                await supabaseClient
+                    .from("notes")
+                    .update({
+
+                        content:
+                            note.content,
+
+                        title:
+                            note.title,
+
+                        updated_at:
+                            note.updatedAt
+
+                    })
+                    .eq(
+                        "id",
+                        note.id
+                    );
+
+
+            if (result.error) {
+
+                console.error(
+                    "Fehler beim Speichern der Notiz:",
+                    result.error
+                );
+
+            }
+
+        }
+
+
+        /* ---------------------------------------------------------
+           LÖSCHEN
+        --------------------------------------------------------- */
+
+
+        async function deleteNote(
+            id,
+            event
+        ) {
+
+            // Verhindert, dass der Klick auf den Papierkorb zusätzlich
+            // noch die Notiz öffnet.
+            if (event) {
+
+                event.stopPropagation();
+
+            }
+
+
+            const confirmed =
+                confirm(
+                    "Diese Notiz wirklich löschen?"
+                );
+
+
+            if (!confirmed) {
+                return;
+            }
+
+
+            // Falls die gelöschte Notiz gerade offen ist: Editor zu,
+            // und den Speicher-Timer abbrechen (sonst würde er gleich
+            // noch eine bereits gelöschte Notiz speichern wollen).
+            if (currentNoteId === id) {
+
+                if (noteSaveTimer) {
+
+                    clearTimeout(noteSaveTimer);
+
+                    noteSaveTimer = null;
+
+                }
+
+
+                currentNoteId = null;
+
+
+                document.getElementById(
+                    "noteEditorView"
+                ).style.display = "none";
+
+                document.getElementById(
+                    "notesListView"
+                ).style.display = "block";
+
+            }
+
+
+            notes =
+                notes.filter(
+                    function (note) {
+
+                        return note.id !== id;
+
+                    }
+                );
+
+
+            renderNotesList();
+
+
+            const result =
+                await supabaseClient
+                    .from("notes")
+                    .delete()
+                    .eq(
+                        "id",
+                        id
+                    );
+
+
+            if (result.error) {
+
+                console.error(
+                    "Fehler beim Löschen der Notiz:",
+                    result.error
+                );
+
+            }
+
+        }
+
+
+        function deleteCurrentNote() {
+
+            if (currentNoteId) {
+
+                deleteNote(
+                    currentNoteId,
+                    null
+                );
+
+            }
+
+        }
+
+
+        /* ---------------------------------------------------------
+           TEXT FORMATIEREN
+
+           document.execCommand() ist der einfachste Weg, Text in einem
+           contenteditable-Feld zu formatieren - ohne zusätzliche
+           Bibliothek. Der Befehl gilt offiziell als "veraltet", wird
+           aber weiterhin von allen Browsern unterstützt (auch Safari
+           auf dem iPhone).
+        --------------------------------------------------------- */
+
+
+        // Fett / Kursiv / Unterstrichen
+        function formatText(command) {
+
+            document.execCommand(
+                command,
+                false,
+                null
+            );
+
+
+            document.getElementById(
+                "noteEditor"
+            ).focus();
+
+
+            handleNoteInput();
+
+        }
+
+
+        // Überschrift / Unterüberschrift / normaler Text
+        function setBlockFormat(tag) {
+
+            document.execCommand(
+                "formatBlock",
+                false,
+                "<" + tag + ">"
+            );
+
+
+            document.getElementById(
+                "noteEditor"
+            ).focus();
+
+
+            handleNoteInput();
+
+        }
+
+
+        /*
+        // Markiert in der Leiste, welche Formatierung an der aktuellen
+        // Cursor-Position gerade aktiv ist - steht der Cursor z.B. in
+        // fettem Text, leuchtet der "F"-Button.
+        */
+
+        function updateToolbarState() {
+
+            // Fett / Kursiv / Unterstrichen
+            document
+                .querySelectorAll(
+                    ".note-tool[data-command]"
+                )
+                .forEach(
+                    function (button) {
+
+                        let isActive = false;
+
+                        try {
+
+                            isActive =
+                                document.queryCommandState(
+                                    button.dataset.command
+                                );
+
+                        }
+
+                        catch (error) {
+
+                            isActive = false;
+
+                        }
+
+
+                        button.classList.toggle(
+                            "active",
+                            isActive
+                        );
+
+                    }
+                );
+
+
+            // Überschrift / Unterüberschrift / Text
+            let block = "";
+
+            try {
+
+                block =
+                    String(
+                        document.queryCommandValue(
+                            "formatBlock"
+                        ) || ""
+                    ).toLowerCase();
+
+            }
+
+            catch (error) {
+
+                block = "";
+
+            }
+
+
+            document
+                .querySelectorAll(
+                    ".note-tool[data-block]"
+                )
+                .forEach(
+                    function (button) {
+
+                        const value =
+                            button.dataset.block;
+
+
+                        // Normaler Text meldet sich je nach Browser als
+                        // "div", "p" oder gar nichts - alles drei zählt
+                        // hier als "Text".
+                        const isActive =
+                            value === "div"
+                                ? (
+                                    block === "" ||
+                                    block === "div" ||
+                                    block === "p"
+                                )
+                                : block === value;
+
+
+                        button.classList.toggle(
+                            "active",
+                            isActive
+                        );
+
+                    }
+                );
+
+        }
+
+
+        /*
+        // EINFÜGEN IMMER ALS REINER TEXT
+        // Ohne das würde beim Einfügen aus einer Webseite deren
+        // komplettes Layout (Farben, Schriftarten, sogar Bilder) mit
+        // in die Notiz wandern. So bleibt nur der Text übrig - genau
+        // wie es die Apple-Notizen-App standardmäßig macht.
+        */
+
+        document
+            .getElementById("noteEditor")
+            .addEventListener(
+                "paste",
+                function (event) {
+
+                    event.preventDefault();
+
+
+                    const text =
+                        (
+                            event.clipboardData ||
+                            window.clipboardData
+                        ).getData("text/plain");
+
+
+                    document.execCommand(
+                        "insertText",
+                        false,
+                        text
+                    );
+
+                }
+            );
+
+
+        /* =========================================================
            TAGESZITAT
         ========================================================= */
 
@@ -7105,6 +8687,8 @@
             renderHabits();
 
             renderTasks();
+
+            renderNotesList();
 
             renderAccountInfo();
 
