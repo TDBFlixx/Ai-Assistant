@@ -9022,16 +9022,17 @@
 
                 // Schon erlaubt - dann sicherheitshalber prüfen, ob
                 // dieses Gerät auch wirklich beim Push-Dienst angemeldet ist.
-                const angemeldet =
+                const ergebnis =
                     await subscribeToPush();
 
                 renderNotificationStatus();
 
 
                 alert(
-                    angemeldet
+                    ergebnis.ok
                         ? "Benachrichtigungen sind aktiv und dieses Gerät ist angemeldet.\n\nMit \"Test-Benachrichtigung\" kannst du es ausprobieren."
-                        : "Benachrichtigungen sind erlaubt, aber die Anmeldung beim Push-Dienst hat nicht geklappt. Prüfe, ob die Tabelle \"push_subscriptions\" in Supabase existiert."
+                        : "Benachrichtigungen sind zwar erlaubt, aber dieses Gerät ist NICHT angemeldet.\n\nGrund:\n" +
+                        ergebnis.grund
                 );
 
                 return;
@@ -9048,7 +9049,20 @@
 
             if (result === "granted") {
 
-                await subscribeToPush();
+                const ergebnis =
+                    await subscribeToPush();
+
+
+                if (!ergebnis.ok) {
+
+                    alert(
+                        "Die Erlaubnis ist erteilt, aber die Anmeldung beim Push-Dienst hat nicht geklappt.\n\nGrund:\n" +
+                        ergebnis.grund
+                    );
+
+                    return;
+
+                }
 
 
                 await showNotification(
@@ -9137,23 +9151,40 @@
 
         async function subscribeToPush() {
 
+            /*
+            // Gibt IMMER einen Grund mit zurück - { ok: ..., grund: ... }.
+            // Vorher meldete diese Funktion nur "hat nicht geklappt",
+            // ohne zu sagen warum, und der Fehler stand nur versteckt
+            // in der Entwickler-Konsole. Jetzt kann die App direkt
+            // anzeigen, woran es liegt.
+            */
+
             if (!notificationsSupported()) {
 
-                return false;
+                return {
+                    ok: false,
+                    grund: "Dieser Browser kennt keine Benachrichtigungen. Auf dem iPhone muss die App vom Home-Bildschirm aus geöffnet werden."
+                };
 
             }
 
 
             if (Notification.permission !== "granted") {
 
-                return false;
+                return {
+                    ok: false,
+                    grund: "Die Erlaubnis fehlt noch (Status: \"" + Notification.permission + "\"). Tippe auf \"Benachrichtigungen\" und bestätige die Nachfrage des Browsers."
+                };
 
             }
 
 
             if (!account) {
 
-                return false;
+                return {
+                    ok: false,
+                    grund: "Es ist gerade niemand eingeloggt."
+                };
 
             }
 
@@ -9239,12 +9270,20 @@
                         saveResult.error
                     );
 
-                    return false;
+                    return {
+                        ok: false,
+                        grund: "Die Anmeldung beim Push-Dienst hat geklappt, aber das Speichern in Supabase nicht: " +
+                            saveResult.error.message +
+                            "\n\n(Fehlt vielleicht noch die Tabelle \"push_subscriptions\"? Dann push-tabelle.sql ausführen.)"
+                    };
 
                 }
 
 
-                return true;
+                return {
+                    ok: true,
+                    grund: ""
+                };
 
             }
 
@@ -9255,7 +9294,11 @@
                     error
                 );
 
-                return false;
+                return {
+                    ok: false,
+                    grund: "Die Anmeldung beim Push-Dienst ist fehlgeschlagen:\n" +
+                        error.name + " - " + error.message
+                };
 
             }
 
@@ -9380,12 +9423,34 @@
 
             else {
 
-                alert(
-                    "Es ist noch kein Gerät angemeldet.\n\n" +
-                    (result.data && result.data.hinweis
-                        ? result.data.hinweis
-                        : "Erlaube die Benachrichtigungen zuerst in dieser App.")
-                );
+                /*
+                // Der Server kennt kein Gerät für diesen Nutzer. Statt
+                // den Nutzer ratlos zurückzulassen, versuchen wir die
+                // Anmeldung gleich hier - und sagen genau, woran sie
+                // scheitert.
+                */
+
+                const ergebnis =
+                    await subscribeToPush();
+
+
+                if (ergebnis.ok) {
+
+                    alert(
+                        "Dieses Gerät war noch nicht angemeldet - das habe ich gerade nachgeholt.\n\n" +
+                        "Tippe noch einmal auf \"Test-Benachrichtigung\", jetzt sollte es klappen."
+                    );
+
+                }
+
+                else {
+
+                    alert(
+                        "Es ist noch kein Gerät angemeldet, und die Anmeldung klappt auch jetzt nicht.\n\nGrund:\n" +
+                        ergebnis.grund
+                    );
+
+                }
 
             }
 
