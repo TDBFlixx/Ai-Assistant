@@ -9294,10 +9294,72 @@
                     result.error
                 );
 
+
+                /*
+                // Die eigentliche Fehlermeldung des Servers steckt bei
+                // Supabase nicht in error.message (dort steht nur
+                // "non-2xx status code"), sondern in error.context -
+                // das ist die komplette Antwort des Servers. Die holen
+                // wir hier heraus, damit man wirklich SIEHT, was los ist,
+                // statt nur zu raten.
+                */
+
+                let details =
+                    result.error.message ||
+                    String(result.error);
+
+
+                try {
+
+                    const context =
+                        result.error.context;
+
+
+                    if (
+                        context &&
+                        typeof context.text === "function"
+                    ) {
+
+                        const antwort =
+                            await context.text();
+
+
+                        if (antwort) {
+
+                            details +=
+                                "\n\nAntwort vom Server:\n" +
+                                antwort.slice(0, 400);
+
+                        }
+
+
+                        if (context.status) {
+
+                            details +=
+                                "\n\nStatus-Code: " + context.status;
+
+                        }
+
+                    }
+
+                }
+
+                catch (fehler) {
+
+                    // Antwort ließ sich nicht lesen - dann bleibt es
+                    // eben bei der kurzen Meldung.
+                }
+
+
                 alert(
                     "Der Server konnte die Nachricht nicht schicken.\n\n" +
-                    "Prüfe, ob die Edge Function \"send-push\" in Supabase " +
-                    "angelegt ist und die VAPID-Schlüssel als Secrets hinterlegt sind."
+                    details +
+                    "\n\n---\nHäufigste Ursachen:\n" +
+                    "1. Die Funktion heißt nicht exakt \"send-push\"\n" +
+                    "2. Die VAPID-Schlüssel fehlen unter Edge Functions -> Secrets\n" +
+                    "3. Die Funktion ist beim Deploy abgestürzt\n\n" +
+                    "Die echte Ursache steht in Supabase unter\n" +
+                    "Edge Functions -> send-push -> Logs."
                 );
 
                 return;
