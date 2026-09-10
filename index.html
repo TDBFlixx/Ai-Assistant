@@ -806,6 +806,25 @@
 
 
         /* =========================================================
+           VERSIONSANZEIGE (ganz unten in den Einstellungen)
+        ========================================================= */
+
+        .app-version {
+
+            text-align: center;
+
+            color: var(--muted);
+
+            font-size: 11.5px;
+
+            padding: 4px 0 10px;
+
+            opacity: 0.8;
+
+        }
+
+
+        /* =========================================================
            UPDATE-HINWEIS
            Wird auf der Home-Seite eingeblendet, wenn die App eine
            neuere Version hat als beim letzten Öffnen - erklärt in
@@ -4202,6 +4221,19 @@
                 </div>
 
             </div>
+
+
+            <!--
+                VERSIONSANZEIGE
+
+                Klingt nach einer Kleinigkeit, spart aber viel Sucherei:
+                Nach dem Hochladen einer neuen Datei sieht man hier sofort,
+                ob wirklich die neue Version läuft - oder ob der Browser
+                noch die alte aus dem Zwischenspeicher anzeigt.
+                Die Nummer kommt aus APP_UPDATES ganz oben im JavaScript.
+            -->
+
+            <div class="app-version" id="appVersionInfo"></div>
 
 
         </main>
@@ -9542,6 +9574,28 @@
         }
 
 
+        // Zeigt unten in den Einstellungen an, welche Version gerade läuft.
+        function renderAppVersion() {
+
+            const box =
+                document.getElementById(
+                    "appVersionInfo"
+                );
+
+
+            if (!box) {
+                return;
+            }
+
+
+            box.textContent =
+                "Mein KI-Assistent - Version " +
+                APP_VERSION +
+                " (" + APP_UPDATES[0].title + ")";
+
+        }
+
+
         // Schreibt den aktuellen Status neben die Zeile in den Einstellungen
         function renderNotificationStatus() {
 
@@ -9712,6 +9766,8 @@
             renderChat();
 
             renderNotificationStatus();
+
+            renderAppVersion();
 
 
             document.getElementById(
