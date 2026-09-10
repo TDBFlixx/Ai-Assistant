@@ -4128,6 +4128,20 @@
 
                 </button>
 
+
+                <!--
+                    RÜCKMELDUNG DIREKT IN DER SEITE
+
+                    Hier landen die Ergebnisse der beiden Buttons darüber.
+                    Bewusst NICHT mehr als alert()-Dialog: Browser blenden
+                    Dialoge aus, wenn man viele davon wegklickt oder das
+                    Häkchen "Weitere Dialoge verhindern" setzt - dann
+                    passiert scheinbar gar nichts mehr. Ein Text in der
+                    Seite kann dagegen nicht unterdrückt werden.
+                -->
+
+                <div class="settings-note" id="notificationResult" style="display: none;"></div>
+
             </div>
 
 
@@ -8993,7 +9007,7 @@
 
             if (!notificationsSupported()) {
 
-                alert(
+                showNotificationResult(
                     "Dieser Browser unterstützt keine Benachrichtigungen.\n\n" +
                     "Auf dem iPhone musst du die App zuerst über Safari mit " +
                     "\"Teilen\" -> \"Zum Home-Bildschirm\" speichern und dann " +
@@ -9007,7 +9021,7 @@
 
             if (Notification.permission === "denied") {
 
-                alert(
+                showNotificationResult(
                     "Benachrichtigungen sind für diese App blockiert.\n\n" +
                     "Du kannst sie in den Einstellungen deines Handys wieder " +
                     "erlauben (Einstellungen -> Mitteilungen -> KI-Assistent)."
@@ -9028,11 +9042,40 @@
                 renderNotificationStatus();
 
 
-                alert(
-                    ergebnis.ok
-                        ? "Benachrichtigungen sind aktiv und dieses Gerät ist angemeldet.\n\nMit \"Test-Benachrichtigung\" kannst du es ausprobieren."
-                        : "Benachrichtigungen sind zwar erlaubt, aber dieses Gerät ist NICHT angemeldet.\n\nGrund:\n" +
+                if (!ergebnis.ok) {
+
+                    showNotificationResult(
+                        "Benachrichtigungen sind zwar erlaubt, aber dieses Gerät ist NICHT angemeldet.\n\nGrund:\n" +
                         ergebnis.grund
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                // Zusätzlich eine LOKALE Benachrichtigung anzeigen - die
+                // kommt nicht vom Server, sondern direkt aus der App.
+                // Damit lässt sich unterscheiden:
+                // - erscheint sie NICHT: dieses Gerät zeigt generell keine
+                //   Benachrichtigungen an (z.B. Windows-Einstellungen)
+                // - erscheint sie: dann liegt ein Problem nur am Versand
+                //   über den Server
+                */
+
+                const angezeigt =
+                    await showNotification(
+                        "Alles bereit",
+                        "Dieses Gerät ist angemeldet und kann Benachrichtigungen anzeigen."
+                    );
+
+
+                showNotificationResult(
+                    "Dieses Gerät ist angemeldet." +
+                    (angezeigt
+                        ? "\n\nEs wurde gerade eine Test-Benachrichtigung angezeigt. Siehst du sie NICHT, blockiert dein Betriebssystem sie (Windows: Einstellungen -> System -> Benachrichtigungen)."
+                        : "\n\nDie Anzeige einer Benachrichtigung hat allerdings nicht funktioniert.")
                 );
 
                 return;
@@ -9055,7 +9098,7 @@
 
                 if (!ergebnis.ok) {
 
-                    alert(
+                    showNotificationResult(
                         "Die Erlaubnis ist erteilt, aber die Anmeldung beim Push-Dienst hat nicht geklappt.\n\nGrund:\n" +
                         ergebnis.grund
                     );
@@ -9074,7 +9117,7 @@
 
             else {
 
-                alert(
+                showNotificationResult(
                     "Ohne deine Erlaubnis kann die App dir leider nichts schicken. " +
                     "Du kannst das hier jederzeit wieder ändern."
                 );
@@ -9394,7 +9437,7 @@
                 }
 
 
-                alert(
+                showNotificationResult(
                     "Der Server konnte die Nachricht nicht schicken.\n\n" +
                     details +
                     "\n\n---\nHäufigste Ursachen:\n" +
@@ -9412,7 +9455,7 @@
 
             if (result.data && result.data.sent > 0) {
 
-                alert(
+                showNotificationResult(
                     "Der Server hat die Nachricht an " + result.data.sent +
                     " Gerät(e) geschickt.\n\nTipp: Schließe die App komplett " +
                     "und lass sie dir dann noch einmal schicken - so siehst du, " +
@@ -9436,7 +9479,7 @@
 
                 if (ergebnis.ok) {
 
-                    alert(
+                    showNotificationResult(
                         "Dieses Gerät war noch nicht angemeldet - das habe ich gerade nachgeholt.\n\n" +
                         "Tippe noch einmal auf \"Test-Benachrichtigung\", jetzt sollte es klappen."
                     );
@@ -9445,7 +9488,7 @@
 
                 else {
 
-                    alert(
+                    showNotificationResult(
                         "Es ist noch kein Gerät angemeldet, und die Anmeldung klappt auch jetzt nicht.\n\nGrund:\n" +
                         ergebnis.grund
                     );
@@ -9453,6 +9496,48 @@
                 }
 
             }
+
+        }
+
+
+        /*
+        // Zeigt eine Rückmeldung UNTER den Benachrichtigungs-Zeilen an.
+        //
+        // Warum kein alert()? Weil Browser Dialoge stummschalten, sobald
+        // man mehrere hintereinander wegklickt ("Weitere Dialoge
+        // verhindern"). Dann drückt man einen Button und es passiert
+        // scheinbar nichts. Text in der Seite kann das nicht passieren.
+        */
+
+        function showNotificationResult(text) {
+
+            const box =
+                document.getElementById(
+                    "notificationResult"
+                );
+
+
+            if (!box) {
+
+                // Zur Sicherheit: falls das Element mal fehlt, wenigstens
+                // in der Konsole ausgeben.
+                console.log(text);
+
+                return;
+
+            }
+
+
+            box.textContent = text;
+
+            box.style.display = "block";
+
+
+            // Auch in die Konsole, damit man den Text kopieren kann.
+            console.log(
+                "[Benachrichtigungen]",
+                text
+            );
 
         }
 
