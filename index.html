@@ -4812,7 +4812,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-09-10 / 21:45";
+        const BUILD_ID = "2026-09-10 / 22:10";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -9485,98 +9485,147 @@
         }
 
 
+        /*
+        // Holt den Login-Schlüssel des angemeldeten Nutzers.
+        //
+        // Eigentlich reicht dafür supabaseClient.auth.getSession().
+        // Dieser Aufruf kann sich aber in seltenen Fällen aufhängen und
+        // dann NIE antworten (bekanntes Verhalten der Supabase-
+        // Bibliothek, wenn eine interne Sperre nicht freigegeben wird).
+        // Genau so ein Hänger wäre von außen nicht zu unterscheiden von
+        // "es passiert nichts".
+        //
+        // Deshalb hier zweigleisig: erst der offizielle Weg mit einem
+        // Zeitlimit von 5 Sekunden, und falls der nicht antwortet, lesen
+        // wir den Schlüssel direkt aus dem Browser-Speicher, wo die
+        // Bibliothek ihn ohnehin ablegt.
+        */
+
+        async function getAccessToken() {
+
+            try {
+
+                const result =
+                    await Promise.race([
+
+                        supabaseClient.auth.getSession(),
+
+                        new Promise(function (_, reject) {
+
+                            setTimeout(
+                                function () {
+
+                                    reject(
+                                        new Error("Zeitlimit")
+                                    );
+
+                                },
+                                5000
+                            );
+
+                        })
+
+                    ]);
+
+
+                if (
+                    result &&
+                    result.data &&
+                    result.data.session
+                ) {
+
+                    return result.data.session.access_token;
+
+                }
+
+            }
+
+            catch (fehler) {
+
+                console.warn(
+                    "getSession() hat nicht geantwortet - lese den Schlüssel direkt aus dem Browser-Speicher."
+                );
+
+            }
+
+
+            // Plan B: Supabase speichert die Sitzung unter einem Schlüssel
+            // der Form "sb-<projekt>-auth-token".
+            for (
+                let i = 0;
+                i < localStorage.length;
+                i++
+            ) {
+
+                const key =
+                    localStorage.key(i);
+
+
+                if (
+                    key &&
+                    key.startsWith("sb-") &&
+                    key.endsWith("-auth-token")
+                ) {
+
+                    try {
+
+                        const wert =
+                            JSON.parse(
+                                localStorage.getItem(key)
+                            );
+
+
+                        if (wert && wert.access_token) {
+
+                            return wert.access_token;
+
+                        }
+
+                    }
+
+                    catch (fehler) {
+
+                        // Eintrag unlesbar - nächsten versuchen
+                    }
+
+                }
+
+            }
+
+
+            return null;
+
+        }
+
+
+        /*
+        // Schickt eine ECHTE Push-Nachricht über den Server an alle
+        // Geräte dieses Nutzers.
+        //
+        // Bewusst OHNE supabaseClient.functions.invoke(): dieser Aufruf
+        // kann ohne Zeitlimit endlos warten, und man erfährt nie, woran
+        // es lag. Ein eigener fetch() mit Abbruch nach 15 Sekunden und
+        // Zwischenmeldungen zeigt dagegen genau, wo es klemmt.
+        */
+
         async function sendTestPushIntern() {
 
-            const result =
-                await supabaseClient.functions.invoke(
-                    "send-push",
-                    {
-                        body: {
+            // --- Schritt 1: Login-Schlüssel besorgen ---
 
-                            title:
-                                "Test aus der Ferne",
-
-                            body:
-                                "Diese Nachricht kam vom Server - sie funktioniert auch bei geschlossener App."
-
-                        }
-                    }
-                );
+            showNotificationResult(
+                "Schritt 1 von 3: Login wird geprüft..."
+            );
 
 
-            if (result.error) {
-
-                console.error(
-                    "Test-Push fehlgeschlagen:",
-                    result.error
-                );
+            const token =
+                await getAccessToken();
 
 
-                /*
-                // Die eigentliche Fehlermeldung des Servers steckt bei
-                // Supabase nicht in error.message (dort steht nur
-                // "non-2xx status code"), sondern in error.context -
-                // das ist die komplette Antwort des Servers. Die holen
-                // wir hier heraus, damit man wirklich SIEHT, was los ist,
-                // statt nur zu raten.
-                */
-
-                let details =
-                    result.error.message ||
-                    String(result.error);
-
-
-                try {
-
-                    const context =
-                        result.error.context;
-
-
-                    if (
-                        context &&
-                        typeof context.text === "function"
-                    ) {
-
-                        const antwort =
-                            await context.text();
-
-
-                        if (antwort) {
-
-                            details +=
-                                "\n\nAntwort vom Server:\n" +
-                                antwort.slice(0, 400);
-
-                        }
-
-
-                        if (context.status) {
-
-                            details +=
-                                "\n\nStatus-Code: " + context.status;
-
-                        }
-
-                    }
-
-                }
-
-                catch (fehler) {
-
-                    // Antwort ließ sich nicht lesen - dann bleibt es
-                    // eben bei der kurzen Meldung.
-                }
-
+            if (!token) {
 
                 showNotificationResult(
-                    "Der Server konnte die Nachricht nicht schicken.\n\n" +
-                    details +
-                    "\n\n---\nHäufigste Ursachen:\n" +
-                    "1. Die Funktion heißt nicht exakt \"send-push\"\n" +
-                    "2. Die VAPID-Schlüssel fehlen unter Edge Functions -> Secrets\n" +
-                    "3. Die Funktion ist beim Deploy abgestürzt\n\n" +
-                    "Die echte Ursache steht in Supabase unter\n" +
-                    "Edge Functions -> send-push -> Logs."
+                    "Es wurde kein gültiger Login gefunden.\n\n" +
+                    "Melde dich einmal ab und wieder an, dann erneut versuchen."
                 );
 
                 return;
@@ -9584,35 +9633,84 @@
             }
 
 
-            if (result.data && result.data.sent > 0) {
+            // --- Schritt 2: Anfrage schicken ---
 
-                showNotificationResult(
-                    "Der Server hat die Nachricht an " + result.data.sent +
-                    " Gerät(e) geschickt.\n\nTipp: Schließe die App komplett " +
-                    "und lass sie dir dann noch einmal schicken - so siehst du, " +
-                    "dass es auch ohne geöffnete App klappt."
+            showNotificationResult(
+                "Schritt 2 von 3: Anfrage wird an den Server geschickt..."
+            );
+
+
+            // Bricht die Anfrage ab, falls der Server nicht antwortet -
+            // sonst würde die App ewig warten.
+            const controller =
+                new AbortController();
+
+
+            const abbruchTimer =
+                setTimeout(
+                    function () {
+
+                        controller.abort();
+
+                    },
+                    15000
                 );
+
+
+            let response;
+
+
+            try {
+
+                response =
+                    await fetch(
+                        SUPABASE_URL + "/functions/v1/send-push",
+                        {
+
+                            method: "POST",
+
+                            signal: controller.signal,
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json",
+
+                                "Authorization":
+                                    "Bearer " + token,
+
+                                "apikey":
+                                    SUPABASE_PUBLISHABLE_KEY
+
+                            },
+
+                            body:
+                                JSON.stringify({
+
+                                    title:
+                                        "Test aus der Ferne",
+
+                                    body:
+                                        "Diese Nachricht kam vom Server - sie funktioniert auch bei geschlossener App."
+
+                                })
+
+                        }
+                    );
 
             }
 
-            else {
+            catch (fehler) {
 
-                /*
-                // Der Server kennt kein Gerät für diesen Nutzer. Statt
-                // den Nutzer ratlos zurückzulassen, versuchen wir die
-                // Anmeldung gleich hier - und sagen genau, woran sie
-                // scheitert.
-                */
-
-                const ergebnis =
-                    await subscribeToPush();
+                clearTimeout(abbruchTimer);
 
 
-                if (ergebnis.ok) {
+                if (fehler.name === "AbortError") {
 
                     showNotificationResult(
-                        "Dieses Gerät war noch nicht angemeldet - das habe ich gerade nachgeholt.\n\n" +
-                        "Tippe noch einmal auf \"Test-Benachrichtigung\", jetzt sollte es klappen."
+                        "Zeitüberschreitung: Der Server hat 15 Sekunden lang nicht geantwortet.\n\n" +
+                        "Prüfe in Supabase unter Edge Functions -> send-push -> Logs, " +
+                        "ob dort überhaupt ein Aufruf ankommt."
                     );
 
                 }
@@ -9620,11 +9718,105 @@
                 else {
 
                     showNotificationResult(
-                        "Es ist noch kein Gerät angemeldet, und die Anmeldung klappt auch jetzt nicht.\n\nGrund:\n" +
-                        ergebnis.grund
+                        "Die Anfrage wurde vom Browser blockiert:\n" +
+                        fehler.name + " - " + fehler.message +
+                        "\n\nDas deutet fast immer auf CORS hin: Die Edge Function " +
+                        "muss die neueste Fassung sein (die mit corsHeaders(req))."
                     );
 
                 }
+
+                return;
+
+            }
+
+
+            clearTimeout(abbruchTimer);
+
+
+            // --- Schritt 3: Antwort lesen ---
+
+            showNotificationResult(
+                "Schritt 3 von 3: Antwort wird gelesen..."
+            );
+
+
+            const rohtext =
+                await response.text();
+
+
+            let daten = null;
+
+
+            try {
+
+                daten = JSON.parse(rohtext);
+
+            }
+
+            catch (fehler) {
+
+                // Keine JSON-Antwort - dann zeigen wir den Rohtext.
+            }
+
+
+            if (!response.ok) {
+
+                showNotificationResult(
+                    "Der Server hat mit einem Fehler geantwortet (Status " +
+                    response.status + "):\n\n" +
+                    (daten && daten.error
+                        ? daten.error
+                        : rohtext.slice(0, 400))
+                );
+
+                return;
+
+            }
+
+
+            if (daten && daten.sent > 0) {
+
+                showNotificationResult(
+                    "Erfolg! Der Server hat die Nachricht an " +
+                    daten.sent + " Gerät(e) geschickt.\n\n" +
+                    "Tipp: Schließe die App komplett und lass sie dir noch " +
+                    "einmal schicken - so siehst du, dass es auch ohne " +
+                    "geöffnete App klappt."
+                );
+
+                return;
+
+            }
+
+
+            /*
+            // Der Server kennt kein Gerät für diesen Nutzer. Statt den
+            // Nutzer ratlos zurückzulassen, versuchen wir die Anmeldung
+            // gleich hier - und sagen genau, woran sie scheitert.
+            */
+
+            const ergebnis =
+                await subscribeToPush();
+
+
+            if (ergebnis.ok) {
+
+                showNotificationResult(
+                    "Dieses Gerät war noch nicht angemeldet - das habe ich " +
+                    "gerade nachgeholt.\n\nTippe noch einmal auf " +
+                    "\"Test-Benachrichtigung\", jetzt sollte es klappen."
+                );
+
+            }
+
+            else {
+
+                showNotificationResult(
+                    "Es ist noch kein Gerät angemeldet, und die Anmeldung " +
+                    "klappt auch jetzt nicht.\n\nGrund:\n" +
+                    ergebnis.grund
+                );
 
             }
 
