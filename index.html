@@ -3442,6 +3442,106 @@
         }
 
 
+        /*
+        // AUFGABENZEILEN IN DER NOTIZ (wie in der Apple-Notizen-App)
+        //
+        // Trick dabei: Der Kreis ist KEIN eigenes Element, sondern wird
+        // per CSS (::before) vor die Zeile gemalt. Das ist wichtig,
+        // weil echte Elemente in einem beschreibbaren Feld ständig
+        // Ärger machen - man kann sie versehentlich löschen, der Cursor
+        // springt hinein, und beim Tippen entsteht Unsinn. Ein gemalter
+        // Kreis kann das alles nicht.
+        //
+        // Ob eine Zeile erledigt ist, steht im Attribut data-checked.
+        // Weil das Teil des HTML-Codes der Notiz ist, wird es ganz
+        // automatisch mitgespeichert - es braucht keinerlei Extra-Logik.
+        */
+
+        .note-check-line {
+
+            position: relative;
+
+            /* Platz für den Kreis links */
+            padding-left: 29px;
+
+            min-height: 24px;
+
+            margin: 0 0 5px;
+
+        }
+
+
+        .note-check-line::before {
+
+            content: "";
+
+            position: absolute;
+
+            left: 0;
+
+            top: 1px;
+
+            width: 19px;
+
+            height: 19px;
+
+            border-radius: 50%;
+
+            border: 2px solid #71899c;
+
+            box-sizing: border-box;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+        }
+
+
+        /* NUR IM GRAU-THEME: neutraler weißlicher statt blaugrauer Rand */
+
+        [data-theme="gray"] .note-check-line::before {
+
+            border-color: rgba(255, 255, 255, 0.35);
+
+        }
+
+
+        /* Erledigt: gefüllter Kreis mit Häkchen */
+
+        .note-check-line[data-checked="true"]::before {
+
+            content: "✓";
+
+            background: var(--green);
+
+            border-color: var(--green);
+
+            color: #05271b;
+
+        }
+
+
+        /*
+        // Erledigter Text tritt zurück. Bewusst ohne Durchstreichen -
+        // das macht die Apple-App auch nicht und es bleibt besser lesbar.
+        */
+
+        .note-check-line[data-checked="true"] {
+
+            color: var(--muted);
+
+        }
+
+
         /* =========================================================
            DESKTOP-ANPASSUNGEN
         ========================================================= */
@@ -3924,6 +4024,30 @@
                     <button class="note-tool" data-block="div" title="Normaler Text"
                         onmousedown="event.preventDefault()" onclick="setBlockFormat('div')">
                         Text
+                    </button>
+
+
+                    <div class="note-toolbar-divider"></div>
+
+
+                    <!--
+                        AUFGABENLISTE
+                        Macht aus der Zeile, in der der Cursor steht, eine
+                        Aufgabe mit Kreis zum Abhaken - und wieder zurück.
+                    -->
+
+                    <button class="note-tool" data-checklist="1" title="Aufgabenliste"
+                        onmousedown="event.preventDefault()" onclick="toggleCheckLine()">
+
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align: -3px;">
+                            <circle cx="5" cy="6" r="3" />
+                            <path d="M2 17.5l2.2 2.2L9 15" />
+                            <line x1="11" y1="6" x2="20" y2="6" />
+                            <line x1="12.5" y1="17" x2="20" y2="17" />
+                        </svg>
+
                     </button>
 
 
@@ -4775,6 +4899,14 @@
         const APP_UPDATES = [
 
             {
+                version: 4,
+
+                title: "Aufgabenlisten in Notizen",
+
+                text: "In Notizen kannst du jetzt Aufgaben mit Kreis zum Abhaken schreiben - der neue Knopf sitzt in der Formatierungsleiste."
+            },
+
+            {
                 version: 3,
 
                 title: "Notizen-Funktion hinzugefügt",
@@ -4812,7 +4944,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-09-10 / 22:10";
+        const BUILD_ID = "2026-09-14 / 20:05";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -8682,6 +8814,186 @@
         --------------------------------------------------------- */
 
 
+        /* ---------------------------------------------------------
+           AUFGABENLISTE INNERHALB EINER NOTIZ
+
+           Eine "Aufgabenzeile" ist einfach eine normale Zeile mit der
+           Klasse "note-check-line" und dem Attribut data-checked.
+           Den Kreis malt das CSS davor (siehe oben) - es gibt also
+           kein zusätzliches Element, das beim Tippen stören könnte.
+        --------------------------------------------------------- */
+
+
+        /*
+        // Findet die Zeile, in der der Cursor gerade steht.
+        // "Zeile" heißt hier: das Element, das direkt im Schreibfeld
+        // liegt (also ein <div>, <h2>, <h3> ...).
+        */
+
+        function getCurrentBlock() {
+
+            const editor =
+                document.getElementById(
+                    "noteEditor"
+                );
+
+
+            const selection =
+                window.getSelection();
+
+
+            if (
+                !selection ||
+                selection.rangeCount === 0
+            ) {
+
+                return null;
+
+            }
+
+
+            let node =
+                selection.getRangeAt(0).startContainer;
+
+
+            // Vom Cursor aus so lange nach oben gehen, bis wir direkt
+            // unter dem Schreibfeld angekommen sind.
+            while (
+                node &&
+                node !== editor
+            ) {
+
+                if (
+                    node.parentNode === editor &&
+                    node.nodeType === 1
+                ) {
+
+                    return node;
+
+                }
+
+                node = node.parentNode;
+
+            }
+
+
+            return null;
+
+        }
+
+
+        // Wandelt die aktuelle Zeile in eine Aufgabe um - oder zurück.
+        function toggleCheckLine() {
+
+            const editor =
+                document.getElementById(
+                    "noteEditor"
+                );
+
+
+            editor.focus();
+
+
+            let block =
+                getCurrentBlock();
+
+
+            /*
+            // Sonderfall: Tippt man in ein noch leeres Feld, liegt der
+            // Text ohne eigene Zeile direkt im Schreibfeld. Dann machen
+            // wir erst mit formatBlock eine richtige Zeile daraus.
+            */
+
+            if (!block) {
+
+                document.execCommand(
+                    "formatBlock",
+                    false,
+                    "<div>"
+                );
+
+                block = getCurrentBlock();
+
+            }
+
+
+            if (!block) {
+                return;
+            }
+
+
+            if (
+                block.classList.contains("note-check-line")
+            ) {
+
+                block.classList.remove("note-check-line");
+
+                block.removeAttribute("data-checked");
+
+            }
+
+            else {
+
+                // Überschriften vorher zu normalem Text machen -
+                // eine Aufgabe in Überschriftgröße sähe seltsam aus.
+                if (
+                    block.tagName === "H2" ||
+                    block.tagName === "H3"
+                ) {
+
+                    document.execCommand(
+                        "formatBlock",
+                        false,
+                        "<div>"
+                    );
+
+                    block = getCurrentBlock();
+
+                }
+
+
+                if (!block) {
+                    return;
+                }
+
+
+                block.classList.add("note-check-line");
+
+                block.setAttribute(
+                    "data-checked",
+                    "false"
+                );
+
+            }
+
+
+            handleNoteInput();
+
+            updateToolbarState();
+
+        }
+
+
+        // Hakt eine Aufgabe ab bzw. wieder ein.
+        function toggleCheckLineDone(line) {
+
+            const erledigt =
+                line.getAttribute("data-checked") === "true";
+
+
+            line.setAttribute(
+                "data-checked",
+                erledigt
+                    ? "false"
+                    : "true"
+            );
+
+
+            handleNoteInput();
+
+        }
+
+
         // Fett / Kursiv / Unterstrichen
         function formatText(command) {
 
@@ -8786,6 +9098,35 @@
             }
 
 
+            // Steht der Cursor gerade in einer Aufgabenzeile?
+            const aktuelleZeile =
+                getCurrentBlock();
+
+
+            const inAufgabe =
+                !!(
+                    aktuelleZeile &&
+                    aktuelleZeile.classList &&
+                    aktuelleZeile.classList.contains("note-check-line")
+                );
+
+
+            document
+                .querySelectorAll(
+                    ".note-tool[data-checklist]"
+                )
+                .forEach(
+                    function (button) {
+
+                        button.classList.toggle(
+                            "active",
+                            inAufgabe
+                        );
+
+                    }
+                );
+
+
             document
                 .querySelectorAll(
                     ".note-tool[data-block]"
@@ -8800,7 +9141,7 @@
                         // Normaler Text meldet sich je nach Browser als
                         // "div", "p" oder gar nichts - alles drei zählt
                         // hier als "Text".
-                        const isActive =
+                        let isActive =
                             value === "div"
                                 ? (
                                     block === "" ||
@@ -8808,6 +9149,16 @@
                                     block === "p"
                                 )
                                 : block === value;
+
+
+                        // In einer Aufgabenzeile soll NICHT zusätzlich
+                        // "Text" hervorgehoben sein - sonst sähe es aus,
+                        // als wären zwei Formate gleichzeitig aktiv.
+                        if (inAufgabe) {
+
+                            isActive = false;
+
+                        }
 
 
                         button.classList.toggle(
@@ -8828,6 +9179,150 @@
         // in die Notiz wandern. So bleibt nur der Text übrig - genau
         // wie es die Apple-Notizen-App standardmäßig macht.
         */
+
+        /*
+        // KLICK AUF DEN KREIS EINER AUFGABE
+        //
+        // Der Kreis ist nur gemalt, also kann man ihn nicht direkt
+        // "anklicken". Stattdessen prüfen wir: Liegt der Klick in einer
+        // Aufgabenzeile UND im linken Bereich, wo der Kreis gezeichnet
+        // wird? Dann gilt er als Klick auf den Kreis.
+        */
+
+        document
+            .getElementById("noteEditor")
+            .addEventListener(
+                "click",
+                function (event) {
+
+                    const line =
+                        event.target.closest
+                            ? event.target.closest(".note-check-line")
+                            : null;
+
+
+                    if (!line) {
+                        return;
+                    }
+
+
+                    const rect =
+                        line.getBoundingClientRect();
+
+
+                    // Der Kreis ist 19 Pixel breit, wir geben etwas
+                    // Spielraum, damit man ihn auch mit dem Finger trifft.
+                    if (
+                        event.clientX - rect.left <= 27
+                    ) {
+
+                        toggleCheckLineDone(line);
+
+                    }
+
+                }
+            );
+
+
+        /*
+        // ENTER IN EINER AUFGABENZEILE
+        //
+        // Verhält sich wie in der Apple-Notizen-App:
+        // - Enter am Ende einer Aufgabe  -> neue, leere Aufgabe darunter
+        // - Enter in einer LEEREN Aufgabe -> Liste verlassen (normale Zeile)
+        */
+
+        document
+            .getElementById("noteEditor")
+            .addEventListener(
+                "keydown",
+                function (event) {
+
+                    if (event.key !== "Enter") {
+                        return;
+                    }
+
+
+                    const block =
+                        getCurrentBlock();
+
+
+                    if (
+                        !block ||
+                        !block.classList.contains("note-check-line")
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    event.preventDefault();
+
+
+                    // Leere Aufgabe -> Liste beenden
+                    if (
+                        block.textContent.trim() === ""
+                    ) {
+
+                        block.classList.remove("note-check-line");
+
+                        block.removeAttribute("data-checked");
+
+                        handleNoteInput();
+
+                        return;
+
+                    }
+
+
+                    // Sonst: neue Aufgabe darunter anlegen
+                    const neueZeile =
+                        document.createElement("div");
+
+                    neueZeile.className =
+                        "note-check-line";
+
+                    neueZeile.setAttribute(
+                        "data-checked",
+                        "false"
+                    );
+
+                    // Ein <br> sorgt dafür, dass die leere Zeile
+                    // überhaupt eine Höhe hat und anklickbar ist.
+                    neueZeile.appendChild(
+                        document.createElement("br")
+                    );
+
+
+                    block.parentNode.insertBefore(
+                        neueZeile,
+                        block.nextSibling
+                    );
+
+
+                    // Cursor in die neue Zeile setzen
+                    const range =
+                        document.createRange();
+
+                    range.setStart(neueZeile, 0);
+
+                    range.collapse(true);
+
+
+                    const selection =
+                        window.getSelection();
+
+                    selection.removeAllRanges();
+
+                    selection.addRange(range);
+
+
+                    handleNoteInput();
+
+                }
+            );
+
 
         document
             .getElementById("noteEditor")
@@ -9731,8 +10226,14 @@
             }
 
 
-            clearTimeout(abbruchTimer);
-
+            /*
+            // ACHTUNG, hier lauerte ein Fehler: Das Zeitlimit wurde
+            // früher schon HIER abgeschaltet. Der Server schickt aber
+            // zuerst nur die Kopfzeilen und den Inhalt danach - hängt er
+            // beim Inhalt, lief die App wieder endlos, obwohl es ein
+            // Zeitlimit gab. Deshalb bleibt der Abbruch-Timer aktiv, bis
+            // die Antwort WIRKLICH vollständig gelesen ist.
+            */
 
             // --- Schritt 3: Antwort lesen ---
 
@@ -9741,8 +10242,36 @@
             );
 
 
-            const rohtext =
-                await response.text();
+            let rohtext;
+
+
+            try {
+
+                rohtext =
+                    await response.text();
+
+            }
+
+            catch (fehler) {
+
+                clearTimeout(abbruchTimer);
+
+
+                showNotificationResult(
+                    "Der Server hat geantwortet (Status " + response.status +
+                    "), aber die Antwort kam nie vollständig an.\n\n" +
+                    "Das bedeutet: Die Edge Function bleibt mitten in der " +
+                    "Ausführung hängen. Fast immer liegt das daran, dass der " +
+                    "Versand der Push-Nachricht selbst hängt.\n\n" +
+                    "(" + fehler.name + " - " + fehler.message + ")"
+                );
+
+                return;
+
+            }
+
+
+            clearTimeout(abbruchTimer);
 
 
             let daten = null;
