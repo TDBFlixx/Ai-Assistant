@@ -118,7 +118,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-    <meta name="theme-color" content="#071a2b">
+    <meta name="theme-color" content="#0d0d0e">
 
     <title>Mein KI-Assistent</title>
 
@@ -209,29 +209,18 @@
 
 
     <!--
-        FRÜHE THEME-ANWENDUNG
-        Dieses kleine Skript läuft, bevor die Seite überhaupt
-        gezeichnet wird. Es liest das zuletzt gespeicherte Theme
-        aus localStorage und setzt data-theme sofort - dadurch
-        gibt es kein kurzes "Aufblitzen" des falschen Themes beim
-        Laden der Seite.
+        ERSCHEINUNGSBILD
+        Die App hat nur noch ein einziges, dunkles Erscheinungsbild.
+        Das Attribut wird hier einmal fest gesetzt - es gibt keinen
+        Umschalter mehr und nichts, was gespeichert werden müsste.
     -->
 
     <script>
 
-        (function () {
-
-            const savedTheme =
-                localStorage.getItem("theme") ||
-                "dark";
-
-
-            document.documentElement.setAttribute(
-                "data-theme",
-                savedTheme
-            );
-
-        })();
+        document.documentElement.setAttribute(
+            "data-theme",
+            "dark"
+        );
 
     </script>
 
@@ -250,108 +239,33 @@
         :root {
 
             /*
-            // FARBVARIABLEN - DUNKLES THEME (Standard)
-            // Wenn du die Grundfarben der App ändern willst,
-            // reicht es meistens, hier die Werte anzupassen -
-            // alle anderen Stellen im CSS greifen darauf zu (var(--name)).
+            // FARBVARIABLEN
+            //
+            // Die App hat nur noch EIN Erscheinungsbild: sehr dunkler,
+            // neutraler Hintergrund ohne Blaustich, darauf leicht
+            // durchsichtige, "verschwommene" Glas-Karten.
+            //
+            // Willst du die Grundfarben ändern, reicht es fast immer,
+            // hier die Werte anzupassen - alle anderen Stellen im CSS
+            // greifen über var(--name) darauf zu.
+            //
+            // Ein Hinweis zu --blue: Der Name stammt noch aus der Zeit,
+            // als es ein blaues Erscheinungsbild gab. Die Variable ist
+            // jetzt WEISS und steht für die Akzentfarbe (aktive Knöpfe,
+            // Fortschrittsring, Menü-Markierung). Weil weiße Flächen
+            // dunkle Schrift brauchen, setzen die betroffenen Knöpfe
+            // ihre Schriftfarbe weiter unten selbst auf Dunkel.
+            //
+            // --habit-done-text ist eine eigene Variable nur für diese
+            // App: die Textfarbe ERLEDIGTER Habits - heller als der
+            // Hintergrund, aber gedeckter als das kräftige Weiß der
+            // noch offenen.
             */
-
-            --background: #071a2b;
-
-            --background-light: #0d2940;
-
-            --card: #102f48;
-
-            --card-light: #143953;
-
-            --border: rgba(255, 255, 255, 0.08);
-
-            --text: #f5f9ff;
-
-            --muted: #8fa8bd;
-
-            --blue: #4aa8ff;
-
-            --blue-light: #72c2ff;
-
-            --green: #42d392;
-
-            --red: #ff6675;
-
-            --yellow: #f7c95b;
-
-        }
-
-
-        /*
-        // FARBVARIABLEN - HELLES THEME
-        // Wird aktiv, sobald <html data-theme="light"> gesetzt ist.
-        // Das übernimmt die Funktion applyTheme() weiter unten im JS,
-        // je nachdem was in den Einstellungen ausgewählt wurde.
-        */
-
-        [data-theme="light"] {
-
-            --background: #eef2f7;
-
-            --background-light: #ffffff;
-
-            --card: #ffffff;
-
-            --card-light: #f2f5f9;
-
-            --border: rgba(16, 32, 47, 0.1);
-
-            --text: #142333;
-
-            --muted: #5c7288;
-
-            --blue: #1c86e6;
-
-            --blue-light: #2f9bff;
-
-            --green: #1f9d67;
-
-            --red: #e0334b;
-
-            --yellow: #caa23a;
-
-        }
-
-
-        /*
-        // FARBVARIABLEN - GRAU/WEISS THEME
-        /*
-        // FARBVARIABLEN - GRAU-THEME (drittes Theme)
-        // Orientiert sich am "dark fintech glass" Look: sehr dunkler,
-        // neutraler Hintergrund OHNE Blaustich, darauf "verschwommene"
-        // helle Glas-Karten (halbtransparentes Weiß + Blur), kräftig
-        // weiße Schrift für wichtige/offene Inhalte.
-        //
-        // WICHTIG: --blue/--blue-light werden hier bewusst NICHT mehr
-        // blau eingefärbt, sondern auf Weiß/Off-White gesetzt, damit
-        // wirklich NICHTS mehr blau erscheint (Buttons, Progress-Ring,
-        // Menü-Indicator usw. hängen alle an diesen Variablen). Weil
-        // dadurch einige Buttons einen WEISSEN statt blauen Hintergrund
-        // bekommen, gibt es weiter unten für jeden betroffenen Button
-        // eine passende [data-theme="gray"]-Regel, die die Schrift/das
-        // Icon-Symbol in diesem Fall auf Dunkel umstellt (sonst wäre
-        // "weißer Text auf weißem Button" unsichtbar).
-        //
-        // --habit-done-text ist eine EXTRA-Variable nur für diese
-        // App - kein Standard-CSS-Name. Sie steuert die Textfarbe von
-        // ERLEDIGTEN Habits: heller als der Hintergrund, aber gedeckter/
-        // "verblasster" als das kräftige Weiß der offenen Habits.
-        */
-
-        [data-theme="gray"] {
 
             --background: #0d0d0e;
 
             --background-light: #161617;
 
-            /* Halbtransparentes Weiß statt fester Farbe = Grundlage
-               für den "verschwommenen", gläsernen Karten-Look. */
             --card: rgba(255, 255, 255, 0.05);
 
             --card-light: rgba(255, 255, 255, 0.09);
@@ -415,24 +329,13 @@
         // seltsam auf hellem Hintergrund wirken.
         */
 
-        [data-theme="light"] body {
-
-            background:
-                radial-gradient(circle at 50% -10%,
-                    #d7e6f7 0%,
-                    var(--background) 45%);
-
-        }
-
-
         /*
-        // Im Grau-Theme bewusst KEIN Farbschimmer oben - flacher,
-        // einheitlicher dunkler Hintergrund, damit die "verschwommenen"
-        // Glas-Karten (siehe --card) der auffällige Kontrast bleiben,
-        // nicht ein zusätzlicher Verlauf im Hintergrund.
+        // Bewusst KEIN Farbschimmer oben - ein flacher, einheitlicher
+        // dunkler Hintergrund, damit die "verschwommenen" Glas-Karten
+        // der auffällige Kontrast bleiben.
         */
 
-        [data-theme="gray"] body {
+        body {
 
             background: var(--background);
 
@@ -669,14 +572,12 @@
 
 
         /*
-        // NUR IM GRAU-THEME: --blue ist hier Weiß statt Blau (siehe
-        // Variablen-Definition oben), der Hintergrund des Kreises wird
-        // dadurch automatisch weiß - die Zahl selbst braucht deshalb
-        // eine DUNKLE statt weiße Schriftfarbe, sonst unsichtbar. Auch
-        // der Leucht-Schatten wird von Blau auf neutrales Weiß umgestellt.
+        // --blue ist Weiß, der Kreis wird dadurch weiß - die Zahl
+        // darin braucht deshalb eine DUNKLE Schriftfarbe, sonst wäre
+        // sie unsichtbar.
         */
 
-        [data-theme="gray"] .week-day.today .week-day-number {
+        .week-day.today .week-day-number {
 
             color: #111111;
 
@@ -724,12 +625,10 @@
 
 
         /*
-        // NUR IM GRAU-THEME: statt des blau-grünen Verlaufs die gleiche
-        // "verschwommene Glas"-Optik wie die anderen Karten (Habits,
-        // Tasks, Progress-Kreis) - siehe Kommentar bei --card weiter oben.
+        // Gleiche "verschwommene Glas"-Optik wie die anderen Karten.
         */
 
-        [data-theme="gray"] .streak-card {
+        .streak-card {
 
             background: var(--card);
 
@@ -796,9 +695,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutrales Glas statt blauem Tint */
+        /* Neutrales Glas als Hintergrund */
 
-        [data-theme="gray"] .details-button {
+        .details-button {
 
             background: rgba(255, 255, 255, 0.1);
 
@@ -852,7 +751,7 @@
         }
 
 
-        [data-theme="gray"] .update-banner {
+        .update-banner {
 
             backdrop-filter: blur(18px);
 
@@ -947,15 +846,10 @@
 
 
         /*
-        // NUR IM GRAU-THEME: Der Progress-Kreis-Hintergrund war bisher
-        // IMMER derselbe feste Dunkelblau-Verlauf, egal welches Theme
-        // aktiv ist (Absicht: der Ring sollte immer gut sichtbar sein).
-        // Im Grau-Theme ersetzen wir das jetzt durch dieselbe
-        // "verschwommene" Glas-Karte wie bei Habits/Tasks/Streak, damit
-        // wirklich kein blauer Farbfleck mehr übrig bleibt.
+        // Dieselbe "verschwommene" Glas-Karte wie bei Habits und Tasks.
         */
 
-        [data-theme="gray"] .progress-card {
+        .progress-card {
 
             background: var(--card);
 
@@ -1027,16 +921,11 @@
 
 
         /*
-        // NUR IM GRAU-THEME: Der Progress-Ring soll laut Vorgabe in
-        // einem "passenden Weiß" erscheinen statt im blauen Akzent,
-        // damit er zu den anderen "wichtigen" weißen Elementen passt
-        // (z.B. den Namen offener Habits). Der Progress-Card-Hintergrund
-        // bleibt bewusst dunkel (siehe .progress-card oben, absichtlich
-        // theme-unabhängig), damit der weiße Ring weiterhin gut sichtbar
-        // bleibt.
+        // Der Fortschrittsring erscheint in kräftigem Weiß, passend zu
+        // den anderen "wichtigen" Elementen.
         */
 
-        [data-theme="gray"] .progress-value {
+        .progress-value {
 
             stroke: #ffffff;
 
@@ -1186,15 +1075,12 @@
 
 
         /*
-        // NUR IM GRAU-THEME: die "verschwommene" Glas-Optik (Blur)
-        // ergänzen. background/border kommen bereits automatisch aus
-        // var(--card)/var(--border), die für dieses Theme oben als
-        // halbtransparentes Weiß definiert sind - hier fehlt nur noch
-        // der Weichzeichner, der den typischen "Frosted Glass"-Effekt
-        // erzeugt.
+        // Die "verschwommene" Glas-Optik (Blur) ergänzen. Farbe und Rand
+        // kommen schon aus var(--card)/var(--border) - hier fehlt nur
+        // der Weichzeichner für den "Frosted Glass"-Effekt.
         */
 
-        [data-theme="gray"] .habit-card {
+        .habit-card {
 
             backdrop-filter: blur(16px);
 
@@ -1212,20 +1098,13 @@
 
 
         /*
-        // NUR IM GRAU-THEME: Erledigte Habits wirken "verblasst" -
-        // Name und Icon wechseln vom kräftigen Weiß (--text) zu einem
-        // gedeckteren Grauweiß (--habit-done-text), das zwar heller
-        // als der Hintergrund bleibt, aber deutlich zurückhaltender
-        // wirkt als offene, noch zu erledigende Habits.
-        // ZUSÄTZLICH wird jetzt auch die Karte selbst dunkler/blasser:
-        // eine schwächere Weiß-Transparenz (weniger "Glas") lässt die
-        // Karte optisch mehr in den dunklen Hintergrund zurücktreten,
-        // und die grüne "erledigt"-Border wird gedämpft statt kräftig.
-        // In den anderen beiden Themes (Dunkel/Hell) bleibt das
-        // bisherige Verhalten unverändert.
+        // Erledigte Habits wirken "verblasst": Name und Icon wechseln vom
+        // kräftigen Weiß zu einem gedeckteren Grauweiß, die Karte selbst
+        // tritt in den Hintergrund zurück und die grüne Markierung wird
+        // gedämpft statt kräftig.
         */
 
-        [data-theme="gray"] .habit-card.done {
+        .habit-card.done {
 
             background: rgba(255, 255, 255, 0.02);
 
@@ -1234,21 +1113,21 @@
         }
 
 
-        [data-theme="gray"] .habit-card.done .habit-name {
+        .habit-card.done .habit-name {
 
             color: var(--habit-done-text);
 
         }
 
 
-        [data-theme="gray"] .habit-card.done .habit-icon {
+        .habit-card.done .habit-icon {
 
             opacity: 0.5;
 
         }
 
 
-        [data-theme="gray"] .habit-card.done .habit-status {
+        .habit-card.done .habit-status {
 
             color: var(--habit-done-text);
 
@@ -1280,7 +1159,7 @@
             padding-right: 6px;
 
             /* Sanfter Übergang, falls sich die Farbe beim Abhaken ändert
-               (aktuell nur im Grau-Theme relevant, schadet aber sonst nicht) */
+               */
             transition: color 0.2s ease;
 
         }
@@ -1332,9 +1211,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutraler weißlicher statt blaugrauer Rahmen */
+        /* Neutraler weißlicher Rahmen */
 
-        [data-theme="gray"] .habit-check {
+        .habit-check {
 
             border-color: rgba(255, 255, 255, 0.3);
 
@@ -1486,10 +1365,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: gleiche "verschwommene" Glas-Optik wie
-           bei den Habit-Karten (siehe dortiger Kommentar). */
+        /* Gleiche "verschwommene" Glas-Optik wie bei den Habit-Karten */
 
-        [data-theme="gray"] .task {
+        .task {
 
             backdrop-filter: blur(16px);
 
@@ -1537,9 +1415,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutraler weißlicher statt blaugrauer Rahmen */
+        /* Neutraler weißlicher Rahmen */
 
-        [data-theme="gray"] .check-circle {
+        .check-circle {
 
             border-color: rgba(255, 255, 255, 0.3);
 
@@ -1803,9 +1681,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutraler Glas-Kreis statt blauem Verlauf */
+        /* Neutraler Glas-Kreis */
 
-        [data-theme="gray"] .avatar {
+        .avatar {
 
             background: rgba(255, 255, 255, 0.08);
 
@@ -1852,9 +1730,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
+        /* Gleiche Glas-Optik wie die anderen Karten */
 
-        [data-theme="gray"] .settings-card {
+        .settings-card {
 
             backdrop-filter: blur(16px);
 
@@ -1933,9 +1811,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutrales Glas statt blauem Tint */
+        /* Neutrales Glas als Hintergrund */
 
-        [data-theme="gray"] .setting-icon {
+        .setting-icon {
 
             background: rgba(255, 255, 255, 0.08);
 
@@ -1961,81 +1839,6 @@
         .logout {
 
             color: var(--red);
-
-        }
-
-
-        /*
-        // THEME-AUSWAHL (Dunkel / Hell / Grau)
-        // Eine "Segmented Control" - drei nebeneinanderliegende
-        // Buttons in einer Pille, von denen immer genau einer als
-        // aktiv markiert ist. Ersetzt den früheren einfachen
-        // Ein/Aus-Schalter, da wir jetzt DREI statt nur zwei
-        // Theme-Optionen haben.
-        */
-
-        .theme-select {
-
-            display: flex;
-
-            background:
-                rgba(255, 255, 255, 0.06);
-
-            border-radius: 999px;
-
-            padding: 3px;
-
-            gap: 2px;
-
-            flex-shrink: 0;
-
-        }
-
-
-        .theme-option {
-
-            border: none;
-
-            background: transparent;
-
-            color: var(--muted);
-
-            font-size: 12px;
-
-            font-weight: 700;
-
-            padding: 7px 12px;
-
-            border-radius: 999px;
-
-            cursor: pointer;
-
-            transition:
-                background 0.2s ease,
-                color 0.2s ease;
-
-        }
-
-
-        .theme-option.active {
-
-            background: var(--blue);
-
-            color: white;
-
-        }
-
-
-        /*
-        // NUR IM GRAU-THEME: --blue ist hier Weiß (siehe Variablen
-        // oben), der Hintergrund der aktiven Pille wird also weiß -
-        // die Beschriftung ("Blau"/"Hell"/"Grau") braucht deshalb
-        // dunkle statt weiße Schrift, sonst unsichtbar.
-        */
-
-        [data-theme="gray"] .theme-option.active {
-
-            color: #111111;
 
         }
 
@@ -2122,9 +1925,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutrales dunkles Glas statt Navy-Blau */
+        /* Neutrales dunkles Glas */
 
-        [data-theme="gray"] .bottom-nav {
+        .bottom-nav {
 
             background: rgba(10, 10, 11, 0.85);
 
@@ -2166,9 +1969,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutrales Weiß-Glas statt blauem Tint */
+        /* Neutrales Weiß-Glas */
 
-        [data-theme="gray"] .nav-indicator {
+        .nav-indicator {
 
             background: rgba(255, 255, 255, 0.12);
 
@@ -2215,9 +2018,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutrales Grau statt blaugrauem Farbton */
+        /* Neutrales Grau */
 
-        [data-theme="gray"] .nav-button {
+        .nav-button {
 
             color: #8a8a8d;
 
@@ -2294,14 +2097,11 @@
 
 
         /*
-        // NUR IM GRAU-THEME: --blue ist hier Weiß (siehe Variablen
-        // oben) - der Button-Hintergrund wird dadurch automatisch
-        // weiß. Das Plus-Icon (SVG, nutzt currentColor) braucht
-        // deshalb eine DUNKLE statt weiße Farbe, sonst unsichtbar.
-        // Auch der Leucht-Schatten wird auf neutrales Weiß umgestellt.
+        // --blue ist Weiß, der Button-Hintergrund wird dadurch weiß.
+        // Das Plus-Icon braucht deshalb eine DUNKLE Farbe.
         */
 
-        [data-theme="gray"] .nav-add-button {
+        .nav-add-button {
 
             color: #111111;
 
@@ -2596,9 +2396,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: kein Farbschimmer, flacher dunkler Hintergrund */
+        /* Kein Farbschimmer, flacher dunkler Hintergrund */
 
-        [data-theme="gray"] .auth-screen {
+        .auth-screen {
 
             background: var(--background);
 
@@ -2624,9 +2424,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: die verschwommene Glas-Optik ergänzen */
+        /* Die verschwommene Glas-Optik ergänzen */
 
-        [data-theme="gray"] .auth-card {
+        .auth-card {
 
             backdrop-filter: blur(20px);
 
@@ -2661,9 +2461,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutraler Glas-Kreis statt blauem Verlauf */
+        /* Neutraler Glas-Kreis */
 
-        [data-theme="gray"] .auth-logo {
+        .auth-logo {
 
             background: rgba(255, 255, 255, 0.08);
 
@@ -2780,12 +2580,12 @@
 
 
         /*
-        // NUR IM GRAU-THEME: --blue ist Weiß, Button-Hintergrund wird
+        // --blue ist Weiß, Button-Hintergrund wird
         // dadurch weiß - Schrift ("Einloggen"/"Registrieren") braucht
         // deshalb dunkle statt weiße Farbe, sonst unsichtbar.
         */
 
-        [data-theme="gray"] .auth-submit {
+        .auth-submit {
 
             color: #111111;
 
@@ -2821,165 +2621,173 @@
 
 
         /* =========================================================
-           KI-CHAT SEITE
+           SCHULE: STUNDENPLAN, HAUSAUFGABEN UND FÄCHER
+
+           Die Seite hat drei Ansichten, zwischen denen oben mit einer
+           Schalterleiste gewechselt wird (gleiche Optik wie die
+           Theme-Auswahl in den Einstellungen).
         ========================================================= */
 
-        /*
-        // Der Nachrichtenverlauf. overflow-y sorgt dafür, dass die
-        // Seite scrollt statt beliebig lang zu werden.
-        */
 
-        .chat-window {
+        /* --- Umschalter oben (Stundenplan / Hausaufgaben / Fächer) --- */
+
+        .school-tabs {
 
             display: flex;
 
-            flex-direction: column;
+            background: rgba(255, 255, 255, 0.06);
 
-            gap: 10px;
+            border-radius: 999px;
 
-            min-height: 300px;
+            padding: 3px;
 
-            margin-bottom: 16px;
+            gap: 2px;
 
-        }
-
-
-        .chat-message {
-
-            max-width: 80%;
-
-            padding: 12px 15px;
-
-            border-radius: 16px;
-
-            font-size: 14px;
-
-            line-height: 1.45;
+            margin-bottom: 20px;
 
         }
 
 
-        /* Nachrichten von dir selbst: rechts, blau */
+        .school-tab {
 
-        .chat-message.user {
+            flex: 1;
 
-            align-self: flex-end;
+            border: none;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            font-size: 12.5px;
+
+            font-weight: 700;
+
+            padding: 9px 6px;
+
+            border-radius: 999px;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease;
+
+        }
+
+
+        .school-tab.active {
 
             background: var(--blue);
 
             color: white;
 
-            border-bottom-right-radius: 4px;
-
         }
 
 
-        /*
-        // NUR IM GRAU-THEME: --blue ist Weiß, Bubble-Hintergrund wird
-        // dadurch weiß - eigener Nachrichtentext braucht deshalb
-        // dunkle statt weiße Farbe, sonst unsichtbar.
-        */
+        /* --blue ist Weiß, deshalb dunkle Schrift */
 
-        [data-theme="gray"] .chat-message.user {
+        .school-tab.active {
 
             color: #111111;
 
         }
 
 
-        /* Antworten der KI: links, dezente Kartenfarbe */
+        /* --- STUNDENPLAN --- */
 
-        .chat-message.ai {
+        /*
+        // Der Plan ist ein Raster: links eine schmale Spalte mit den
+        // Stundennummern, daneben die fünf Wochentage.
+        // "grid-template-columns" legt genau das fest.
+        */
 
-            align-self: flex-start;
+        .timetable {
 
-            background: var(--card);
+            display: grid;
 
-            border: 1px solid var(--border);
+            /* Links die Spalte mit Stundennummer und Uhrzeiten,
+               daneben die fünf Wochentage zu gleichen Teilen. */
+            grid-template-columns:
+                42px repeat(5, 1fr);
 
-            border-bottom-left-radius: 4px;
-
-        }
-
-
-        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
-
-        [data-theme="gray"] .chat-message.ai {
-
-            backdrop-filter: blur(14px);
-
-            -webkit-backdrop-filter: blur(14px);
+            gap: 4px;
 
         }
 
 
-        .chat-input-row {
+        .timetable-head {
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+            color: var(--muted);
+
+            text-align: center;
+
+            padding-bottom: 2px;
+
+        }
+
+
+        /*
+        // Die linke Spalte einer Unterrichtsstunde: oben die Nummer,
+        // darunter Anfangs- und Endzeit in klein.
+        */
+
+        .timetable-period {
 
             display: flex;
 
-            gap: 10px;
+            flex-direction: column;
 
             align-items: center;
 
+            justify-content: center;
+
+            gap: 1px;
+
+            color: var(--muted);
+
         }
 
 
-        .chat-input-row input {
+        .timetable-period-number {
 
-            flex: 1;
+            font-size: 12px;
 
-            padding: 14px 16px;
-
-            border-radius: 14px;
-
-            border: 1px solid var(--border);
-
-            background: var(--card);
+            font-weight: 800;
 
             color: var(--text);
 
-            outline: none;
+        }
+
+
+        .timetable-period-time {
+
+            font-size: 8.5px;
+
+            font-weight: 600;
+
+            line-height: 1.15;
+
+            opacity: 0.85;
 
         }
 
 
-        /* NUR IM GRAU-THEME: gleiche Glas-Optik wie die anderen Karten */
+        /*
+        // PAUSEN
+        //
+        // Eine Pause ist keine Stunde, sondern ein schmaler Balken quer
+        // über den ganzen Plan. "grid-column: 1 / -1" heißt: von der
+        // ersten bis zur letzten Spalte durchgehend - dadurch muss man
+        // nicht wissen, wie viele Spalten es gerade gibt.
+        */
 
-        [data-theme="gray"] .chat-input-row input {
+        .timetable-break {
 
-            backdrop-filter: blur(14px);
-
-            -webkit-backdrop-filter: blur(14px);
-
-        }
-
-
-        .chat-input-row input:focus {
-
-            border-color: var(--blue);
-
-        }
-
-
-        .chat-send-button {
-
-            width: 48px;
-
-            height: 48px;
-
-            flex-shrink: 0;
-
-            border: none;
-
-            border-radius: 50%;
-
-            background: var(--blue);
-
-            color: white;
-
-            font-size: 18px;
-
-            cursor: pointer;
+            grid-column: 1 / -1;
 
             display: flex;
 
@@ -2987,31 +2795,379 @@
 
             justify-content: center;
 
+            gap: 8px;
+
+            padding: 5px 8px;
+
+            margin: 1px 0;
+
+            border-radius: 8px;
+
+            background: rgba(255, 255, 255, 0.035);
+
+            color: var(--muted);
+
+            font-size: 10.5px;
+
+            font-weight: 700;
+
+            letter-spacing: 0.3px;
+
+        }
+
+
+        .timetable-break-time {
+
+            font-weight: 500;
+
+            opacity: 0.75;
+
         }
 
 
         /*
-        // NUR IM GRAU-THEME: --blue ist Weiß, Button-Hintergrund wird
-        // dadurch weiß - das Senden-Symbol braucht deshalb dunkle
-        // statt weiße Farbe, sonst unsichtbar.
+        // Eine einzelne Stunde. Ist ein Fach eingetragen, färbt das JS
+        // den Hintergrund passend zur Fachfarbe ein (als halbdurch-
+        // sichtige Variante, damit die Schrift lesbar bleibt).
         */
 
-        [data-theme="gray"] .chat-send-button {
+        .timetable-cell {
 
-            color: #111111;
+            min-height: 44px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 10px;
+
+            background: var(--card);
+
+            color: var(--text);
+
+            padding: 4px 2px;
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 2px;
+
+            overflow: hidden;
+
+            text-align: center;
+
+            line-height: 1.2;
 
         }
 
 
-        .chat-hint {
+        .timetable-cell {
+
+            backdrop-filter: blur(14px);
+
+            -webkit-backdrop-filter: blur(14px);
+
+        }
+
+
+        .timetable-cell:active {
+
+            transform: scale(0.96);
+
+        }
+
+
+        /* Leere Stunde: dezenter gestrichelter Rahmen */
+
+        .timetable-cell.empty {
+
+            border-style: dashed;
+
+            background: rgba(255, 255, 255, 0.02);
 
             color: var(--muted);
 
+            font-weight: 400;
+
+            font-size: 15px;
+
+        }
+
+
+        .timetable-room {
+
+            font-size: 9.5px;
+
+            font-weight: 600;
+
+            opacity: 0.75;
+
+        }
+
+
+        /* --- FÄCHER --- */
+
+        .subject-row {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 14px;
+
+            padding: 12px 13px;
+
+            margin-bottom: 9px;
+
+        }
+
+
+        .subject-row {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
+        /*
+        // Das farbige Kürzel-Feld vor dem Fachnamen - dieselbe Farbe
+        // taucht später im Stundenplan und bei den Hausaufgaben auf,
+        // damit man ein Fach überall sofort wiedererkennt.
+        */
+
+        .subject-badge {
+
+            width: 38px;
+
+            height: 38px;
+
+            flex-shrink: 0;
+
+            border-radius: 11px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
             font-size: 12px;
 
-            text-align: center;
+            font-weight: 800;
 
-            margin-top: 12px;
+            color: #10202e;
+
+        }
+
+
+        .subject-name {
+
+            flex: 1;
+
+            min-width: 0;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+
+        }
+
+
+        .subject-count {
+
+            font-size: 12px;
+
+            color: var(--muted);
+
+        }
+
+
+        /* --- HAUSAUFGABEN --- */
+
+        .homework-group {
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .homework-group-head {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 9px;
+
+            margin-bottom: 9px;
+
+        }
+
+
+        .homework-group-title {
+
+            font-size: 15px;
+
+            font-weight: 750;
+
+        }
+
+
+        /*
+        // Eine Hausaufgabe. Gleicher Aufbau wie eine Aufgabe auf der
+        // To-Do-Seite, damit sich die App einheitlich anfühlt - inkl.
+        // der Klasse "completing" für das sanfte Ausblenden beim Abhaken.
+        */
+
+        .homework-item {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            background: var(--card);
+
+            border: 1px solid var(--border);
+
+            border-radius: 14px;
+
+            padding: 13px;
+
+            margin-bottom: 8px;
+
+            transition:
+                opacity 0.8s ease,
+                transform 0.8s ease;
+
+        }
+
+
+        .homework-item {
+
+            backdrop-filter: blur(16px);
+
+            -webkit-backdrop-filter: blur(16px);
+
+        }
+
+
+        .homework-item.completing {
+
+            opacity: 0;
+
+            transform: translateX(20px);
+
+        }
+
+
+        .homework-text {
+
+            flex: 1;
+
+            min-width: 0;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            line-height: 1.35;
+
+        }
+
+
+        .homework-text.done {
+
+            text-decoration: line-through;
+
+            opacity: 0.5;
+
+        }
+
+
+        .homework-due {
+
+            font-size: 11.5px;
+
+            color: var(--muted);
+
+            margin-top: 3px;
+
+            font-weight: 500;
+
+        }
+
+
+        /* Fällig heute oder überfällig: rot hervorheben */
+
+        .homework-due.urgent {
+
+            color: var(--red);
+
+        }
+
+
+        /* --- FARBAUSWAHL IM "FACH ANLEGEN"-FENSTER --- */
+
+        .color-choices {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 9px;
+
+            margin-bottom: 17px;
+
+        }
+
+
+        .color-choice {
+
+            width: 34px;
+
+            height: 34px;
+
+            border-radius: 50%;
+
+            border: 3px solid transparent;
+
+            cursor: pointer;
+
+            padding: 0;
+
+        }
+
+
+        /* Die gerade gewählte Farbe bekommt einen Ring */
+
+        .color-choice.active {
+
+            border-color: #142333;
 
         }
 
@@ -3059,10 +3215,10 @@
         }
 
 
-        /* NUR IM GRAU-THEME: gleiche "verschwommene" Glas-Optik wie
+        /* gleiche "verschwommene" Glas-Optik wie
            bei den Habit- und Aufgaben-Karten. */
 
-        [data-theme="gray"] .note-item {
+        .note-item {
 
             backdrop-filter: blur(16px);
 
@@ -3256,7 +3412,7 @@
         }
 
 
-        [data-theme="gray"] .note-toolbar {
+        .note-toolbar {
 
             backdrop-filter: blur(16px);
 
@@ -3310,9 +3466,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: --blue ist hier Weiß, deshalb dunkle Schrift */
+        /* --blue ist hier Weiß, deshalb dunkle Schrift */
 
-        [data-theme="gray"] .note-tool.active {
+        .note-tool.active {
 
             color: #111111;
 
@@ -3386,7 +3542,7 @@
         }
 
 
-        [data-theme="gray"] .note-editor {
+        .note-editor {
 
             backdrop-filter: blur(16px);
 
@@ -3506,9 +3662,9 @@
         }
 
 
-        /* NUR IM GRAU-THEME: neutraler weißlicher statt blaugrauer Rand */
+        /* neutraler weißlicher statt blaugrauer Rand */
 
-        [data-theme="gray"] .note-check-line::before {
+        .note-check-line::before {
 
             border-color: rgba(255, 255, 255, 0.35);
 
@@ -3885,48 +4041,83 @@
 
 
         <!-- =====================================
-         KI-CHAT SEITE
-         Platzhalter-Chat: Nachrichten werden aktuell nur lokal
-         gespeichert und mit einer Beispiel-Antwort beantwortet.
-         Sobald eine echte KI-Anbindung (z.B. per API) existiert,
-         wird nur die Funktion sendChatMessage() im JS angepasst.
+         SCHULE
+         Drei Ansichten auf einer Seite, umgeschaltet über die
+         Leiste oben (siehe showSchoolTab() im JavaScript):
+
+         1. Stundenplan  - das Wochenraster
+         2. Hausaufgaben - nach Fächern gruppiert
+         3. Fächer       - anlegen und löschen
     ====================================== -->
 
-        <main class="page" id="aiPage">
+        <main class="page" id="schoolPage">
 
             <div class="page-heading">
 
                 <h1>
-                    KI-Assistent
+                    Schule
                 </h1>
 
                 <p>
-                    Schreib mir etwas - sobald ich mit einer echten
-                    KI verbunden bin, antworte ich dir hier direkt.
+                    Dein Stundenplan und alle Hausaufgaben.
                 </p>
 
             </div>
 
 
-            <div class="chat-window" id="chatWindow"></div>
+            <div class="school-tabs">
 
+                <button class="school-tab active" id="schoolTabPlan" onclick="showSchoolTab('plan')">
+                    Stundenplan
+                </button>
 
-            <div class="chat-input-row">
+                <button class="school-tab" id="schoolTabHomework" onclick="showSchoolTab('homework')">
+                    Hausaufgaben
+                </button>
 
-                <input id="chatInput" type="text" placeholder="Nachricht schreiben..."
-                    onkeydown="handleChatKeydown(event)">
-
-                <button class="chat-send-button" onclick="sendChatMessage()" aria-label="Senden">
-                    ➤
+                <button class="school-tab" id="schoolTabSubjects" onclick="showSchoolTab('subjects')">
+                    Fächer
                 </button>
 
             </div>
 
 
-            <div class="chat-hint">
-                Noch keine echte KI verbunden - das kommt als Nächstes.
+            <!-- ===== ANSICHT 1: STUNDENPLAN ===== -->
+
+            <div id="schoolPlanView">
+
+                <div class="timetable" id="timetable"></div>
+
+                <div class="settings-note" style="padding: 14px 2px 0;">
+                    Tippe auf eine Stunde, um ein Fach einzutragen oder zu löschen.
+                    Stimmen die Uhrzeiten nicht mit deiner Schule überein, lassen
+                    sie sich im Code ganz oben bei "TIMETABLE_ROWS" anpassen.
+                </div>
+
             </div>
 
+
+            <!-- ===== ANSICHT 2: HAUSAUFGABEN ===== -->
+
+            <div id="schoolHomeworkView" style="display: none;">
+
+                <div id="homeworkList"></div>
+
+            </div>
+
+
+            <!-- ===== ANSICHT 3: FÄCHER ===== -->
+
+            <div id="schoolSubjectsView" style="display: none;">
+
+                <div id="subjectList"></div>
+
+                <div class="settings-note" style="padding: 14px 2px 0;">
+                    Das Kürzel ist die Kurzform, die im Stundenplan angezeigt
+                    wird - zum Beispiel "MA" für Mathematik.
+                </div>
+
+            </div>
 
         </main>
 
@@ -4176,46 +4367,6 @@
                 </div>
 
 
-            <!--
-                Erscheinungsbild-Zeile: drei Buttons (Dunkel/Hell/Grau)
-                in einer Pille. setTheme() im JS setzt das gewählte
-                Theme und markiert den passenden Button als "active".
-            -->
-
-                <div class="setting-row">
-
-                    <div class="setting-left">
-
-                        <div class="setting-icon">
-                            🎨
-                        </div>
-
-                        <div class="setting-label">
-                            Erscheinungsbild
-                        </div>
-
-                    </div>
-
-
-                    <div class="theme-select" id="themeSelect">
-
-                        <button class="theme-option" data-theme-value="dark" onclick="setTheme('dark')">
-                            Blau
-                        </button>
-
-                        <button class="theme-option" data-theme-value="light" onclick="setTheme('light')">
-                            Hell
-                        </button>
-
-                        <button class="theme-option" data-theme-value="gray" onclick="setTheme('gray')">
-                            Grau
-                        </button>
-
-                    </div>
-
-                </div>
-
-
                 <!--
                     Der Klick hier ist der EINZIGE Weg, die Erlaubnis
                     für Benachrichtigungen anzufragen: Apple erlaubt die
@@ -4400,16 +4551,18 @@
         </button>
 
 
-        <button class="nav-button" id="navAI" onclick="showPage('ai')">
+        <button class="nav-button" id="navSchool" onclick="showPage('school')">
 
             <div class="nav-icon">
                 <svg viewBox="0 0 24 24">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    <path d="M3 7.5l9-4 9 4-9 4-9-4z" />
+                    <path d="M7 10.5V16c0 1.3 2.2 2.4 5 2.4s5-1.1 5-2.4v-5.5" />
+                    <path d="M21 7.5v6" />
                 </svg>
             </div>
 
             <div class="nav-label">
-                KI
+                Schule
             </div>
 
         </button>
@@ -4604,6 +4757,177 @@
 
             </div>
 
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+     FACH ANLEGEN
+====================================== -->
+
+    <div class="modal" id="subjectModal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2>
+                    Neues Fach
+                </h2>
+
+                <button class="close-button" onclick="closeSubjectModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <label>
+                Name
+            </label>
+
+            <input id="subjectNameInput" type="text" placeholder="z.B. Mathematik">
+
+
+            <label>
+                Kürzel (für den Stundenplan)
+            </label>
+
+            <input id="subjectShortInput" type="text" maxlength="4" placeholder="z.B. MA">
+
+
+            <label>
+                Farbe
+            </label>
+
+            <div class="color-choices" id="colorChoices"></div>
+
+
+            <div class="modal-buttons">
+
+                <button class="modal-button cancel-button" onclick="closeSubjectModal()">
+                    Abbrechen
+                </button>
+
+                <button class="modal-button create-button" onclick="createSubject()">
+                    Erstellen
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+     STUNDE EINTRAGEN
+     Wird geöffnet, wenn man im Stundenplan auf eine Zelle tippt.
+====================================== -->
+
+    <div class="modal" id="lessonModal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2 id="lessonModalTitle">
+                    Stunde
+                </h2>
+
+                <button class="close-button" onclick="closeLessonModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <label>
+                Fach
+            </label>
+
+            <select id="lessonSubjectSelect"></select>
+
+
+            <label>
+                Raum (optional)
+            </label>
+
+            <input id="lessonRoomInput" type="text" placeholder="z.B. A204">
+
+
+            <div class="modal-buttons">
+
+                <button class="modal-button cancel-button" onclick="clearLesson()">
+                    Leeren
+                </button>
+
+                <button class="modal-button create-button" onclick="saveLesson()">
+                    Speichern
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+     HAUSAUFGABE ANLEGEN
+====================================== -->
+
+    <div class="modal" id="homeworkModal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2>
+                    Neue Hausaufgabe
+                </h2>
+
+                <button class="close-button" onclick="closeHomeworkModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <label>
+                Fach
+            </label>
+
+            <select id="homeworkSubjectSelect"></select>
+
+
+            <label>
+                Aufgabe
+            </label>
+
+            <input id="homeworkTextInput" type="text" placeholder="z.B. Seite 42, Nr. 3-7">
+
+
+            <label>
+                Bis wann? (optional)
+            </label>
+
+            <input id="homeworkDueInput" type="date">
+
+
+            <div class="modal-buttons">
+
+                <button class="modal-button cancel-button" onclick="closeHomeworkModal()">
+                    Abbrechen
+                </button>
+
+                <button class="modal-button create-button" onclick="createHomework()">
+                    Erstellen
+                </button>
+
+            </div>
 
         </div>
 
@@ -4853,15 +5177,6 @@
         let accountModalAction = "email";
 
 
-        // Nachrichtenverlauf der KI-Chat-Seite: { sender, text }
-        // sender ist entweder "user" oder "ai". Bleibt bewusst lokal
-        // im Browser (siehe Hinweis oben).
-        let chatMessages =
-            JSON.parse(
-                localStorage.getItem("chatMessages")
-            ) || [];
-
-
         // Liste aller Notizen: { id, title, content, updatedAt }
         // "content" ist HTML (also z.B. "<h2>Titel</h2><div>Text</div>"),
         // weil im Editor ja auch Formatierungen möglich sind.
@@ -4897,6 +5212,22 @@
         */
 
         const APP_UPDATES = [
+
+            {
+                version: 6,
+
+                title: "Stundenplan mit Uhrzeiten",
+
+                text: "Der Plan zeigt jetzt 10 Stunden mit Uhrzeiten und Pausen. Außerdem gibt es nur noch das dunkle Erscheinungsbild."
+            },
+
+            {
+                version: 5,
+
+                title: "Schul-Planer statt KI-Chat",
+
+                text: "Trag deinen Stundenplan ein und notiere Hausaufgaben zu deinen Fächern - der neue Tab heißt Schule."
+            },
 
             {
                 version: 4,
@@ -4944,7 +5275,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-09-14 / 20:05";
+        const BUILD_ID = "2026-09-24 / 21:05";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -4980,16 +5311,6 @@
            jeweiligen Funktionen weiter unten, z.B. toggleHabit(),
            createItem(), handleAuthSubmit() usw.)
         ========================================================= */
-
-
-        function saveChatMessages() {
-
-            localStorage.setItem(
-                "chatMessages",
-                JSON.stringify(chatMessages)
-            );
-
-        }
 
 
         /* =========================================================
@@ -5213,49 +5534,14 @@
             }
 
 
-            // --- THEME LADEN ---
-
-            const settingsResult =
-                await supabaseClient
-                    .from("settings")
-                    .select("*")
-                    .maybeSingle();
-
-
-            if (
-                settingsResult.data
-            ) {
-
-                applyTheme(
-                    settingsResult.data.theme
-                );
-
-            }
-
-            else {
-
-                // Noch keine Settings-Zeile für diesen Account ->
-                // eine anlegen, mit dem aktuell sichtbaren Theme.
-                await supabaseClient
-                    .from("settings")
-                    .insert({
-
-                        user_id:
-                            account.id,
-
-                        theme:
-                            document.documentElement.getAttribute(
-                                "data-theme"
-                            ) || "dark"
-
-                    });
-
-            }
-
-
             // --- NOTIZEN LADEN ---
 
             await loadNotes();
+
+
+            // --- SCHULE LADEN (Fächer, Stundenplan, Hausaufgaben) ---
+
+            await loadSchoolData();
 
 
             /*
@@ -5343,8 +5629,8 @@
                 todo:
                     "todoPage",
 
-                ai:
-                    "aiPage",
+                school:
+                    "schoolPage",
 
                 habit:
                     "habitPage",
@@ -5407,7 +5693,7 @@
 
                 home: "navHome",
 
-                ai: "navAI",
+                school: "navSchool",
 
                 notes: "navNotes",
 
@@ -6605,6 +6891,47 @@
             }
 
 
+            /*
+            // Auf der Schul-Seite hängt es davon ab, welche der drei
+            // Ansichten gerade offen ist: beim Stundenplan gibt es
+            // nichts anzulegen (dort tippt man direkt auf eine Stunde),
+            // bei den Hausaufgaben eine Aufgabe, bei den Fächern ein Fach.
+            */
+
+            if (
+                !startType &&
+                document
+                    .getElementById("schoolPage")
+                    .classList.contains("active")
+            ) {
+
+                if (schoolTab === "subjects") {
+
+                    openSubjectModal();
+
+                }
+
+                else if (schoolTab === "homework") {
+
+                    openHomeworkModal();
+
+                }
+
+                else {
+
+                    // Stundenplan offen -> zu den Hausaufgaben wechseln
+                    // und dort gleich das Fenster öffnen.
+                    showSchoolTab("homework");
+
+                    openHomeworkModal();
+
+                }
+
+                return;
+
+            }
+
+
             if (startType) {
 
                 document.getElementById(
@@ -7357,6 +7684,17 @@
                 );
 
 
+            // Fächer löschen reicht: Stundenplan und Hausaufgaben
+            // hängen per "on delete cascade" daran und verschwinden mit.
+            await supabaseClient
+                .from("subjects")
+                .delete()
+                .eq(
+                    "user_id",
+                    account.id
+                );
+
+
             await supabaseClient
                 .from("settings")
                 .delete()
@@ -7796,74 +8134,241 @@
 
 
         /* =========================================================
-           THEME (Dunkel/Hell)
+           SCHULE: STUNDENPLAN, HAUSAUFGABEN UND FÄCHER
+
+           Aufbau:
+           - subjects  = deine Fächer   { id, name, short, color }
+           - lessons   = der Stundenplan { id, weekday, period, subjectId, room }
+           - homework  = Hausaufgaben    { id, subjectId, text, dueDate }
+
+           Der Stundenplan ist ein Raster aus Wochentag (0 = Montag bis
+           4 = Freitag) und Stundennummer. Für jede belegte Stunde gibt
+           es GENAU EINE Zeile in der Tabelle - deshalb wird beim
+           Speichern "upsert" benutzt: vorhanden -> überschreiben,
+           sonst -> neu anlegen.
         ========================================================= */
 
 
-        // Setzt data-theme auf <html>. "persist" steuert, ob die Wahl
-        // auch dauerhaft gespeichert werden soll (in Supabase, wenn
-        // eingeloggt, sonst nur lokal) - beim allerersten Laden der
-        // Seite (vor dem Login) wollen wir NICHT gleich in die
-        // Datenbank schreiben, deshalb persist=false in diesem Fall.
-        function applyTheme(
-            theme,
-            persist
-        ) {
+        let subjects = [];
 
-            document.documentElement.setAttribute(
-                "data-theme",
-                theme
-            );
+        let lessons = [];
+
+        let homework = [];
 
 
-            localStorage.setItem(
-                "theme",
-                theme
-            );
+        // Welche der drei Ansichten gerade sichtbar ist
+        let schoolTab = "plan";
 
 
-            // Die drei Buttons in den Einstellungen mit dem echten
-            // Theme synchron halten (falls sie gerade sichtbar sind):
-            // genau der Button, der zum aktuellen Theme passt,
-            // bekommt die Klasse "active", alle anderen verlieren sie.
-            document
-                .querySelectorAll(
-                    ".theme-option"
-                )
-                .forEach(
-                    function (button) {
+        // Merkt sich, welche Stunde im Bearbeiten-Fenster offen ist
+        let editingLesson = null;
 
-                        button.classList.toggle(
-                            "active",
-                            button.dataset.themeValue === theme
-                        );
 
-                    }
+        // Farbe, die im "Fach anlegen"-Fenster gerade ausgewählt ist
+        let selectedSubjectColor = "#4aa8ff";
+
+
+        /*
+        // DAS ZEITRASTER DEINER SCHULE
+        //
+        // HIER ÄNDERST DU DIE UHRZEITEN. Jede Zeile ist entweder eine
+        // Unterrichtsstunde ("lesson") oder eine Pause ("break").
+        // Unterrichtsstunden brauchen zusätzlich ihre Nummer, denn nur
+        // sie können im Stundenplan belegt werden - Pausen werden nur
+        // angezeigt.
+        //
+        // Willst du andere Zeiten, eine Pause mehr oder eine weniger,
+        // änderst du einfach diese Liste. Der Stundenplan richtet sich
+        // automatisch danach, am restlichen Code musst du nichts tun.
+        */
+
+        const TIMETABLE_ROWS = [
+
+            { type: "lesson", period: 1, from: "07:30", to: "08:15" },
+
+            { type: "lesson", period: 2, from: "08:15", to: "09:00" },
+
+            { type: "break", name: "Pause", from: "09:00", to: "09:15" },
+
+            { type: "lesson", period: 3, from: "09:15", to: "10:00" },
+
+            { type: "lesson", period: 4, from: "10:00", to: "10:45" },
+
+            { type: "break", name: "Pause", from: "10:45", to: "11:00" },
+
+            { type: "lesson", period: 5, from: "11:00", to: "11:45" },
+
+            { type: "lesson", period: 6, from: "11:45", to: "12:30" },
+
+            { type: "break", name: "Mittagspause", from: "12:30", to: "13:00" },
+
+            { type: "lesson", period: 7, from: "13:00", to: "13:45" },
+
+            { type: "lesson", period: 8, from: "13:45", to: "14:30" },
+
+            { type: "break", name: "Pause", from: "14:30", to: "14:45" },
+
+            { type: "lesson", period: 9, from: "14:45", to: "15:30" },
+
+            { type: "lesson", period: 10, from: "15:30", to: "16:15" }
+
+        ];
+
+
+        const WEEKDAY_NAMES = [
+            "Mo",
+            "Di",
+            "Mi",
+            "Do",
+            "Fr"
+        ];
+
+
+        /*
+        // Auswahlfarben für Fächer. Bewusst kräftige, gut unter-
+        // scheidbare Töne - die Schrift darauf ist immer dunkel,
+        // deshalb sind alle Farben eher hell gehalten.
+        */
+
+        const SUBJECT_COLORS = [
+            "#4aa8ff",
+            "#42d392",
+            "#f7c95b",
+            "#ff8b6b",
+            "#ff6675",
+            "#c99bff",
+            "#5ad7d7",
+            "#a8b6c4"
+        ];
+
+
+        /* ---------------------------------------------------------
+           DATEN LADEN
+        --------------------------------------------------------- */
+
+
+        async function loadSchoolData() {
+
+            const fachResult =
+                await supabaseClient
+                    .from("subjects")
+                    .select("*")
+                    .order("name", { ascending: true });
+
+
+            if (fachResult.error) {
+
+                console.error(
+                    "Fehler beim Laden der Fächer:",
+                    fachResult.error
                 );
 
+                subjects = [];
 
-            if (persist && account) {
+            }
 
-                supabaseClient
-                    .from("settings")
-                    .update({
-                        theme: theme
-                    })
-                    .eq(
-                        "user_id",
-                        account.id
-                    )
-                    .then(
-                        function (result) {
+            else {
 
-                            if (result.error) {
+                subjects =
+                    fachResult.data.map(
+                        function (row) {
 
-                                console.error(
-                                    "Fehler beim Speichern des Themes:",
-                                    result.error
-                                );
+                            return {
 
-                            }
+                                id: row.id,
+
+                                name: row.name,
+
+                                short: row.short || "",
+
+                                color: row.color || "#4aa8ff"
+
+                            };
+
+                        }
+                    );
+
+            }
+
+
+            const stundenResult =
+                await supabaseClient
+                    .from("lessons")
+                    .select("*");
+
+
+            if (stundenResult.error) {
+
+                console.error(
+                    "Fehler beim Laden des Stundenplans:",
+                    stundenResult.error
+                );
+
+                lessons = [];
+
+            }
+
+            else {
+
+                lessons =
+                    stundenResult.data.map(
+                        function (row) {
+
+                            return {
+
+                                id: row.id,
+
+                                weekday: row.weekday,
+
+                                period: row.period,
+
+                                subjectId: row.subject_id,
+
+                                room: row.room || ""
+
+                            };
+
+                        }
+                    );
+
+            }
+
+
+            const hausaufgabenResult =
+                await supabaseClient
+                    .from("homework")
+                    .select("*")
+                    .order("created_at", { ascending: true });
+
+
+            if (hausaufgabenResult.error) {
+
+                console.error(
+                    "Fehler beim Laden der Hausaufgaben:",
+                    hausaufgabenResult.error
+                );
+
+                homework = [];
+
+            }
+
+            else {
+
+                homework =
+                    hausaufgabenResult.data.map(
+                        function (row) {
+
+                            return {
+
+                                id: row.id,
+
+                                subjectId: row.subject_id,
+
+                                text: row.text,
+
+                                dueDate: row.due_date || ""
+
+                            };
 
                         }
                     );
@@ -7873,177 +8378,1526 @@
         }
 
 
-        // Wird beim Klick auf einen der drei Theme-Buttons
-        // (Dunkel/Hell/Grau) in den Einstellungen aufgerufen.
-        function setTheme(theme) {
+        /* ---------------------------------------------------------
+           KLEINE HELFER
+        --------------------------------------------------------- */
 
-            applyTheme(
-                theme,
-                true
-            );
+
+        function findSubject(id) {
+
+            return subjects.find(
+                function (fach) {
+
+                    return fach.id === id;
+
+                }
+            ) || null;
 
         }
 
 
-        /* =========================================================
-           KI-CHAT
-        ========================================================= */
+        function findLesson(weekday, period) {
 
+            return lessons.find(
+                function (stunde) {
 
-        function renderChat() {
-
-
-            const chatWindow =
-                document.getElementById(
-                    "chatWindow"
-                );
-
-
-            chatWindow.innerHTML = "";
-
-
-            if (chatMessages.length === 0) {
-
-
-                const empty =
-                    document.createElement(
-                        "div"
+                    return (
+                        stunde.weekday === weekday &&
+                        stunde.period === period
                     );
 
+                }
+            ) || null;
 
-                empty.className =
-                    "empty-state";
-
-
-                empty.textContent =
-                    "Schreib mir eine Nachricht, um loszulegen 👋";
+        }
 
 
-                chatWindow.appendChild(
-                    empty
-                );
+        /* ---------------------------------------------------------
+           ZWISCHEN DEN DREI ANSICHTEN WECHSELN
+        --------------------------------------------------------- */
 
 
-                return;
+        function showSchoolTab(tab) {
 
-            }
-
-
-            chatMessages.forEach(
-                function (message) {
+            schoolTab = tab;
 
 
-                    const bubble =
-                        document.createElement(
-                            "div"
-                        );
+            const ansichten = {
+
+                plan: "schoolPlanView",
+
+                homework: "schoolHomeworkView",
+
+                subjects: "schoolSubjectsView"
+
+            };
 
 
-                    bubble.className =
-                        "chat-message " +
-                        message.sender;
+            const knoepfe = {
+
+                plan: "schoolTabPlan",
+
+                homework: "schoolTabHomework",
+
+                subjects: "schoolTabSubjects"
+
+            };
 
 
-                    // textContent statt innerHTML, damit eingegebener
-                    // Text nicht versehentlich als HTML interpretiert wird.
-                    bubble.textContent =
-                        message.text;
+            Object.keys(ansichten).forEach(
+                function (name) {
+
+                    document.getElementById(
+                        ansichten[name]
+                    ).style.display =
+                        name === tab
+                            ? "block"
+                            : "none";
 
 
-                    chatWindow.appendChild(
-                        bubble
+                    document.getElementById(
+                        knoepfe[name]
+                    ).classList.toggle(
+                        "active",
+                        name === tab
                     );
 
                 }
             );
 
 
-            // Automatisch ganz nach unten scrollen, zur neuesten Nachricht.
-            chatWindow.scrollTop =
-                chatWindow.scrollHeight;
+            renderSchool();
 
         }
 
 
-        function handleChatKeydown(
-            event
-        ) {
-
-            if (
-                event.key === "Enter"
-            ) {
-
-                sendChatMessage();
-
-            }
-
-        }
+        /* ---------------------------------------------------------
+           STUNDENPLAN ZEICHNEN
+        --------------------------------------------------------- */
 
 
-        // Fügt die eigene Nachricht hinzu und lässt (aktuell) eine
-        // Platzhalter-Antwort folgen. Sobald eine echte KI angebunden
-        // ist, muss nur der setTimeout-Block hier unten durch einen
-        // echten API-Aufruf ersetzt werden.
-        function sendChatMessage() {
+        function renderTimetable() {
 
-
-            const input =
+            const raster =
                 document.getElementById(
-                    "chatInput"
+                    "timetable"
                 );
 
 
-            const text =
-                input.value.trim();
-
-
-            if (text === "") {
+            if (!raster) {
                 return;
             }
 
 
-            chatMessages.push({
-
-                sender:
-                    "user",
-
-                text:
-                    text
-
-            });
+            raster.innerHTML = "";
 
 
-            input.value = "";
+            // Kopfzeile: leere Ecke oben links, dann Mo bis Fr
+            raster.appendChild(
+                document.createElement("div")
+            );
 
 
-            saveChatMessages();
+            WEEKDAY_NAMES.forEach(
+                function (name) {
 
-            renderChat();
+                    const kopf =
+                        document.createElement("div");
+
+                    kopf.className =
+                        "timetable-head";
+
+                    kopf.textContent = name;
+
+                    raster.appendChild(kopf);
+
+                }
+            );
+
+
+            /*
+            // Jetzt Zeile für Zeile durch das Zeitraster. Pausen sind
+            // dabei keine Stunden, sondern ein einziger breiter Balken
+            // über alle fünf Tage - deshalb der Sonderfall gleich hier.
+            */
+
+            TIMETABLE_ROWS.forEach(
+                function (zeile) {
+
+
+                    if (zeile.type === "break") {
+
+                        const pause =
+                            document.createElement("div");
+
+                        pause.className =
+                            "timetable-break";
+
+
+                        const name =
+                            document.createElement("span");
+
+                        name.textContent = zeile.name;
+
+
+                        const zeit =
+                            document.createElement("span");
+
+                        zeit.className =
+                            "timetable-break-time";
+
+                        zeit.textContent =
+                            zeile.from + " - " + zeile.to;
+
+
+                        pause.appendChild(name);
+
+                        pause.appendChild(zeit);
+
+
+                        raster.appendChild(pause);
+
+                        return;
+
+                    }
+
+
+                    // --- Linke Spalte: Stundennummer und Uhrzeiten ---
+
+                    const spalte =
+                        document.createElement("div");
+
+                    spalte.className =
+                        "timetable-period";
+
+
+                    const nummer =
+                        document.createElement("div");
+
+                    nummer.className =
+                        "timetable-period-number";
+
+                    nummer.textContent = zeile.period;
+
+
+                    const von =
+                        document.createElement("div");
+
+                    von.className =
+                        "timetable-period-time";
+
+                    von.textContent = zeile.from;
+
+
+                    const bis =
+                        document.createElement("div");
+
+                    bis.className =
+                        "timetable-period-time";
+
+                    bis.textContent = zeile.to;
+
+
+                    spalte.appendChild(nummer);
+
+                    spalte.appendChild(von);
+
+                    spalte.appendChild(bis);
+
+                    raster.appendChild(spalte);
+
+
+                    // --- Die fünf Tage dieser Stunde ---
+
+                    for (
+                        let tag = 0;
+                        tag < 5;
+                        tag++
+                    ) {
+
+                        const zelle =
+                            document.createElement("div");
+
+
+                        const eintrag =
+                            findLesson(tag, zeile.period);
+
+
+                        if (eintrag) {
+
+                            const fach =
+                                findSubject(eintrag.subjectId);
+
+
+                            zelle.className =
+                                "timetable-cell";
+
+
+                            if (fach) {
+
+                                // Kräftige Fachfarbe als Hintergrund,
+                                // dazu dunkle Schrift - so bleibt es
+                                // auf dem dunklen Hintergrund lesbar.
+                                zelle.style.background = fach.color;
+
+                                zelle.style.borderColor = fach.color;
+
+                                zelle.style.color = "#10202e";
+
+
+                                const name =
+                                    document.createElement("div");
+
+                                name.textContent =
+                                    fach.short || fach.name.slice(0, 4);
+
+                                zelle.appendChild(name);
+
+
+                                if (eintrag.room) {
+
+                                    const raum =
+                                        document.createElement("div");
+
+                                    raum.className =
+                                        "timetable-room";
+
+                                    raum.textContent = eintrag.room;
+
+                                    zelle.appendChild(raum);
+
+                                }
+
+                            }
+
+                            else {
+
+                                // Fach wurde gelöscht, Stunde ist verwaist
+                                zelle.textContent = "?";
+
+                            }
+
+                        }
+
+                        else {
+
+                            zelle.className =
+                                "timetable-cell empty";
+
+                            zelle.textContent = "+";
+
+                        }
+
+
+                        // In eigenen Variablen festhalten, sonst hätte
+                        // der Klick-Handler später die Werte des LETZTEN
+                        // Schleifendurchlaufs.
+                        const klickTag = tag;
+
+                        const klickStunde = zeile.period;
+
+
+                        zelle.onclick =
+                            function () {
+
+                                openLessonModal(
+                                    klickTag,
+                                    klickStunde
+                                );
+
+                            };
+
+
+                        raster.appendChild(zelle);
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* ---------------------------------------------------------
+           FÄCHER-ANSICHT ZEICHNEN
+        --------------------------------------------------------- */
+
+
+        function renderSubjects() {
+
+            const liste =
+                document.getElementById(
+                    "subjectList"
+                );
+
+
+            if (!liste) {
+                return;
+            }
+
+
+            liste.innerHTML = "";
+
+
+            if (subjects.length === 0) {
+
+                const leer =
+                    document.createElement("div");
+
+                leer.className = "empty-state";
+
+                leer.textContent =
+                    "Noch keine Fächer - tippe unten auf das +";
+
+                liste.appendChild(leer);
+
+                return;
+
+            }
+
+
+            subjects.forEach(
+                function (fach) {
+
+                    const zeile =
+                        document.createElement("div");
+
+                    zeile.className = "subject-row";
+
+
+                    const badge =
+                        document.createElement("div");
+
+                    badge.className = "subject-badge";
+
+                    badge.style.background = fach.color;
+
+                    badge.textContent =
+                        fach.short || fach.name.slice(0, 2).toUpperCase();
+
+
+                    const name =
+                        document.createElement("div");
+
+                    name.className = "subject-name";
+
+                    name.textContent = fach.name;
+
+
+                    // Wie viele Hausaufgaben hängen an diesem Fach?
+                    const anzahl =
+                        homework.filter(
+                            function (aufgabe) {
+
+                                return aufgabe.subjectId === fach.id;
+
+                            }
+                        ).length;
+
+
+                    const zaehler =
+                        document.createElement("div");
+
+                    zaehler.className = "subject-count";
+
+                    zaehler.textContent =
+                        anzahl === 0
+                            ? "keine Aufgaben"
+                            : anzahl + (anzahl === 1 ? " Aufgabe" : " Aufgaben");
+
+
+                    const loeschen =
+                        document.createElement("button");
+
+                    loeschen.className = "delete-button";
+
+                    loeschen.textContent = "🗑️";
+
+                    loeschen.title = "Fach löschen";
+
+                    loeschen.onclick =
+                        function () {
+
+                            deleteSubject(fach.id);
+
+                        };
+
+
+                    zeile.appendChild(badge);
+
+                    zeile.appendChild(name);
+
+                    zeile.appendChild(zaehler);
+
+                    zeile.appendChild(loeschen);
+
+
+                    liste.appendChild(zeile);
+
+                }
+            );
+
+        }
+
+
+        /* ---------------------------------------------------------
+           HAUSAUFGABEN ZEICHNEN (nach Fächern gruppiert)
+        --------------------------------------------------------- */
+
+
+        // Macht aus "2026-09-25" ein lesbares "25. Sep."
+        function formatDueDate(wert) {
+
+            if (!wert) {
+
+                return "";
+
+            }
+
+
+            const datum =
+                new Date(wert + "T00:00:00");
+
+
+            if (isNaN(datum.getTime())) {
+
+                return wert;
+
+            }
+
+
+            return datum.toLocaleDateString(
+                "de-DE",
+                {
+                    day: "numeric",
+                    month: "short"
+                }
+            );
+
+        }
+
+
+        // Ist die Aufgabe heute oder schon früher fällig?
+        function isDueSoon(wert) {
+
+            if (!wert) {
+
+                return false;
+
+            }
+
+
+            return wert <= dateKey(new Date());
+
+        }
+
+
+        function renderHomework() {
+
+            const liste =
+                document.getElementById(
+                    "homeworkList"
+                );
+
+
+            if (!liste) {
+                return;
+            }
+
+
+            liste.innerHTML = "";
+
+
+            if (subjects.length === 0) {
+
+                const hinweis =
+                    document.createElement("div");
+
+                hinweis.className = "empty-state";
+
+                hinweis.textContent =
+                    "Lege zuerst unter \"Fächer\" ein Fach an - danach kannst du Hausaufgaben eintragen.";
+
+                liste.appendChild(hinweis);
+
+                return;
+
+            }
+
+
+            if (homework.length === 0) {
+
+                const leer =
+                    document.createElement("div");
+
+                leer.className = "empty-state";
+
+                leer.textContent =
+                    "Keine offenen Hausaufgaben 🎉";
+
+                liste.appendChild(leer);
+
+                return;
+
+            }
+
+
+            // Für jedes Fach eine eigene Gruppe - aber nur, wenn es
+            // dort auch wirklich Aufgaben gibt.
+            subjects.forEach(
+                function (fach) {
+
+                    const aufgaben =
+                        homework.filter(
+                            function (eintrag) {
+
+                                return eintrag.subjectId === fach.id;
+
+                            }
+                        );
+
+
+                    if (aufgaben.length === 0) {
+
+                        return;
+
+                    }
+
+
+                    const gruppe =
+                        document.createElement("div");
+
+                    gruppe.className = "homework-group";
+
+
+                    const kopf =
+                        document.createElement("div");
+
+                    kopf.className = "homework-group-head";
+
+
+                    const badge =
+                        document.createElement("div");
+
+                    badge.className = "subject-badge";
+
+                    badge.style.background = fach.color;
+
+                    badge.style.width = "28px";
+
+                    badge.style.height = "28px";
+
+                    badge.style.fontSize = "10.5px";
+
+                    badge.style.borderRadius = "9px";
+
+                    badge.textContent =
+                        fach.short || fach.name.slice(0, 2).toUpperCase();
+
+
+                    const titel =
+                        document.createElement("div");
+
+                    titel.className = "homework-group-title";
+
+                    titel.textContent = fach.name;
+
+
+                    kopf.appendChild(badge);
+
+                    kopf.appendChild(titel);
+
+                    gruppe.appendChild(kopf);
+
+
+                    aufgaben.forEach(
+                        function (eintrag) {
+
+                            gruppe.appendChild(
+                                createHomeworkElement(eintrag)
+                            );
+
+                        }
+                    );
+
+
+                    liste.appendChild(gruppe);
+
+                }
+            );
+
+        }
+
+
+        function createHomeworkElement(eintrag) {
+
+            const zeile =
+                document.createElement("div");
+
+            zeile.className = "homework-item";
+
+
+            const kreis =
+                document.createElement("button");
+
+            kreis.className = "check-circle";
+
+
+            const inhalt =
+                document.createElement("div");
+
+            inhalt.className = "homework-text";
+
+            inhalt.textContent = eintrag.text;
+
+
+            const huelle =
+                document.createElement("div");
+
+            huelle.style.flex = "1";
+
+            huelle.style.minWidth = "0";
+
+            huelle.appendChild(inhalt);
+
+
+            if (eintrag.dueDate) {
+
+                const faellig =
+                    document.createElement("div");
+
+                faellig.className =
+                    "homework-due" +
+                    (isDueSoon(eintrag.dueDate)
+                        ? " urgent"
+                        : "");
+
+                faellig.textContent =
+                    "bis " + formatDueDate(eintrag.dueDate);
+
+                huelle.appendChild(faellig);
+
+            }
+
+
+            const loeschen =
+                document.createElement("button");
+
+            loeschen.className = "delete-button";
+
+            loeschen.textContent = "🗑️";
+
+            loeschen.onclick =
+                function () {
+
+                    removeHomework(eintrag.id);
+
+                };
+
+
+            /*
+            // Abhaken: genau wie bei den Aufgaben auf der To-Do-Seite.
+            // Erst sofort sichtbar abhaken, dann sanft ausblenden, und
+            // nach 1,5 Sekunden endgültig entfernen.
+            */
+
+            kreis.onclick =
+                function () {
+
+                    kreis.classList.add("checked");
+
+                    kreis.textContent = "✓";
+
+                    inhalt.classList.add("done");
+
+                    zeile.classList.add("completing");
+
+
+                    setTimeout(
+                        function () {
+
+                            removeHomework(eintrag.id);
+
+                        },
+                        1500
+                    );
+
+                };
+
+
+            zeile.appendChild(kreis);
+
+            zeile.appendChild(huelle);
+
+            zeile.appendChild(loeschen);
+
+
+            return zeile;
+
+        }
+
+
+        /* ---------------------------------------------------------
+           ALLES AUF DER SCHUL-SEITE NEU ZEICHNEN
+        --------------------------------------------------------- */
+
+
+        function renderSchool() {
+
+            renderTimetable();
+
+            renderSubjects();
+
+            renderHomework();
+
+        }
+
+
+        /* ---------------------------------------------------------
+           FACH ANLEGEN UND LÖSCHEN
+        --------------------------------------------------------- */
+
+
+        function openSubjectModal() {
+
+            document.getElementById(
+                "subjectNameInput"
+            ).value = "";
+
+            document.getElementById(
+                "subjectShortInput"
+            ).value = "";
+
+
+            selectedSubjectColor =
+                SUBJECT_COLORS[
+                    subjects.length % SUBJECT_COLORS.length
+                ];
+
+
+            renderColorChoices();
+
+
+            document
+                .getElementById("subjectModal")
+                .classList.add("show");
 
 
             setTimeout(
                 function () {
 
-
-                    chatMessages.push({
-
-                        sender:
-                            "ai",
-
-                        text:
-                            "Der KI-Assistent ist noch nicht verbunden. Diese Funktion kommt als Nächstes!"
-
-                    });
-
-
-                    saveChatMessages();
-
-                    renderChat();
-
+                    document
+                        .getElementById("subjectNameInput")
+                        .focus();
 
                 },
-                500
+                100
             );
+
+        }
+
+
+        function closeSubjectModal() {
+
+            document
+                .getElementById("subjectModal")
+                .classList.remove("show");
+
+        }
+
+
+        // Zeichnet die Farbpunkte im "Fach anlegen"-Fenster
+        function renderColorChoices() {
+
+            const box =
+                document.getElementById(
+                    "colorChoices"
+                );
+
+
+            box.innerHTML = "";
+
+
+            SUBJECT_COLORS.forEach(
+                function (farbe) {
+
+                    const punkt =
+                        document.createElement("button");
+
+                    punkt.className =
+                        "color-choice" +
+                        (farbe === selectedSubjectColor
+                            ? " active"
+                            : "");
+
+                    punkt.style.background = farbe;
+
+                    punkt.onclick =
+                        function () {
+
+                            selectedSubjectColor = farbe;
+
+                            renderColorChoices();
+
+                        };
+
+
+                    box.appendChild(punkt);
+
+                }
+            );
+
+        }
+
+
+        async function createSubject() {
+
+            const name =
+                document.getElementById(
+                    "subjectNameInput"
+                ).value.trim();
+
+
+            if (name === "") {
+
+                return;
+
+            }
+
+
+            let kuerzel =
+                document.getElementById(
+                    "subjectShortInput"
+                ).value.trim().toUpperCase();
+
+
+            // Kein Kürzel angegeben? Dann die ersten beiden Buchstaben
+            // des Namens nehmen.
+            if (kuerzel === "") {
+
+                kuerzel = name.slice(0, 2).toUpperCase();
+
+            }
+
+
+            const farbe = selectedSubjectColor;
+
+
+            closeSubjectModal();
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("subjects")
+                    .insert({
+
+                        user_id: account.id,
+
+                        name: name,
+
+                        short: kuerzel,
+
+                        color: farbe
+
+                    })
+                    .select()
+                    .single();
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Fehler beim Anlegen des Fachs:",
+                    ergebnis.error
+                );
+
+                alert(
+                    "Das Fach konnte nicht gespeichert werden. Existieren die Schul-Tabellen in Supabase schon?"
+                );
+
+                return;
+
+            }
+
+
+            subjects.push({
+
+                id: ergebnis.data.id,
+
+                name: name,
+
+                short: kuerzel,
+
+                color: farbe
+
+            });
+
+
+            // Alphabetisch sortiert halten
+            subjects.sort(
+                function (a, b) {
+
+                    return a.name.localeCompare(b.name);
+
+                }
+            );
+
+
+            renderSchool();
+
+        }
+
+
+        async function deleteSubject(id) {
+
+            const fach = findSubject(id);
+
+
+            if (!fach) {
+                return;
+            }
+
+
+            const bestaetigt =
+                confirm(
+                    "Das Fach \"" + fach.name + "\" wirklich löschen?\n\n" +
+                    "Seine Hausaufgaben und alle Stunden im Stundenplan verschwinden damit ebenfalls."
+                );
+
+
+            if (!bestaetigt) {
+                return;
+            }
+
+
+            // Lokal alles entfernen, was an diesem Fach hängt
+            subjects = subjects.filter(
+                function (eintrag) {
+
+                    return eintrag.id !== id;
+
+                }
+            );
+
+            lessons = lessons.filter(
+                function (eintrag) {
+
+                    return eintrag.subjectId !== id;
+
+                }
+            );
+
+            homework = homework.filter(
+                function (eintrag) {
+
+                    return eintrag.subjectId !== id;
+
+                }
+            );
+
+
+            renderSchool();
+
+
+            /*
+            // In der Datenbank reicht das Löschen des Fachs: Stunden und
+            // Hausaufgaben verweisen per "on delete cascade" darauf und
+            // werden deshalb automatisch mitgelöscht (siehe schule.sql).
+            */
+
+            const ergebnis =
+                await supabaseClient
+                    .from("subjects")
+                    .delete()
+                    .eq("id", id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Fehler beim Löschen des Fachs:",
+                    ergebnis.error
+                );
+
+            }
+
+        }
+
+
+        /* ---------------------------------------------------------
+           STUNDE EINTRAGEN
+        --------------------------------------------------------- */
+
+
+        function openLessonModal(weekday, period) {
+
+            if (subjects.length === 0) {
+
+                alert(
+                    "Lege zuerst unter \"Fächer\" ein Fach an - danach kannst du es in den Stundenplan eintragen."
+                );
+
+                return;
+
+            }
+
+
+            editingLesson = {
+
+                weekday: weekday,
+
+                period: period
+
+            };
+
+
+            document.getElementById(
+                "lessonModalTitle"
+            ).textContent =
+                WEEKDAY_NAMES[weekday] + ", " + period + ". Stunde";
+
+
+            // Fächerliste in das Auswahlfeld füllen
+            const auswahl =
+                document.getElementById(
+                    "lessonSubjectSelect"
+                );
+
+            auswahl.innerHTML = "";
+
+
+            subjects.forEach(
+                function (fach) {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value = fach.id;
+
+                    option.textContent = fach.name;
+
+                    auswahl.appendChild(option);
+
+                }
+            );
+
+
+            const vorhanden =
+                findLesson(weekday, period);
+
+
+            if (vorhanden) {
+
+                auswahl.value = vorhanden.subjectId;
+
+                document.getElementById(
+                    "lessonRoomInput"
+                ).value = vorhanden.room;
+
+            }
+
+            else {
+
+                document.getElementById(
+                    "lessonRoomInput"
+                ).value = "";
+
+            }
+
+
+            document
+                .getElementById("lessonModal")
+                .classList.add("show");
+
+        }
+
+
+        function closeLessonModal() {
+
+            document
+                .getElementById("lessonModal")
+                .classList.remove("show");
+
+            editingLesson = null;
+
+        }
+
+
+        async function saveLesson() {
+
+            if (!editingLesson) {
+                return;
+            }
+
+
+            const weekday = editingLesson.weekday;
+
+            const period = editingLesson.period;
+
+
+            const subjectId =
+                document.getElementById(
+                    "lessonSubjectSelect"
+                ).value;
+
+
+            const room =
+                document.getElementById(
+                    "lessonRoomInput"
+                ).value.trim();
+
+
+            closeLessonModal();
+
+
+            const vorhanden =
+                findLesson(weekday, period);
+
+
+            if (vorhanden) {
+
+                vorhanden.subjectId = subjectId;
+
+                vorhanden.room = room;
+
+            }
+
+            else {
+
+                lessons.push({
+
+                    id: null,
+
+                    weekday: weekday,
+
+                    period: period,
+
+                    subjectId: subjectId,
+
+                    room: room
+
+                });
+
+            }
+
+
+            renderSchool();
+
+
+            /*
+            // "upsert" mit onConflict: Gibt es für diesen Nutzer an
+            // diesem Tag in dieser Stunde schon eine Zeile, wird sie
+            // überschrieben statt eine zweite anzulegen. Möglich macht
+            // das die Regel "unique (user_id, weekday, period)" in der
+            // Tabelle (siehe schule.sql).
+            */
+
+            const ergebnis =
+                await supabaseClient
+                    .from("lessons")
+                    .upsert(
+                        {
+
+                            user_id: account.id,
+
+                            weekday: weekday,
+
+                            period: period,
+
+                            subject_id: subjectId,
+
+                            room: room
+
+                        },
+                        {
+                            onConflict: "user_id,weekday,period"
+                        }
+                    )
+                    .select()
+                    .single();
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Fehler beim Speichern der Stunde:",
+                    ergebnis.error
+                );
+
+                return;
+
+            }
+
+
+            // Die von der Datenbank vergebene ID nachtragen
+            const gespeichert =
+                findLesson(weekday, period);
+
+
+            if (gespeichert) {
+
+                gespeichert.id = ergebnis.data.id;
+
+            }
+
+        }
+
+
+        // Macht eine Stunde wieder frei
+        async function clearLesson() {
+
+            if (!editingLesson) {
+                return;
+            }
+
+
+            const weekday = editingLesson.weekday;
+
+            const period = editingLesson.period;
+
+
+            closeLessonModal();
+
+
+            const vorhanden =
+                findLesson(weekday, period);
+
+
+            if (!vorhanden) {
+                return;
+            }
+
+
+            lessons = lessons.filter(
+                function (stunde) {
+
+                    return !(
+                        stunde.weekday === weekday &&
+                        stunde.period === period
+                    );
+
+                }
+            );
+
+
+            renderSchool();
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("lessons")
+                    .delete()
+                    .eq("weekday", weekday)
+                    .eq("period", period)
+                    .eq("user_id", account.id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Fehler beim Leeren der Stunde:",
+                    ergebnis.error
+                );
+
+            }
+
+        }
+
+
+        /* ---------------------------------------------------------
+           HAUSAUFGABEN ANLEGEN UND ABHAKEN
+        --------------------------------------------------------- */
+
+
+        function openHomeworkModal() {
+
+            if (subjects.length === 0) {
+
+                alert(
+                    "Lege zuerst unter \"Fächer\" ein Fach an - Hausaufgaben gehören immer zu einem Fach."
+                );
+
+                showSchoolTab("subjects");
+
+                return;
+
+            }
+
+
+            const auswahl =
+                document.getElementById(
+                    "homeworkSubjectSelect"
+                );
+
+            auswahl.innerHTML = "";
+
+
+            subjects.forEach(
+                function (fach) {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value = fach.id;
+
+                    option.textContent = fach.name;
+
+                    auswahl.appendChild(option);
+
+                }
+            );
+
+
+            document.getElementById(
+                "homeworkTextInput"
+            ).value = "";
+
+            document.getElementById(
+                "homeworkDueInput"
+            ).value = "";
+
+
+            document
+                .getElementById("homeworkModal")
+                .classList.add("show");
+
+
+            setTimeout(
+                function () {
+
+                    document
+                        .getElementById("homeworkTextInput")
+                        .focus();
+
+                },
+                100
+            );
+
+        }
+
+
+        function closeHomeworkModal() {
+
+            document
+                .getElementById("homeworkModal")
+                .classList.remove("show");
+
+        }
+
+
+        async function createHomework() {
+
+            const text =
+                document.getElementById(
+                    "homeworkTextInput"
+                ).value.trim();
+
+
+            if (text === "") {
+
+                return;
+
+            }
+
+
+            const subjectId =
+                document.getElementById(
+                    "homeworkSubjectSelect"
+                ).value;
+
+
+            const faellig =
+                document.getElementById(
+                    "homeworkDueInput"
+                ).value;
+
+
+            closeHomeworkModal();
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("homework")
+                    .insert({
+
+                        user_id: account.id,
+
+                        subject_id: subjectId,
+
+                        text: text,
+
+                        // Leeres Datum als null speichern, nicht als ""
+                        due_date: faellig || null
+
+                    })
+                    .select()
+                    .single();
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Fehler beim Anlegen der Hausaufgabe:",
+                    ergebnis.error
+                );
+
+                alert(
+                    "Die Hausaufgabe konnte nicht gespeichert werden."
+                );
+
+                return;
+
+            }
+
+
+            homework.push({
+
+                id: ergebnis.data.id,
+
+                subjectId: subjectId,
+
+                text: text,
+
+                dueDate: faellig || ""
+
+            });
+
+
+            renderSchool();
+
+        }
+
+
+        // Entfernt eine Hausaufgabe endgültig (abgehakt oder gelöscht)
+        async function removeHomework(id) {
+
+            homework = homework.filter(
+                function (eintrag) {
+
+                    return eintrag.id !== id;
+
+                }
+            );
+
+
+            renderSchool();
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("homework")
+                    .delete()
+                    .eq("id", id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Fehler beim Entfernen der Hausaufgabe:",
+                    ergebnis.error
+                );
+
+            }
 
         }
 
@@ -8142,6 +9996,18 @@
 
             temp.innerHTML =
                 String(html || "")
+                    /*
+                    // Sowohl VOR als auch NACH jedem Absatz einen
+                    // Zeilenumbruch einfügen. Nur die schließenden Tags
+                    // zu ersetzen reichte nicht: Die allererste Zeile
+                    // einer Notiz steht oft ganz ohne Absatz-Hülle da,
+                    // und klebte dadurch am nächsten Absatz fest
+                    // ("TitelErste Aufgabe" statt "Titel").
+                    */
+                    .replace(
+                        /<(div|p|h1|h2|h3|li)\b[^>]*>/gi,
+                        "\n"
+                    )
                     .replace(
                         /<\/(div|p|h1|h2|h3|li)>/gi,
                         "\n"
@@ -10582,9 +12448,9 @@
 
             renderNotesList();
 
-            renderAccountInfo();
+            renderSchool();
 
-            renderChat();
+            renderAccountInfo();
 
             renderNotificationStatus();
 
@@ -10620,6 +12486,12 @@
 
                     closeAccountModal();
 
+                    closeSubjectModal();
+
+                    closeLessonModal();
+
+                    closeHomeworkModal();
+
                 }
 
 
@@ -10641,6 +12513,57 @@
                     ) {
 
                         createItem();
+
+                        return;
+
+                    }
+
+
+                    const subjectModal =
+                        document.getElementById(
+                            "subjectModal"
+                        );
+
+
+                    if (
+                        subjectModal.classList.contains("show")
+                    ) {
+
+                        createSubject();
+
+                        return;
+
+                    }
+
+
+                    const homeworkModal =
+                        document.getElementById(
+                            "homeworkModal"
+                        );
+
+
+                    if (
+                        homeworkModal.classList.contains("show")
+                    ) {
+
+                        createHomework();
+
+                        return;
+
+                    }
+
+
+                    const lessonModal =
+                        document.getElementById(
+                            "lessonModal"
+                        );
+
+
+                    if (
+                        lessonModal.classList.contains("show")
+                    ) {
+
+                        saveLesson();
 
                         return;
 
@@ -10716,17 +12639,6 @@
         /* =========================================================
            APP STARTEN
         ========================================================= */
-
-
-        // Gespeichertes Theme (lokal gecacht) sofort anzeigen, damit es
-        // beim Laden nicht "flackert". persist=false, weil wir hier nur
-        // lesen, nicht schreiben wollen (und ohnehin noch kein Account
-        // bekannt ist).
-        applyTheme(
-            localStorage.getItem("theme") ||
-            "dark",
-            false
-        );
 
 
         renderAll();
