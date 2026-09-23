@@ -5275,7 +5275,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-09-22 / 19:30";
+        const BUILD_ID = "2026-09-23 / 18:15";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -12138,8 +12138,43 @@
 
             try {
 
+                /*
+                // WICHTIG: Hier reicht das Zeitlimit von oben NICHT aus.
+                //
+                // Ein Abbruch über AbortController stoppt zwar zuverlässig
+                // das VERBINDEN, aber Safari auf dem iPhone bricht damit
+                // ein bereits laufendes LESEN der Antwort nicht immer ab.
+                // Genau das ist passiert: Der Server schickte die
+                // Kopfzeilen, blieb dann beim Inhalt hängen - und die App
+                // wartete endlos bei "Schritt 3 von 3".
+                //
+                // Promise.race() startet deshalb zwei Abläufe gleichzeitig
+                // und nimmt, was zuerst fertig ist: das Lesen der Antwort
+                // oder einen Wecker nach 15 Sekunden. Damit kann dieser
+                // Schritt unter keinen Umständen mehr ewig hängen.
+                */
+
                 rohtext =
-                    await response.text();
+                    await Promise.race([
+
+                        response.text(),
+
+                        new Promise(function (_, reject) {
+
+                            setTimeout(
+                                function () {
+
+                                    reject(
+                                        new Error("Zeitlimit beim Lesen")
+                                    );
+
+                                },
+                                15000
+                            );
+
+                        })
+
+                    ]);
 
             }
 
@@ -12151,9 +12186,10 @@
                 showNotificationResult(
                     "Der Server hat geantwortet (Status " + response.status +
                     "), aber die Antwort kam nie vollständig an.\n\n" +
-                    "Das bedeutet: Die Edge Function bleibt mitten in der " +
-                    "Ausführung hängen. Fast immer liegt das daran, dass der " +
-                    "Versand der Push-Nachricht selbst hängt.\n\n" +
+                    "Das heißt: Die Edge Function bleibt mitten in der " +
+                    "Ausführung stecken. Läuft in Supabase noch eine ältere " +
+                    "Fassung? Die neue (Stand 2026-09-23) kommt ohne fremde " +
+                    "Bibliotheken aus und kann nicht mehr hängen bleiben.\n\n" +
                     "(" + fehler.name + " - " + fehler.message + ")"
                 );
 
