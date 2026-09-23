@@ -5275,7 +5275,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-09-24 / 21:05";
+        const BUILD_ID = "2026-09-22 / 19:30";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -11969,6 +11969,31 @@
         // Zwischenmeldungen zeigt dagegen genau, wo es klemmt.
         */
 
+        /*
+        // Hängt an jede Meldung an, welcher Stand der Server-Funktion
+        // geantwortet hat. Ohne das weiß man nie, ob in Supabase wirklich
+        // die neueste Fassung deployt ist - und genau daran sind wir
+        // schon mehrfach hängengeblieben.
+        */
+
+        function mitFunktionsStand(text, daten) {
+
+            if (daten && daten.funktion) {
+
+                return text +
+                    "\n\n(Server-Funktion Stand " + daten.funktion + ")";
+
+            }
+
+
+            return text +
+                "\n\n(Die Server-Funktion meldet keinen Stand - dann läuft " +
+                "in Supabase noch eine ältere Fassung. Bitte die Edge Function " +
+                "\"send-push\" neu deployen.)";
+
+        }
+
+
         async function sendTestPushIntern() {
 
             // --- Schritt 1: Login-Schlüssel besorgen ---
@@ -12158,11 +12183,14 @@
             if (!response.ok) {
 
                 showNotificationResult(
-                    "Der Server hat mit einem Fehler geantwortet (Status " +
-                    response.status + "):\n\n" +
-                    (daten && daten.error
-                        ? daten.error
-                        : rohtext.slice(0, 400))
+                    mitFunktionsStand(
+                        "Der Server hat mit einem Fehler geantwortet (Status " +
+                        response.status + "):\n\n" +
+                        (daten && daten.error
+                            ? daten.error
+                            : rohtext.slice(0, 400)),
+                        daten
+                    )
                 );
 
                 return;
@@ -12173,11 +12201,14 @@
             if (daten && daten.sent > 0) {
 
                 showNotificationResult(
-                    "Erfolg! Der Server hat die Nachricht an " +
-                    daten.sent + " Gerät(e) geschickt.\n\n" +
-                    "Tipp: Schließe die App komplett und lass sie dir noch " +
-                    "einmal schicken - so siehst du, dass es auch ohne " +
-                    "geöffnete App klappt."
+                    mitFunktionsStand(
+                        "Erfolg! Der Server hat die Nachricht an " +
+                        daten.sent + " Gerät(e) geschickt.\n\n" +
+                        "Tipp: Schließe die App komplett und lass sie dir noch " +
+                        "einmal schicken - so siehst du, dass es auch ohne " +
+                        "geöffnete App klappt.",
+                        daten
+                    )
                 );
 
                 return;
