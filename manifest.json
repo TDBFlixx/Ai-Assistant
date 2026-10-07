@@ -1,16 +1,29 @@
 {
-  "name": "Mein KI-Assistent",
-  "short_name": "KI-Assistent",
-  "description": "Aufgaben, Habits und Notizen an einem Ort.",
+  "name": "YouDo",
+  "short_name": "YouDo",
+  "description": "Gewohnheiten, Ziele, Schule und Notizen an einem Ort.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "background_color": "#0d0d0e",
-  "theme_color": "#071a2b",
+  "theme_color": "#0d0d0e",
   "lang": "de",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
