@@ -2355,6 +2355,67 @@
         }
 
 
+        /*
+        // Die drei Zusatz-Knöpfe im Fenster "Zeit ändern"
+        // (Pause einfügen / Stunde einfügen / Zeile löschen).
+        // Sie stehen untereinander und sehen bewusst ruhiger aus als
+        // der Speichern-Knopf, damit man sie nicht aus Versehen trifft.
+        */
+
+        .zeit-aktionen {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+
+            margin: 2px 0 16px;
+
+        }
+
+
+        .zeit-aktion {
+
+            border: 1px solid #d7dde5;
+
+            background: #ffffff;
+
+            color: #2b3a49;
+
+            border-radius: 11px;
+
+            padding: 11px 13px;
+
+            font-size: 13.5px;
+
+            font-weight: 600;
+
+            font-family: inherit;
+
+            text-align: left;
+
+            cursor: pointer;
+
+        }
+
+
+        .zeit-aktion:hover {
+
+            background: #eef2f7;
+
+        }
+
+
+        .zeit-aktion-rot {
+
+            color: #c23b49;
+
+            border-color: #f0ccd1;
+
+        }
+
+
         .modal-buttons {
 
             display: flex;
@@ -2859,6 +2920,14 @@
 
         .timetable-period {
 
+            /*
+            // Anklickbar: ein Tipp auf die Uhrzeiten öffnet das Fenster,
+            // in dem sich Anfang und Ende dieser Stunde ändern lassen.
+            */
+            cursor: pointer;
+
+            border-radius: 7px;
+
             display: flex;
 
             flex-direction: column;
@@ -2907,7 +2976,16 @@
         // nicht wissen, wie viele Spalten es gerade gibt.
         */
 
+        .timetable-period:hover {
+
+            background: rgba(255, 255, 255, 0.05);
+
+        }
+
+
         .timetable-break {
+
+            cursor: pointer;
 
             grid-column: 1 / -1;
 
@@ -4181,7 +4259,7 @@
                 </h1>
 
                 <p>
-                    Dein Stundenplan und alle Hausaufgaben.
+                    Stundenplan und Hausaufgaben.
                 </p>
 
             </div>
@@ -4209,12 +4287,6 @@
             <div id="schoolPlanView">
 
                 <div class="timetable" id="timetable"></div>
-
-                <div class="settings-note" style="padding: 14px 2px 0;">
-                    Tippe auf eine Stunde, um ein Fach einzutragen oder zu löschen.
-                    Stimmen die Uhrzeiten nicht mit deiner Schule überein, lassen
-                    sie sich im Code ganz oben bei "TIMETABLE_ROWS" anpassen.
-                </div>
 
             </div>
 
@@ -5072,6 +5144,90 @@
 
 
     <!-- =====================================
+     ZEIT EINER STUNDE ODER PAUSE ÄNDERN
+     Wird geöffnet, wenn man im Stundenplan links auf die Uhrzeiten
+     einer Stunde oder auf einen Pausen-Balken tippt.
+====================================== -->
+
+    <div class="modal" id="zeitModal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2 id="zeitModalTitle">
+                    Zeit ändern
+                </h2>
+
+                <button class="close-button" onclick="closeZeitModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <!-- Nur bei Pausen sichtbar -->
+
+            <div id="zeitNameFeld">
+
+                <label>
+                    Name der Pause
+                </label>
+
+                <input id="zeitNameInput" type="text" placeholder="z.B. Mittagspause">
+
+            </div>
+
+
+            <label>
+                Von
+            </label>
+
+            <input id="zeitVonInput" type="time">
+
+
+            <label>
+                Bis
+            </label>
+
+            <input id="zeitBisInput" type="time">
+
+
+            <div class="zeit-aktionen">
+
+                <button class="zeit-aktion" onclick="zeileEinfuegen('break')">
+                    Pause danach einfügen
+                </button>
+
+                <button class="zeit-aktion" onclick="zeileEinfuegen('lesson')">
+                    Stunde danach einfügen
+                </button>
+
+                <button class="zeit-aktion zeit-aktion-rot" onclick="zeileLoeschen()">
+                    Diese Zeile löschen
+                </button>
+
+            </div>
+
+
+            <div class="modal-buttons">
+
+                <button class="modal-button cancel-button" onclick="closeZeitModal()">
+                    Abbrechen
+                </button>
+
+                <button class="modal-button create-button" onclick="speichereZeit()">
+                    Speichern
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
      HAUSAUFGABE ANLEGEN
 ====================================== -->
 
@@ -5499,6 +5655,14 @@
         */
 
         const APP_UPDATES = [
+
+            {
+                version: "1.9",
+
+                title: "Eigene Schulzeiten",
+
+                text: "Tippe im Stundenplan links auf die Uhrzeiten einer Stunde oder auf eine Pause - dort stellst du Anfang und Ende selbst ein und kannst Stunden und Pausen einfügen oder löschen."
+            },
 
             {
                 version: "1.8",
@@ -8914,20 +9078,23 @@
 
 
         /*
-        // DAS ZEITRASTER DEINER SCHULE
+        // DAS ZEITRASTER DER SCHULE
         //
-        // HIER ÄNDERST DU DIE UHRZEITEN. Jede Zeile ist entweder eine
-        // Unterrichtsstunde ("lesson") oder eine Pause ("break").
-        // Unterrichtsstunden brauchen zusätzlich ihre Nummer, denn nur
-        // sie können im Stundenplan belegt werden - Pausen werden nur
-        // angezeigt.
+        // Jede Zeile ist entweder eine Unterrichtsstunde ("lesson")
+        // oder eine Pause ("break"). Die Liste unten ist nur der
+        // STARTWERT für einen neuen Account - sobald jemand im
+        // Stundenplan auf eine Uhrzeit tippt und sie ändert, wird sein
+        // eigenes Raster in Supabase gespeichert (Tabelle "zeitraster")
+        // und von dort geladen.
         //
-        // Willst du andere Zeiten, eine Pause mehr oder eine weniger,
-        // änderst du einfach diese Liste. Der Stundenplan richtet sich
-        // automatisch danach, am restlichen Code musst du nichts tun.
+        // Das Feld "period" ist die INTERNE Nummer einer Stunde. Daran
+        // hängen die eingetragenen Fächer in der Tabelle "lessons".
+        // Sie bleibt deshalb für immer gleich, auch wenn später oben
+        // eine Stunde dazukommt - angezeigt wird stattdessen die
+        // laufende Nummer (1., 2., 3. ...).
         */
 
-        const TIMETABLE_ROWS = [
+        const STANDARD_ZEITRASTER = [
 
             { type: "lesson", period: 1, from: "07:30", to: "08:15" },
 
@@ -8958,6 +9125,32 @@
             { type: "lesson", period: 10, from: "15:30", to: "16:15" }
 
         ];
+
+
+        /*
+        // Eine frische Kopie des Startwerts. Wichtig: eine KOPIE -
+        // sonst würde das Ändern einer Uhrzeit die Vorlage selbst
+        // überschreiben.
+        */
+
+        function standardZeitraster() {
+
+            return JSON.parse(
+                JSON.stringify(
+                    STANDARD_ZEITRASTER
+                )
+            );
+
+        }
+
+
+        // Das Raster, das gerade angezeigt wird.
+        let timetableRows = standardZeitraster();
+
+
+        // Welche Zeile im Fenster "Zeit ändern" gerade offen ist
+        // (die Position in timetableRows, nicht die Stundennummer).
+        let bearbeiteteZeile = null;
 
 
         const WEEKDAY_NAMES = [
@@ -9120,6 +9313,504 @@
 
             }
 
+
+            // Die eigenen Uhrzeiten (Stunden und Pausen)
+            await ladeZeitraster();
+
+        }
+
+
+        /* ---------------------------------------------------------
+           DAS ZEITRASTER: LADEN, SPEICHERN, ÄNDERN
+        --------------------------------------------------------- */
+
+
+        /*
+        // Holt das gespeicherte Raster dieses Nutzers. Gibt es noch
+        // keines (neuer Account), bleibt es beim Startwert.
+        */
+
+        async function ladeZeitraster() {
+
+            const ergebnis =
+                await supabaseClient
+                    .from("zeitraster")
+                    .select("zeilen")
+                    .eq("user_id", account.id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Fehler beim Laden der Uhrzeiten:",
+                    ergebnis.error
+                );
+
+                timetableRows = standardZeitraster();
+
+                return;
+
+            }
+
+
+            const zeile =
+                ergebnis.data && ergebnis.data[0];
+
+
+            if (zeile &&
+                Array.isArray(zeile.zeilen) &&
+                zeile.zeilen.length > 0) {
+
+                timetableRows = zeile.zeilen;
+
+            }
+
+            else {
+
+                timetableRows = standardZeitraster();
+
+            }
+
+        }
+
+
+        async function speichereZeitraster() {
+
+            const ergebnis =
+                await supabaseClient
+                    .from("zeitraster")
+                    .upsert(
+                        {
+                            user_id: account.id,
+
+                            zeilen: timetableRows
+                        },
+                        {
+                            onConflict: "user_id"
+                        }
+                    );
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Uhrzeiten konnten nicht gespeichert werden:",
+                    ergebnis.error
+                );
+
+
+                alert(
+                    "Die Uhrzeiten konnten nicht gespeichert werden:\n" +
+                    ergebnis.error.message +
+                    "\n\n(Fehlt vielleicht noch die Tabelle \"zeitraster\"? Dann stundenzeiten.sql in Supabase ausführen.)"
+                );
+
+            }
+
+        }
+
+
+        /*
+        // Die laufende Nummer einer Stunde (1., 2., 3. ...) zu ihrer
+        // internen Nummer. Die beiden sind nicht zwingend gleich -
+        // siehe Kommentar bei STANDARD_ZEITRASTER.
+        */
+
+        function anzeigeNummer(period) {
+
+            let zaehler = 0;
+
+
+            for (const zeile of timetableRows) {
+
+                if (zeile.type !== "lesson") {
+                    continue;
+                }
+
+
+                zaehler = zaehler + 1;
+
+
+                if (zeile.period === period) {
+
+                    return zaehler;
+
+                }
+
+            }
+
+
+            return period;
+
+        }
+
+
+        // Die nächste freie interne Nummer für eine neue Stunde.
+        function naechstePeriode() {
+
+            let groesste = 0;
+
+
+            timetableRows.forEach(
+                function (zeile) {
+
+                    if (zeile.type === "lesson" &&
+                        zeile.period > groesste) {
+
+                        groesste = zeile.period;
+
+                    }
+
+                }
+            );
+
+
+            return groesste + 1;
+
+        }
+
+
+        // Wie viele Unterrichtsstunden gibt es gerade?
+        function anzahlStunden() {
+
+            return timetableRows.filter(
+                function (zeile) {
+                    return zeile.type === "lesson";
+                }
+            ).length;
+
+        }
+
+
+        /* ---- Das Fenster "Zeit ändern" ---- */
+
+
+        function openZeitModal(position) {
+
+            const zeile =
+                timetableRows[position];
+
+
+            if (!zeile) {
+                return;
+            }
+
+
+            bearbeiteteZeile = position;
+
+
+            const istPause =
+                zeile.type === "break";
+
+
+            document.getElementById(
+                "zeitModalTitle"
+            ).textContent =
+                istPause
+                    ? "Pause"
+                    : anzeigeNummer(zeile.period) + ". Stunde";
+
+
+            document.getElementById(
+                "zeitNameFeld"
+            ).style.display =
+                istPause ? "block" : "none";
+
+
+            document.getElementById(
+                "zeitNameInput"
+            ).value =
+                zeile.name || "Pause";
+
+
+            document.getElementById(
+                "zeitVonInput"
+            ).value = zeile.from;
+
+
+            document.getElementById(
+                "zeitBisInput"
+            ).value = zeile.to;
+
+
+            document.getElementById(
+                "zeitModal"
+            ).classList.add("show");
+
+        }
+
+
+        function closeZeitModal() {
+
+            bearbeiteteZeile = null;
+
+
+            document.getElementById(
+                "zeitModal"
+            ).classList.remove("show");
+
+        }
+
+
+        async function speichereZeit() {
+
+            if (bearbeiteteZeile === null) {
+                return;
+            }
+
+
+            const zeile =
+                timetableRows[bearbeiteteZeile];
+
+
+            const von =
+                document.getElementById(
+                    "zeitVonInput"
+                ).value;
+
+
+            const bis =
+                document.getElementById(
+                    "zeitBisInput"
+                ).value;
+
+
+            if (!von || !bis) {
+
+                alert(
+                    "Bitte Anfang und Ende ausfüllen."
+                );
+
+                return;
+
+            }
+
+
+            if (von >= bis) {
+
+                /*
+                // Uhrzeiten als Text wie "09:15" lassen sich direkt
+                // vergleichen, weil die Stunde immer zweistellig ist -
+                // "09:15" < "10:00" stimmt also auch als Text.
+                */
+
+                alert(
+                    "Das Ende muss nach dem Anfang liegen."
+                );
+
+                return;
+
+            }
+
+
+            zeile.from = von;
+
+            zeile.to = bis;
+
+
+            if (zeile.type === "break") {
+
+                const name =
+                    document.getElementById(
+                        "zeitNameInput"
+                    ).value.trim();
+
+
+                zeile.name =
+                    name === ""
+                        ? "Pause"
+                        : name;
+
+            }
+
+
+            closeZeitModal();
+
+            renderSchool();
+
+            await speichereZeitraster();
+
+        }
+
+
+        /*
+        // Fügt nach der gerade offenen Zeile eine neue Pause oder
+        // Stunde ein. Als Zeit bekommt sie erst einmal das Ende der
+        // Zeile darüber - danach kann man sie gleich anpassen.
+        */
+
+        async function zeileEinfuegen(art) {
+
+            if (bearbeiteteZeile === null) {
+                return;
+            }
+
+
+            const davor =
+                timetableRows[bearbeiteteZeile];
+
+
+            const neueZeile =
+                art === "break"
+
+                    ? {
+                        type: "break",
+                        name: "Pause",
+                        from: davor.to,
+                        to: plusMinuten(davor.to, 15)
+                    }
+
+                    : {
+                        type: "lesson",
+                        period: naechstePeriode(),
+                        from: davor.to,
+                        to: plusMinuten(davor.to, 45)
+                    };
+
+
+            timetableRows.splice(
+                bearbeiteteZeile + 1,
+                0,
+                neueZeile
+            );
+
+
+            const neuePosition =
+                bearbeiteteZeile + 1;
+
+
+            closeZeitModal();
+
+            renderSchool();
+
+            await speichereZeitraster();
+
+
+            // Gleich das Fenster der neuen Zeile öffnen.
+            openZeitModal(neuePosition);
+
+        }
+
+
+        /*
+        // Rechnet Minuten auf eine Uhrzeit drauf, z.B. "15:30" + 45
+        // ergibt "16:15". Nach Mitternacht wird bei 23:59 gestoppt.
+        */
+
+        function plusMinuten(uhrzeit, minuten) {
+
+            const teile =
+                String(uhrzeit).split(":");
+
+
+            let gesamt =
+                (Number(teile[0]) || 0) * 60 +
+                (Number(teile[1]) || 0) +
+                minuten;
+
+
+            if (gesamt > 23 * 60 + 59) {
+
+                gesamt = 23 * 60 + 59;
+
+            }
+
+
+            const stunde =
+                Math.floor(gesamt / 60);
+
+
+            const minute =
+                gesamt % 60;
+
+
+            return (
+                String(stunde).padStart(2, "0") +
+                ":" +
+                String(minute).padStart(2, "0")
+            );
+
+        }
+
+
+        async function zeileLoeschen() {
+
+            if (bearbeiteteZeile === null) {
+                return;
+            }
+
+
+            const zeile =
+                timetableRows[bearbeiteteZeile];
+
+
+            if (zeile.type === "lesson" &&
+                anzahlStunden() <= 1) {
+
+                alert(
+                    "Es muss mindestens eine Stunde übrig bleiben."
+                );
+
+                return;
+
+            }
+
+
+            if (zeile.type === "lesson") {
+
+                const bestaetigt =
+                    confirm(
+                        "Die " + anzeigeNummer(zeile.period) +
+                        ". Stunde löschen? Die Fächer, die an diesem Tag dort eingetragen sind, verschwinden mit."
+                    );
+
+
+                if (!bestaetigt) {
+                    return;
+                }
+
+
+                // Die eingetragenen Fächer dieser Stunde mitlöschen.
+                const weg =
+                    await supabaseClient
+                        .from("lessons")
+                        .delete()
+                        .eq("user_id", account.id)
+                        .eq("period", zeile.period);
+
+
+                if (weg.error) {
+
+                    console.error(
+                        "Stunden konnten nicht gelöscht werden:",
+                        weg.error
+                    );
+
+                }
+
+
+                lessons =
+                    lessons.filter(
+                        function (eintrag) {
+                            return eintrag.period !== zeile.period;
+                        }
+                    );
+
+            }
+
+
+            timetableRows.splice(
+                bearbeiteteZeile,
+                1
+            );
+
+
+            closeZeitModal();
+
+            renderSchool();
+
+            await speichereZeitraster();
+
         }
 
 
@@ -9266,8 +9957,12 @@
             // über alle fünf Tage - deshalb der Sonderfall gleich hier.
             */
 
-            TIMETABLE_ROWS.forEach(
-                function (zeile) {
+            // Laufende Nummer der Unterrichtsstunden (1., 2., 3. ...)
+            let laufendeNummer = 0;
+
+
+            timetableRows.forEach(
+                function (zeile, position) {
 
 
                     if (zeile.type === "break") {
@@ -9300,11 +9995,21 @@
                         pause.appendChild(zeit);
 
 
+                        // Tipp auf die Pause -> Zeiten ändern
+                        pause.onclick =
+                            function () {
+                                openZeitModal(position);
+                            };
+
+
                         raster.appendChild(pause);
 
                         return;
 
                     }
+
+
+                    laufendeNummer = laufendeNummer + 1;
 
 
                     // --- Linke Spalte: Stundennummer und Uhrzeiten ---
@@ -9322,7 +10027,7 @@
                     nummer.className =
                         "timetable-period-number";
 
-                    nummer.textContent = zeile.period;
+                    nummer.textContent = laufendeNummer;
 
 
                     const von =
@@ -9348,6 +10053,14 @@
                     spalte.appendChild(von);
 
                     spalte.appendChild(bis);
+
+
+                    // Tipp auf die Uhrzeiten -> Zeiten ändern
+                    spalte.onclick =
+                        function () {
+                            openZeitModal(position);
+                        };
+
 
                     raster.appendChild(spalte);
 
@@ -10199,7 +10912,8 @@
             document.getElementById(
                 "lessonModalTitle"
             ).textContent =
-                WEEKDAY_NAMES[weekday] + ", " + period + ". Stunde";
+                WEEKDAY_NAMES[weekday] + ", " +
+                anzeigeNummer(period) + ". Stunde";
 
 
             // Fächerliste in das Auswahlfeld füllen
@@ -14379,6 +15093,8 @@
                     closeLessonModal();
 
                     closeHomeworkModal();
+
+                    closeZeitModal();
 
                 }
 
