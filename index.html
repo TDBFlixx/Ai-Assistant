@@ -5275,7 +5275,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-09-23 / 18:15";
+        const BUILD_ID = "2026-10-07 / 17:10";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -12021,8 +12021,9 @@
 
             // --- Schritt 2: Anfrage schicken ---
 
-            showNotificationResult(
-                "Schritt 2 von 3: Anfrage wird an den Server geschickt..."
+            zeigeMitCountdown(
+                "Schritt 2 von 3: Anfrage wird an den Server geschickt...",
+                15
             );
 
 
@@ -12128,8 +12129,9 @@
 
             // --- Schritt 3: Antwort lesen ---
 
-            showNotificationResult(
-                "Schritt 3 von 3: Antwort wird gelesen..."
+            zeigeMitCountdown(
+                "Schritt 3 von 3: Antwort wird gelesen...",
+                12
             );
 
 
@@ -12169,7 +12171,7 @@
                                     );
 
                                 },
-                                15000
+                                12000
                             );
 
                         })
@@ -12188,7 +12190,7 @@
                     "), aber die Antwort kam nie vollständig an.\n\n" +
                     "Das heißt: Die Edge Function bleibt mitten in der " +
                     "Ausführung stecken. Läuft in Supabase noch eine ältere " +
-                    "Fassung? Die neue (Stand 2026-09-23) kommt ohne fremde " +
+                    "Fassung? Die neue (Stand 2026-10-07) kommt ohne fremde " +
                     "Bibliotheken aus und kann nicht mehr hängen bleiben.\n\n" +
                     "(" + fehler.name + " - " + fehler.message + ")"
                 );
@@ -12294,7 +12296,94 @@
         // scheinbar nichts. Text in der Seite kann das nicht passieren.
         */
 
+        /*
+        // SICHTBARER COUNTDOWN
+        //
+        // Warum das nötig ist: Bei "Antwort wird gelesen..." sieht man
+        // nicht, ob die App noch arbeitet oder endgültig hängt. Ohne
+        // Rückmeldung tippt man nach zwei Sekunden auf "kaputt" - dabei
+        // läuft das Zeitlimit noch. Ein mitlaufender Countdown macht
+        // sichtbar, dass Warten dazugehört und wie lange noch.
+        */
+
+        let countdownTimer = null;
+
+
+        function stoppeCountdown() {
+
+            if (countdownTimer) {
+
+                clearInterval(countdownTimer);
+
+                countdownTimer = null;
+
+            }
+
+        }
+
+
+        function zeigeMitCountdown(basistext, sekunden) {
+
+            stoppeCountdown();
+
+
+            let rest = sekunden;
+
+
+            const box =
+                document.getElementById(
+                    "notificationResult"
+                );
+
+
+            function schreiben() {
+
+                if (!box) {
+                    return;
+                }
+
+                box.textContent =
+                    basistext +
+                    "\n\nBitte warten - Abbruch in " + rest + " Sekunden...";
+
+                box.style.display = "block";
+
+            }
+
+
+            schreiben();
+
+
+            countdownTimer =
+                setInterval(
+                    function () {
+
+                        rest--;
+
+
+                        if (rest <= 0) {
+
+                            stoppeCountdown();
+
+                            return;
+
+                        }
+
+
+                        schreiben();
+
+                    },
+                    1000
+                );
+
+        }
+
+
         function showNotificationResult(text) {
+
+            // Ein fertiges Ergebnis beendet immer einen laufenden Countdown
+            stoppeCountdown();
+
 
             const box =
                 document.getElementById(
