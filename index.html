@@ -7,76 +7,41 @@
 
 
     <!--
-        FEHLERANZEIGE FÜR UNTERWEGS
+        STILLE FEHLER-AUFZEICHNUNG
         Läuft als ALLERERSTES Skript, noch vor allem anderen.
-        Falls irgendwo im restlichen Code ein Fehler auftritt (z.B.
-        weil die Supabase-Bibliothek nicht geladen werden konnte),
-        wird er hier oben als roter Balken direkt auf dem Bildschirm
-        angezeigt - auch auf dem Handy, ganz ohne Entwickler-Tools.
-        Das ist NUR zum Debuggen gedacht und kann später wieder
-        entfernt werden, wenn alles zuverlässig läuft.
+
+        Früher stand hier ein roter Balken, der jeden Fehler quer über
+        den Bildschirm geschrieben hat. Das war beim Suchen von Fehlern
+        sehr nützlich, hat aber im Alltag gestört: Safari auf dem iPhone
+        meldet z.B. beim Antippen von "Teilen" einen harmlosen Fehler,
+        und schon klebte der rote Balken oben.
+
+        Jetzt werden Fehler nur noch LEISE gesammelt: in der
+        Entwickler-Konsole und in window.appFehler. Wenn mal etwas
+        klemmt, kann man dort nachsehen - sichtbar ist aber nichts.
     -->
 
     <script>
 
-        function showFatalError(
-            text
-        ) {
-
-            let box =
-                document.getElementById(
-                    "fatalErrorBox"
-                );
+        window.appFehler = [];
 
 
-            if (!box) {
+        function merkeFehler(text) {
 
-                box =
-                    document.createElement(
-                        "div"
-                    );
-
-                box.id =
-                    "fatalErrorBox";
-
-                box.style.cssText =
-                    "position:fixed;top:0;left:0;right:0;z-index:99999;" +
-                    "background:#ff3b3b;color:white;padding:12px 14px;" +
-                    "font-size:12.5px;font-family:monospace;" +
-                    "white-space:pre-wrap;line-height:1.5;";
+            window.appFehler.push(
+                new Date().toLocaleTimeString("de-DE") + " - " + text
+            );
 
 
-                // document.body existiert an dieser Stelle eventuell
-                // noch nicht (Skript läuft ganz früh) - deshalb notfalls
-                // warten, bis die Seite bereit ist.
-                if (document.body) {
+            // Nur die letzten 50 behalten, damit nichts vollläuft.
+            if (window.appFehler.length > 50) {
 
-                    document.body.appendChild(
-                        box
-                    );
-
-                }
-
-                else {
-
-                    document.addEventListener(
-                        "DOMContentLoaded",
-                        function () {
-
-                            document.body.appendChild(
-                                box
-                            );
-
-                        }
-                    );
-
-                }
+                window.appFehler.shift();
 
             }
 
 
-            box.textContent +=
-                "⚠️ " + text + "\n";
+            console.error("App-Fehler:", text);
 
         }
 
@@ -86,7 +51,7 @@
             "error",
             function (event) {
 
-                showFatalError(
+                merkeFehler(
                     event.message
                 );
 
@@ -103,7 +68,7 @@
                 const reason =
                     event.reason;
 
-                showFatalError(
+                merkeFehler(
 
                     reason && reason.message
                         ? reason.message
@@ -120,7 +85,7 @@
 
     <meta name="theme-color" content="#0d0d0e">
 
-    <title>Mein KI-Assistent</title>
+    <title>YouDo</title>
 
 
     <!--
@@ -175,7 +140,7 @@
         und ihn abschneiden.
     -->
 
-    <meta name="apple-mobile-web-app-title" content="KI-Assistent">
+    <meta name="apple-mobile-web-app-title" content="YouDo">
 
 
     <!--
@@ -2446,11 +2411,10 @@
         .auth-screen {
 
             /*
-            // Wichtig: "display" wird per JS zwischen "none" und "flex"
-            // umgeschaltet (siehe checkAuthState()). Der Startwert hier
-            // ist "none", damit beim allerersten Laden kein kurzes
-            // Aufblitzen der Login-Maske passiert, falls man doch
-            // schon eingeloggt ist.
+            // "display" wird per JS zwischen "none" und "flex"
+            // umgeschaltet (siehe checkAuthState()). Der Startwert
+            // "none" verhindert, dass die Maske kurz aufblitzt, wenn
+            // man in Wahrheit schon eingeloggt ist.
             */
 
             display: none;
@@ -2465,69 +2429,43 @@
 
             justify-content: center;
 
-            padding: 22px;
-
-            background:
-                radial-gradient(circle at 50% -10%,
-                    #16466a 0%,
-                    var(--background) 45%);
-
-        }
-
-
-        /* Kein Farbschimmer, flacher dunkler Hintergrund */
-
-        .auth-screen {
+            padding: 30px 24px;
 
             background: var(--background);
 
+            overflow-y: auto;
+
         }
 
+
+        /*
+        // Bewusst OHNE Karte, Rahmen und Glas-Effekt: nur Symbol,
+        // Überschrift, Felder, Knopf. Das wirkt ruhiger und lenkt
+        // nicht vom Wesentlichen ab.
+        */
 
         .auth-card {
 
             width: 100%;
 
-            max-width: 380px;
-
-            background: var(--card);
-
-            border: 1px solid var(--border);
-
-            border-radius: 24px;
-
-            padding: 30px 26px;
-
-            text-align: center;
-
-        }
-
-
-        /* Die verschwommene Glas-Optik ergänzen */
-
-        .auth-card {
-
-            backdrop-filter: blur(20px);
-
-            -webkit-backdrop-filter: blur(20px);
+            max-width: 340px;
 
         }
 
 
         .auth-logo {
 
-            width: 60px;
+            width: 64px;
 
-            height: 60px;
+            height: 64px;
 
-            margin: 0 auto 16px;
+            margin: 0 auto 24px;
 
-            border-radius: 50%;
+            border-radius: 19px;
 
-            background:
-                linear-gradient(135deg,
-                    #3b8fd1,
-                    #6bc7ee);
+            border: 1px solid var(--border);
+
+            background: transparent;
 
             display: flex;
 
@@ -2535,36 +2473,59 @@
 
             justify-content: center;
 
-            font-size: 26px;
+        }
+
+
+        .auth-logo svg {
+
+            width: 34px;
+
+            height: 34px;
+
+            display: block;
 
         }
 
 
-        /* Neutraler Glas-Kreis */
-
-        .auth-logo {
-
-            background: rgba(255, 255, 255, 0.08);
-
-        }
-
+        /* Die dicke weiße Zeile ganz oben */
 
         .auth-card h1 {
 
-            font-size: 22px;
+            font-size: 27px;
 
-            margin: 0 0 6px;
+            font-weight: 800;
+
+            letter-spacing: -0.4px;
+
+            text-align: center;
+
+            margin: 0 0 7px;
 
         }
 
 
-        .auth-card p {
+        /* Auf sehr schmalen Handys die Überschrift etwas kleiner */
+
+        @media (max-width: 360px) {
+
+            .auth-card h1 {
+
+                font-size: 24px;
+
+            }
+
+        }
+
+
+        .auth-card p.auth-sub {
 
             color: var(--muted);
 
-            font-size: 13px;
+            font-size: 14px;
 
-            margin: 0 0 22px;
+            text-align: center;
+
+            margin: 0 0 28px;
 
         }
 
@@ -2577,11 +2538,11 @@
 
             font-size: 12px;
 
-            font-weight: 700;
+            font-weight: 600;
 
             color: var(--muted);
 
-            margin-bottom: 6px;
+            margin: 0 0 7px 2px;
 
         }
 
@@ -2590,29 +2551,46 @@
 
             width: 100%;
 
-            padding: 13px;
+            padding: 14px 15px;
 
-            border-radius: 11px;
+            border-radius: 13px;
 
             border: 1px solid var(--border);
 
-            background: var(--card-light);
+            background: var(--card);
 
             color: var(--text);
 
-            margin-bottom: 15px;
+            font-size: 15px;
+
+            font-family: inherit;
+
+            margin-bottom: 16px;
 
             outline: none;
+
+            -webkit-appearance: none;
+
+        }
+
+
+        .auth-card input::placeholder {
+
+            color: #5d5e62;
 
         }
 
 
         .auth-card input:focus {
 
-            border-color: var(--blue);
+            border-color: rgba(255, 255, 255, 0.45);
+
+            background: var(--card-light);
 
         }
 
+
+        /* Roter Kasten für Fehler ... */
 
         .auth-error {
 
@@ -2622,15 +2600,38 @@
 
             font-size: 12.5px;
 
-            border-radius: 10px;
+            border-radius: 11px;
 
-            padding: 10px 12px;
+            padding: 11px 13px;
 
-            margin-bottom: 15px;
+            margin-bottom: 16px;
 
             text-align: left;
 
-            line-height: 1.4;
+            line-height: 1.45;
+
+        }
+
+
+        /* ... und ein grüner für gute Nachrichten ("Link verschickt") */
+
+        .auth-info {
+
+            background: rgba(66, 211, 146, 0.12);
+
+            color: var(--green);
+
+            font-size: 12.5px;
+
+            border-radius: 11px;
+
+            padding: 11px 13px;
+
+            margin-bottom: 16px;
+
+            text-align: left;
+
+            line-height: 1.45;
 
         }
 
@@ -2643,30 +2644,66 @@
 
             background: var(--blue);
 
-            color: white;
+            /*
+            // --blue ist Weiß - die Schrift auf dem Knopf muss deshalb
+            // dunkel sein, sonst wäre sie unsichtbar.
+            */
+            color: #111111;
 
             font-weight: 700;
 
-            padding: 14px;
+            font-family: inherit;
 
-            border-radius: 12px;
+            padding: 15px;
+
+            border-radius: 13px;
 
             cursor: pointer;
 
             font-size: 15px;
 
+            margin-top: 4px;
+
         }
 
 
-        /*
-        // --blue ist Weiß, Button-Hintergrund wird
-        // dadurch weiß - Schrift ("Einloggen"/"Registrieren") braucht
-        // deshalb dunkle statt weiße Farbe, sonst unsichtbar.
-        */
+        .auth-submit:active {
 
-        .auth-submit {
+            opacity: 0.85;
 
-            color: #111111;
+        }
+
+
+        /* "Passwort vergessen?" - bewusst unauffällig */
+
+        .auth-forgot {
+
+            text-align: center;
+
+            margin: 16px 0 0;
+
+        }
+
+
+        .auth-forgot button {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            font-size: 13px;
+
+            font-family: inherit;
+
+            cursor: pointer;
+
+            padding: 4px;
+
+            text-decoration: underline;
+
+            text-underline-offset: 3px;
 
         }
 
@@ -2675,9 +2712,11 @@
 
             color: var(--muted);
 
-            font-size: 13px;
+            font-size: 13.5px;
 
-            margin: 18px 0 0;
+            text-align: center;
+
+            margin: 26px 0 0;
 
         }
 
@@ -2688,9 +2727,13 @@
 
             background: transparent;
 
-            color: var(--blue-light);
+            color: var(--text);
 
             font-weight: 700;
+
+            font-size: 13.5px;
+
+            font-family: inherit;
 
             cursor: pointer;
 
@@ -5192,16 +5235,50 @@
 
         <div class="auth-card">
 
+
+            <!--
+                APP-SYMBOL
+                Dieselbe Zeichnung wie das Tab-Icon und das Symbol auf
+                dem Home-Bildschirm: ein Klemmbrett mit abgehakten
+                Kästchen. Es steht direkt als SVG hier im Code, damit
+                es in jeder Größe scharf bleibt.
+            -->
+
             <div class="auth-logo">
-                🤖
+
+                <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+
+                    <rect x="6.5" y="6" width="19" height="22" rx="3"
+                        stroke="#f5f5f5" stroke-width="2" />
+
+                    <rect x="11.5" y="2.6" width="9" height="6" rx="2"
+                        fill="#0d0d0e" stroke="#f5f5f5" stroke-width="2" />
+
+                    <path d="M10.3 15.6l2.1 2.1 3.9-4.3"
+                        stroke="#f5f5f5" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+
+                    <path d="M18.4 14.6h3.4"
+                        stroke="#f5f5f5" stroke-width="2" stroke-linecap="round" />
+
+                    <path d="M10.3 22.4l2.1 2.1 3.9-4.3"
+                        stroke="#f5f5f5" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+
+                    <path d="M18.4 21.4h3.4"
+                        stroke="#f5f5f5" stroke-width="2" stroke-linecap="round" />
+
+                </svg>
+
             </div>
 
+
             <h1 id="authTitle">
-                Willkommen zurück
+                Willkommen
             </h1>
 
-            <p id="authSubtitle">
-                Melde dich mit deinem Account an.
+            <p class="auth-sub" id="authSubtitle">
+                Schön dich zu sehen!
             </p>
 
 
@@ -5210,20 +5287,36 @@
             <div class="auth-error" id="authError" style="display:none;"></div>
 
 
-            <label>
-                E-Mail
-            </label>
+            <!-- Gute Nachrichten (z.B. "Link ist unterwegs") -->
 
-            <input id="authEmail" type="email" placeholder="deine@email.de">
-
-            <label>
-                Passwort
-            </label>
-
-            <input id="authPassword" type="password" placeholder="Passwort">
+            <div class="auth-info" id="authInfo" style="display:none;"></div>
 
 
-            <!-- Nur im Registrierungs-Modus sichtbar -->
+            <div id="authEmailField">
+
+                <label>
+                    E-Mail
+                </label>
+
+                <input id="authEmail" type="email" inputmode="email"
+                    autocomplete="email" placeholder="deine@email.de">
+
+            </div>
+
+
+            <div id="authPasswordField">
+
+                <label>
+                    Passwort
+                </label>
+
+                <input id="authPassword" type="password"
+                    autocomplete="current-password" placeholder="Passwort">
+
+            </div>
+
+
+            <!-- Nur beim Registrieren und beim Passwort-Neusetzen sichtbar -->
 
             <div id="authConfirmField">
 
@@ -5231,7 +5324,8 @@
                     Passwort bestätigen
                 </label>
 
-                <input id="authPasswordConfirm" type="password" placeholder="Passwort wiederholen">
+                <input id="authPasswordConfirm" type="password"
+                    autocomplete="new-password" placeholder="Passwort wiederholen">
 
             </div>
 
@@ -5240,12 +5334,21 @@
                 Einloggen
             </button>
 
+
+            <p class="auth-forgot" id="authForgot">
+                <button onclick="switchAuthMode('reset')">
+                    Passwort vergessen?
+                </button>
+            </p>
+
+
             <p class="auth-switch" id="authSwitchText">
-                Noch keinen Account?
-                <button onclick="switchAuthMode()">
+                Noch keinen Account? Jetzt
+                <button onclick="switchAuthMode('register')">
                     Registrieren
                 </button>
             </p>
+
 
         </div>
 
@@ -5325,6 +5428,37 @@
         let authMode = "login";
 
 
+        /*
+        // PASSWORT ZURÜCKSETZEN - WIE DAS ABLÄUFT
+        //
+        // 1. Jemand tippt auf "Passwort vergessen?" und gibt seine
+        //    E-Mail ein. Supabase verschickt eine Mail mit Link.
+        // 2. Der Link führt zurück auf diese Seite, mit "?reset=1"
+        //    hinten dran - daran erkennt die App, worum es geht.
+        // 3. Dann wird NICHT die App geöffnet, sondern das Fenster
+        //    "Neues Passwort".
+        //
+        // Das Erkennungszeichen wird hier GANZ AM ANFANG gelesen,
+        // bevor irgendetwas anderes die Adresse verändern kann.
+        */
+
+        let passwortResetLaeuft = false;
+
+        try {
+
+            passwortResetLaeuft =
+                new URLSearchParams(window.location.search)
+                    .get("reset") === "1";
+
+        }
+
+        catch (fehler) {
+
+            passwortResetLaeuft = false;
+
+        }
+
+
         // Merkt sich, ob im Account-Modal gerade die E-Mail oder das
         // Passwort geändert wird ("email" | "password").
         let accountModalAction = "email";
@@ -5365,6 +5499,22 @@
         */
 
         const APP_UPDATES = [
+
+            {
+                version: "1.8",
+
+                title: "Die App heißt jetzt YouDo",
+
+                text: "Neuer Name, aufgeräumtes Anmelde-Fenster mit App-Symbol - und wer sein Passwort vergisst, bekommt jetzt einen Link per E-Mail."
+            },
+
+            {
+                version: "1.7",
+
+                title: "Ruhigere App",
+
+                text: "Der rote Fehlerbalken ist verschwunden, und Updates melden sich nur noch hier in der App - nicht mehr als Benachrichtigung."
+            },
 
             {
                 version: "1.6",
@@ -7514,15 +7664,162 @@
         }
 
 
-        // Wechselt zwischen Login- und Registrierungs-Ansicht und
-        // passt Überschrift, Button-Text und das "Passwort bestätigen"-
-        // Feld entsprechend an.
-        function switchAuthMode() {
+        // Zeigt eine gute Nachricht im grünen Kasten an
+        function showAuthInfo(
+            message
+        ) {
 
-            authMode =
-                authMode === "login"
-                    ? "register"
-                    : "login";
+            const box =
+                document.getElementById(
+                    "authInfo"
+                );
+
+            box.textContent =
+                message;
+
+            box.style.display =
+                "block";
+
+        }
+
+
+        function hideAuthInfo() {
+
+            document.getElementById(
+                "authInfo"
+            ).style.display =
+                "none";
+
+        }
+
+
+        /*
+        // DIE VIER ANSICHTEN DES ANMELDE-FENSTERS
+        //
+        // "login"    - einloggen
+        // "register" - Account anlegen
+        // "reset"    - Link zum Zurücksetzen anfordern
+        // "neu"      - neues Passwort vergeben (nach Klick auf den Link)
+        //
+        // Alle vier benutzen DIESELBEN Felder. Umgeschaltet wird nur,
+        // welche davon sichtbar sind und was in den Texten steht.
+        // Deshalb steht hier eine kleine Tabelle statt vier mal fast
+        // demselben Code.
+        */
+
+        const AUTH_ANSICHTEN = {
+
+            login: {
+
+                titel: "Willkommen",
+
+                untertitel: "Schön dich zu sehen!",
+
+                knopf: "Einloggen",
+
+                email: true,
+
+                passwort: true,
+
+                bestaetigen: false,
+
+                vergessen: true,
+
+                wechsel:
+                    'Noch keinen Account? Jetzt ' +
+                    '<button onclick="switchAuthMode(\'register\')">Registrieren</button>'
+
+            },
+
+            register: {
+
+                titel: "Erstelle einen Account",
+
+                untertitel: "um jetzt loszulegen!",
+
+                knopf: "Registrieren",
+
+                email: true,
+
+                passwort: true,
+
+                bestaetigen: true,
+
+                vergessen: false,
+
+                wechsel:
+                    'Schon einen Account? Jetzt ' +
+                    '<button onclick="switchAuthMode(\'login\')">Einloggen</button>'
+
+            },
+
+            reset: {
+
+                titel: "Passwort vergessen?",
+
+                untertitel: "Wir schicken dir einen Link per E-Mail.",
+
+                knopf: "Link schicken",
+
+                email: true,
+
+                passwort: false,
+
+                bestaetigen: false,
+
+                vergessen: false,
+
+                wechsel:
+                    'Doch wieder eingefallen? Zurück zum ' +
+                    '<button onclick="switchAuthMode(\'login\')">Einloggen</button>'
+
+            },
+
+            neu: {
+
+                titel: "Neues Passwort",
+
+                untertitel: "Wähle ein neues Passwort für deinen Account.",
+
+                knopf: "Passwort speichern",
+
+                email: false,
+
+                passwort: true,
+
+                bestaetigen: true,
+
+                vergessen: false,
+
+                wechsel: ""
+
+            }
+
+        };
+
+
+        /*
+        // Wechselt die Ansicht. Ohne Angabe wird zwischen Login und
+        // Registrierung hin- und hergeschaltet (so war es früher).
+        */
+
+        function switchAuthMode(ziel) {
+
+            if (ziel) {
+
+                authMode = ziel;
+
+            }
+
+            else {
+
+                authMode =
+                    authMode === "login"
+                        ? "register"
+                        : "login";
+
+            }
+
 
             renderAuthMode();
 
@@ -7534,76 +7831,310 @@
 
             hideAuthError();
 
+            hideAuthInfo();
 
-            const confirmField =
+
+            const ansicht =
+                AUTH_ANSICHTEN[authMode] ||
+                AUTH_ANSICHTEN.login;
+
+
+            document.getElementById(
+                "authTitle"
+            ).textContent =
+                ansicht.titel;
+
+
+            document.getElementById(
+                "authSubtitle"
+            ).textContent =
+                ansicht.untertitel;
+
+
+            document.getElementById(
+                "authSubmitButton"
+            ).textContent =
+                ansicht.knopf;
+
+
+            document.getElementById(
+                "authEmailField"
+            ).style.display =
+                ansicht.email ? "block" : "none";
+
+
+            document.getElementById(
+                "authPasswordField"
+            ).style.display =
+                ansicht.passwort ? "block" : "none";
+
+
+            document.getElementById(
+                "authConfirmField"
+            ).style.display =
+                ansicht.bestaetigen ? "block" : "none";
+
+
+            document.getElementById(
+                "authForgot"
+            ).style.display =
+                ansicht.vergessen ? "block" : "none";
+
+
+            const wechsel =
                 document.getElementById(
-                    "authConfirmField"
+                    "authSwitchText"
                 );
 
+            wechsel.innerHTML =
+                ansicht.wechsel;
 
-            if (authMode === "register") {
+            wechsel.style.display =
+                ansicht.wechsel ? "block" : "none";
 
-                document.getElementById(
-                    "authTitle"
-                ).textContent =
-                    "Konto erstellen";
 
-                document.getElementById(
-                    "authSubtitle"
-                ).textContent =
-                    "Lege einen Account mit E-Mail und Passwort an.";
+            /*
+            // Dem Browser sagen, ob er das GESPEICHERTE Passwort
+            // anbieten soll (Login) oder ein NEUES vorschlagen darf
+            // (Registrieren / Passwort ändern).
+            */
 
-                document.getElementById(
-                    "authSubmitButton"
-                ).textContent =
-                    "Registrieren";
-
-                document.getElementById(
-                    "authSwitchText"
-                ).innerHTML =
-                    'Schon einen Account? <button onclick="switchAuthMode()">Einloggen</button>';
-
-                confirmField.style.display =
-                    "block";
-
-            }
-
-            else {
-
-                document.getElementById(
-                    "authTitle"
-                ).textContent =
-                    "Willkommen zurück";
-
-                document.getElementById(
-                    "authSubtitle"
-                ).textContent =
-                    "Melde dich mit deinem Account an.";
-
-                document.getElementById(
-                    "authSubmitButton"
-                ).textContent =
-                    "Einloggen";
-
-                document.getElementById(
-                    "authSwitchText"
-                ).innerHTML =
-                    'Noch keinen Account? <button onclick="switchAuthMode()">Registrieren</button>';
-
-                confirmField.style.display =
-                    "none";
-
-            }
+            document.getElementById(
+                "authPassword"
+            ).setAttribute(
+                "autocomplete",
+                authMode === "login"
+                    ? "current-password"
+                    : "new-password"
+            );
 
         }
 
 
-        // Wird beim Klick auf "Einloggen"/"Registrieren" ausgeführt.
-        // Wird beim Klick auf "Einloggen"/"Registrieren" ausgeführt.
+        /*
+        // SCHRITT 1: Link anfordern.
+        //
+        // Aus Sicherheitsgründen verrät die Antwort NICHT, ob es zu
+        // dieser Adresse überhaupt ein Konto gibt - sonst könnte man
+        // damit fremde E-Mail-Adressen durchprobieren.
+        */
+
+        async function sendePasswortLink() {
+
+            const email =
+                document.getElementById(
+                    "authEmail"
+                ).value.trim().toLowerCase();
+
+
+            if (!isValidEmail(email)) {
+
+                showAuthError(
+                    "Bitte eine gültige E-Mail-Adresse eingeben."
+                );
+
+                return;
+
+            }
+
+
+            // Die Adresse, auf die der Link zurückführen soll.
+            // Das "?reset=1" ist das Erkennungszeichen für die App.
+            const zieladresse =
+                window.location.origin +
+                window.location.pathname +
+                "?reset=1";
+
+
+            const ergebnis =
+                await supabaseClient
+                    .auth
+                    .resetPasswordForEmail(
+                        email,
+                        {
+                            redirectTo: zieladresse
+                        }
+                    );
+
+
+            if (ergebnis.error) {
+
+                showAuthError(
+                    "Der Link konnte nicht verschickt werden:\n" +
+                    ergebnis.error.message
+                );
+
+                return;
+
+            }
+
+
+            showAuthInfo(
+                "Wenn es zu dieser Adresse ein Konto gibt, ist die E-Mail unterwegs. Schau auch im Spam-Ordner nach. Der Link gilt eine Stunde."
+            );
+
+        }
+
+
+        /*
+        // SCHRITT 2: Neues Passwort speichern.
+        //
+        // Durch den Klick auf den Link hat Supabase bereits eine
+        // (kurzlebige) Sitzung angelegt - nur deshalb darf das
+        // Passwort hier überhaupt geändert werden.
+        */
+
+        async function speichereNeuesPasswort() {
+
+            const passwort =
+                document.getElementById(
+                    "authPassword"
+                ).value;
+
+
+            const wiederholung =
+                document.getElementById(
+                    "authPasswordConfirm"
+                ).value;
+
+
+            if (passwort.length < 6) {
+
+                showAuthError(
+                    "Das Passwort muss mindestens 6 Zeichen lang sein."
+                );
+
+                return;
+
+            }
+
+
+            if (passwort !== wiederholung) {
+
+                showAuthError(
+                    "Die Passwörter stimmen nicht überein."
+                );
+
+                return;
+
+            }
+
+
+            /*
+            // Die Sitzung aus dem Link entsteht erst kurz NACH dem
+            // Laden der Seite. Deshalb: einmal nachsehen, und falls
+            // sie noch fehlt, kurz warten und ein zweites Mal schauen.
+            */
+
+            let sitzung =
+                (await supabaseClient.auth.getSession()).data.session;
+
+
+            if (!sitzung) {
+
+                await new Promise(function (fertig) {
+                    setTimeout(fertig, 1200);
+                });
+
+
+                sitzung =
+                    (await supabaseClient.auth.getSession()).data.session;
+
+            }
+
+
+            if (!sitzung) {
+
+                showAuthError(
+                    "Der Link ist abgelaufen oder wurde schon benutzt. Fordere bitte einen neuen an."
+                );
+
+                return;
+
+            }
+
+
+            const ergebnis =
+                await supabaseClient
+                    .auth
+                    .updateUser({
+                        password: passwort
+                    });
+
+
+            if (ergebnis.error) {
+
+                showAuthError(
+                    "Das Passwort konnte nicht geändert werden:\n" +
+                    ergebnis.error.message
+                );
+
+                return;
+
+            }
+
+
+            // Das "?reset=1" aus der Adresse entfernen, damit es beim
+            // nächsten Öffnen nicht wieder anspringt.
+            try {
+
+                window.history.replaceState(
+                    null,
+                    "",
+                    window.location.pathname
+                );
+
+            }
+
+            catch (fehler) {
+                // Nicht schlimm.
+            }
+
+
+            passwortResetLaeuft = false;
+
+
+            showAuthInfo(
+                "Passwort geändert. Du wirst gleich eingeloggt ..."
+            );
+
+
+            setTimeout(
+                function () {
+                    checkAuthState();
+                },
+                1000
+            );
+
+        }
+
+
+        // Wird beim Klick auf den großen Knopf unten ausgeführt.
         async function handleAuthSubmit() {
 
 
             hideAuthError();
+
+            hideAuthInfo();
+
+
+            // Die beiden Sonderfälle zuerst abhandeln.
+            if (authMode === "reset") {
+
+                await sendePasswortLink();
+
+                return;
+
+            }
+
+
+            if (authMode === "neu") {
+
+                await speichereNeuesPasswort();
+
+                return;
+
+            }
 
 
             const email =
@@ -7918,6 +8449,39 @@
                 document.querySelector(
                     ".bottom-nav"
                 );
+
+
+            /*
+            // Kommt jemand gerade über den "Passwort vergessen"-Link?
+            // Dann NICHT die App öffnen, sondern das Fenster für das
+            // neue Passwort zeigen - auch wenn durch den Link schon
+            // eine Sitzung besteht.
+            */
+
+            if (passwortResetLaeuft) {
+
+                account = null;
+
+                isLoggedIn = false;
+
+                authMode = "neu";
+
+                renderAuthMode();
+
+
+                authScreen.style.display =
+                    "flex";
+
+                appContainer.style.display =
+                    "none";
+
+                bottomNav.style.display =
+                    "none";
+
+
+                return;
+
+            }
 
 
             // Supabase merkt sich die Sitzung selbst (in seinem eigenen
@@ -11864,7 +12428,7 @@
                 showNotificationResult(
                     "Benachrichtigungen sind für diese App blockiert.\n\n" +
                     "Du kannst sie in den Einstellungen deines Handys wieder " +
-                    "erlauben (Einstellungen -> Mitteilungen -> KI-Assistent)."
+                    "erlauben (Einstellungen -> Mitteilungen -> YouDo)."
                 );
 
                 return;
@@ -13584,7 +14148,7 @@
 
 
             box.textContent =
-                "Mein KI-Assistent - Version " +
+                "YouDo - Version " +
                 APP_VERSION +
                 " - " +
                 APP_UPDATES[0].title;
@@ -13731,13 +14295,19 @@
                 APP_UPDATES[0];
 
 
+            /*
+            // BEWUSST NUR DER HINWEIS IN DER APP, KEINE
+            // BENACHRICHTIGUNG.
+            //
+            // Früher kam bei jedem Update zusätzlich eine echte
+            // Benachrichtigung aufs Handy. Das nutzt sich schnell ab -
+            // und wer zu oft unwichtige Nachrichten bekommt, schaltet
+            // sie irgendwann ganz ab. Die Erlaubnis soll für die
+            // wichtigen Dinge aufgehoben werden (z.B. Erinnerungen an
+            // Aufgaben und Ziele).
+            */
+
             showUpdateBanner(update);
-
-
-            await showNotification(
-                "Update: " + update.title,
-                update.text
-            );
 
 
             localStorage.setItem(
