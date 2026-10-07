@@ -1863,6 +1863,85 @@
 
 
         /*
+        // LISTE DER ANGEMELDETEN GERÄTE
+        //
+        // Jede Zeile steht für EIN Gerät, das Benachrichtigungen
+        // bekommt. Rechts sitzt ein Knopf, mit dem man dieses Gerät
+        // wieder abmelden kann - wichtig, wenn dieselbe Nachricht
+        // doppelt ankommt (z.B. einmal im Browser-Tab und einmal in
+        // der installierten App).
+        */
+
+        .push-geraet {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 12px;
+
+            padding: 12px 16px;
+
+            border-top: 1px solid var(--border);
+
+        }
+
+
+        .push-geraet-name {
+
+            font-size: 14px;
+
+            color: var(--text);
+
+        }
+
+
+        .push-geraet-info {
+
+            font-size: 11px;
+
+            color: var(--muted);
+
+            margin-top: 3px;
+
+            line-height: 1.4;
+
+        }
+
+
+        .push-geraet-weg {
+
+            flex-shrink: 0;
+
+            background: transparent;
+
+            border: 1px solid var(--border);
+
+            color: var(--red);
+
+            border-radius: 9px;
+
+            padding: 7px 11px;
+
+            font-size: 12px;
+
+            font-family: inherit;
+
+            cursor: pointer;
+
+        }
+
+
+        .push-geraet-weg:hover {
+
+            background: var(--card-light);
+
+        }
+
+
+        /*
         // GEFAHRENZONE
         // Deutlich abgesetzter Bereich für "zerstörerische" Aktionen
         // wie das endgültige Löschen des Kontos.
@@ -4436,6 +4515,48 @@
 
                 <div class="settings-note" id="notificationResult" style="display: none;"></div>
 
+
+                <!--
+                    ANGEMELDETE GERÄTE
+
+                    Jeder Browser und jede installierte App bekommt beim
+                    Erlauben der Benachrichtigungen eine EIGENE Adresse
+                    beim Push-Dienst - und damit eine eigene Zeile in der
+                    Datenbank. Öffnet man die Seite also einmal normal im
+                    Safari und einmal als App vom Dock, kommt jede
+                    Nachricht zweimal an. Hier sieht man alle Anmeldungen
+                    und kann die abmelden, die man nicht braucht.
+                -->
+
+                <button class="setting-row" onclick="zeigePushGeraete()">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            📱
+                        </div>
+
+                        <div class="setting-label">
+                            Angemeldete Geräte
+                        </div>
+
+                    </div>
+
+                    <div class="setting-arrow" id="pushGeraeteAnzahl">
+                        ›
+                    </div>
+
+                </button>
+
+
+                <div id="pushGeraeteBox" style="display: none;">
+
+                    <div id="pushGeraeteListe"></div>
+
+                    <div class="settings-note" id="pushGeraeteHinweis"></div>
+
+                </div>
+
             </div>
 
 
@@ -5214,6 +5335,14 @@
         const APP_UPDATES = [
 
             {
+                version: 7,
+
+                title: "Geräte für Benachrichtigungen verwalten",
+
+                text: "In den Einstellungen siehst du jetzt alle angemeldeten Geräte und kannst einzelne abmelden - gut gegen doppelte Benachrichtigungen."
+            },
+
+            {
                 version: 6,
 
                 title: "Stundenplan mit Uhrzeiten",
@@ -5275,7 +5404,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-10-08 / 12:20";
+        const BUILD_ID = "2026-10-08 / 15:05";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -11449,6 +11578,27 @@
 
         async function requestNotificationPermissionIntern() {
 
+            /*
+            // Wer hier tippt, WILL Benachrichtigungen auf diesem Gerät.
+            // Also eine frühere Abmeldung (siehe pushGeraetEntfernen)
+            // wieder aufheben, sonst würde sich das Gerät gleich
+            // wieder weigern, sich anzumelden.
+            */
+
+            try {
+
+                localStorage.removeItem(
+                    "pushAbgemeldet"
+                );
+
+            }
+
+            catch (fehler) {
+                // localStorage kann im privaten Modus gesperrt sein -
+                // das ist hier nicht schlimm.
+            }
+
+
             if (!notificationsSupported()) {
 
                 showNotificationResult(
@@ -11676,6 +11826,23 @@
             }
 
 
+            /*
+            // Hat man dieses Gerät in den Einstellungen bewusst
+            // abgemeldet, darf es sich beim nächsten Öffnen der App
+            // nicht heimlich wieder selbst anmelden. Sonst wäre der
+            // Knopf "Abmelden" wirkungslos.
+            */
+
+            if (pushAbgemeldet()) {
+
+                return {
+                    ok: false,
+                    grund: "Dieses Gerät wurde in den Einstellungen abgemeldet. Tippe auf \"Benachrichtigungen\", um es wieder anzumelden."
+                };
+
+            }
+
+
             try {
 
                 if (!serviceWorkerRegistration) {
@@ -11738,7 +11905,14 @@
                                     raw.keys.p256dh,
 
                                 auth:
-                                    raw.keys.auth
+                                    raw.keys.auth,
+
+                                // Klartext-Name, damit man die Anmeldung
+                                // in den Einstellungen wiedererkennt
+                                // (z.B. "Mac - App" statt einer langen
+                                // Adresse des Push-Dienstes).
+                                geraet:
+                                    geraeteName()
 
                             },
                             {
@@ -11788,6 +11962,556 @@
                 };
 
             }
+
+        }
+
+
+        /* ---------------------------------------------------------
+           ANGEMELDETE GERÄTE VERWALTEN
+
+           Warum das nötig ist:
+           Jeder Browser und jede installierte App bekommt beim
+           Erlauben der Benachrichtigungen eine EIGENE Adresse beim
+           Push-Dienst ("endpoint"). Für den Server sind das zwei
+           völlig verschiedene Empfänger - auch wenn es derselbe
+           Rechner ist. Öffnet man die Seite also einmal normal im
+           Safari und hat sie zusätzlich als App im Dock, kommt jede
+           Nachricht ZWEIMAL an: einmal mit dem Safari-Symbol und
+           einmal mit dem App-Symbol.
+
+           Der Push-Dienst verrät nicht, zu welchem Fenster eine
+           Adresse gehört, und die App kann die Anmeldung des jeweils
+           ANDEREN Fensters auch nicht von sich aus löschen. Deshalb
+           steht hier eine Liste: man sieht alle Anmeldungen und
+           entfernt die, die man nicht braucht.
+        --------------------------------------------------------- */
+
+
+        /*
+        // Läuft die App gerade "installiert" (vom Home-Bildschirm
+        // bzw. aus dem Dock) oder in einem normalen Browser-Tab?
+        //
+        // - navigator.standalone ist Apples alte Variante (iPhone/iPad)
+        // - display-mode: standalone ist der heutige Standard
+        */
+
+        function istAlsAppInstalliert() {
+
+            if (window.navigator.standalone === true) {
+
+                return true;
+
+            }
+
+
+            if (window.matchMedia &&
+                window.matchMedia("(display-mode: standalone)").matches) {
+
+                return true;
+
+            }
+
+
+            return false;
+
+        }
+
+
+        /*
+        // Baut einen gut lesbaren Namen für dieses Gerät, z.B.
+        // "Mac - App" oder "Mac - Safari (Tab)". Der Name wird in der
+        // Datenbank mitgespeichert, damit man die Zeilen später
+        // auseinanderhalten kann.
+        //
+        // Hinweis zur Reihenfolge der Abfragen: In der Kennung von
+        // Chrome steht AUCH das Wort "Safari" drin (historische
+        // Gründe). Deshalb muss Chrome VOR Safari geprüft werden,
+        // sonst würde Chrome als Safari erkannt.
+        */
+
+        function geraeteName() {
+
+            const kennung =
+                navigator.userAgent || "";
+
+
+            let geraet = "Gerät";
+
+            if (/iPhone/.test(kennung)) {
+                geraet = "iPhone";
+            }
+            else if (/iPad/.test(kennung)) {
+                geraet = "iPad";
+            }
+            else if (/Macintosh|Mac OS X/.test(kennung)) {
+                geraet = "Mac";
+            }
+            else if (/Android/.test(kennung)) {
+                geraet = "Android";
+            }
+            else if (/Windows/.test(kennung)) {
+                geraet = "Windows-PC";
+            }
+            else if (/Linux/.test(kennung)) {
+                geraet = "Linux-PC";
+            }
+
+
+            let browser = "Browser";
+
+            if (/OPR\/|OPiOS|Opera/.test(kennung)) {
+                browser = "Opera";
+            }
+            else if (/Edg\//.test(kennung)) {
+                browser = "Edge";
+            }
+            else if (/FxiOS|Firefox\//.test(kennung)) {
+                browser = "Firefox";
+            }
+            else if (/CriOS|Chrome\//.test(kennung)) {
+                browser = "Chrome";
+            }
+            else if (/Safari\//.test(kennung)) {
+                browser = "Safari";
+            }
+
+
+            if (istAlsAppInstalliert()) {
+
+                return geraet + " - App";
+
+            }
+
+
+            return geraet + " - " + browser + " (Tab)";
+
+        }
+
+
+        /*
+        // Wurde dieses Gerät in den Einstellungen abgemeldet?
+        // Das merkt sich die App direkt im Browser, nicht in der
+        // Datenbank - denn es gilt nur für genau dieses Fenster.
+        */
+
+        function pushAbgemeldet() {
+
+            try {
+
+                return localStorage.getItem("pushAbgemeldet") === "ja";
+
+            }
+
+            catch (fehler) {
+
+                return false;
+
+            }
+
+        }
+
+
+        // Merkt sich die Adresse, mit der DIESES Fenster angemeldet
+        // ist - damit die Liste "Dieses Gerät" dazuschreiben kann.
+        let eigenerPushEndpoint = "";
+
+
+        // Ist die Liste gerade aufgeklappt?
+        let pushGeraeteOffen = false;
+
+
+        /*
+        // Klick auf "Angemeldete Geräte": klappt die Liste auf bzw.
+        // wieder zu und lädt sie frisch aus Supabase.
+        */
+
+        async function zeigePushGeraete() {
+
+            const box =
+                document.getElementById(
+                    "pushGeraeteBox"
+                );
+
+
+            if (!box) {
+                return;
+            }
+
+
+            if (pushGeraeteOffen) {
+
+                box.style.display = "none";
+
+                pushGeraeteOffen = false;
+
+                return;
+
+            }
+
+
+            box.style.display = "block";
+
+            pushGeraeteOffen = true;
+
+
+            document.getElementById(
+                "pushGeraeteListe"
+            ).innerHTML = "";
+
+            document.getElementById(
+                "pushGeraeteHinweis"
+            ).textContent = "Wird geladen ...";
+
+
+            await ladePushGeraete();
+
+        }
+
+
+        /*
+        // Holt alle Anmeldungen dieses Nutzers. Dank der
+        // Sicherheitsregeln in Supabase (Row Level Security) bekommt
+        // man hier nur die EIGENEN Zeilen zu sehen, nie die anderer
+        // Nutzer.
+        */
+
+        async function ladePushGeraete() {
+
+            const liste =
+                document.getElementById(
+                    "pushGeraeteListe"
+                );
+
+            const hinweis =
+                document.getElementById(
+                    "pushGeraeteHinweis"
+                );
+
+
+            if (!liste || !hinweis) {
+                return;
+            }
+
+
+            // Zuerst die eigene Adresse ermitteln (falls vorhanden).
+            eigenerPushEndpoint = "";
+
+            try {
+
+                if (notificationsSupported()) {
+
+                    const reg =
+                        serviceWorkerRegistration ||
+                        await navigator.serviceWorker.getRegistration();
+
+
+                    if (reg) {
+
+                        const eigene =
+                            await reg.pushManager.getSubscription();
+
+
+                        if (eigene) {
+
+                            eigenerPushEndpoint = eigene.endpoint;
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+            catch (fehler) {
+
+                // Nicht schlimm - dann fehlt nur die Markierung
+                // "Dieses Gerät".
+
+            }
+
+
+            if (!account) {
+
+                liste.innerHTML = "";
+
+                hinweis.textContent =
+                    "Es ist gerade niemand eingeloggt.";
+
+                return;
+
+            }
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("push_subscriptions")
+                    .select("id, endpoint, geraet, created_at")
+                    .eq("user_id", account.id)
+                    .order("created_at", { ascending: true });
+
+
+            if (ergebnis.error) {
+
+                liste.innerHTML = "";
+
+                hinweis.textContent =
+                    "Die Liste konnte nicht geladen werden: " +
+                    ergebnis.error.message +
+                    "\n\n(Fehlt vielleicht noch die Spalte \"geraet\"? Dann push-geraet-spalte.sql in Supabase ausführen.)";
+
+                return;
+
+            }
+
+
+            pushGeraete =
+                ergebnis.data || [];
+
+
+            renderPushGeraete();
+
+        }
+
+
+        // Alle geladenen Anmeldungen
+        let pushGeraete = [];
+
+
+        /*
+        // Zeichnet die Liste. Jede Zeile: Name, Datum, und rechts ein
+        // Knopf zum Abmelden.
+        */
+
+        function renderPushGeraete() {
+
+            const liste =
+                document.getElementById(
+                    "pushGeraeteListe"
+                );
+
+            const hinweis =
+                document.getElementById(
+                    "pushGeraeteHinweis"
+                );
+
+            const anzahl =
+                document.getElementById(
+                    "pushGeraeteAnzahl"
+                );
+
+
+            if (!liste || !hinweis) {
+                return;
+            }
+
+
+            if (anzahl) {
+
+                anzahl.textContent =
+                    pushGeraete.length === 1
+                        ? "1 Gerät"
+                        : pushGeraete.length + " Geräte";
+
+            }
+
+
+            if (pushGeraete.length === 0) {
+
+                liste.innerHTML = "";
+
+                hinweis.textContent =
+                    "Noch kein Gerät angemeldet. Tippe oben auf \"Benachrichtigungen\", um dieses Gerät anzumelden.";
+
+                return;
+
+            }
+
+
+            liste.innerHTML =
+                pushGeraete
+                    .map(function (eintrag) {
+
+                        const istDieses =
+                            eigenerPushEndpoint &&
+                            eintrag.endpoint === eigenerPushEndpoint;
+
+
+                        const name =
+                            eintrag.geraet ||
+                            "Unbekanntes Gerät";
+
+
+                        let datum = "";
+
+                        if (eintrag.created_at) {
+
+                            datum =
+                                new Date(eintrag.created_at)
+                                    .toLocaleDateString(
+                                        "de-DE",
+                                        {
+                                            day: "2-digit",
+                                            month: "2-digit",
+                                            year: "numeric"
+                                        }
+                                    );
+
+                        }
+
+
+                        return "" +
+                            "<div class=\"push-geraet\">" +
+                                "<div>" +
+                                    "<div class=\"push-geraet-name\">" +
+                                        escapeHtml(name) +
+                                        (istDieses
+                                            ? " (dieses Gerät)"
+                                            : "") +
+                                    "</div>" +
+                                    "<div class=\"push-geraet-info\">" +
+                                        "angemeldet am " + datum +
+                                        " · Kennung " +
+                                        escapeHtml(
+                                            String(eintrag.endpoint || "")
+                                                .slice(-8)
+                                        ) +
+                                    "</div>" +
+                                "</div>" +
+                                "<button class=\"push-geraet-weg\" onclick=\"pushGeraetEntfernen('" +
+                                    eintrag.id +
+                                "')\">Abmelden</button>" +
+                            "</div>";
+
+                    })
+                    .join("");
+
+
+            if (pushGeraete.length > 1) {
+
+                hinweis.textContent =
+                    "Jede Zeile bekommt jede Nachricht einmal. Stehen hier zwei Einträge für denselben Rechner (z.B. \"Mac - App\" und \"Mac - Safari (Tab)\"), kommt jede Benachrichtigung doppelt - dann melde den Eintrag ab, den du nicht brauchst.";
+
+            }
+
+            else {
+
+                hinweis.textContent =
+                    "Jede Zeile bekommt jede Nachricht einmal.";
+
+            }
+
+        }
+
+
+        /*
+        // Meldet ein Gerät ab: die Zeile wird aus der Datenbank
+        // gelöscht. Betrifft es das Fenster, in dem man gerade sitzt,
+        // wird zusätzlich die Anmeldung beim Push-Dienst beendet und
+        // in diesem Browser vermerkt, dass er sich nicht gleich wieder
+        // selbst anmelden soll.
+        */
+
+        async function pushGeraetEntfernen(id) {
+
+            const eintrag =
+                pushGeraete.find(function (e) {
+                    return e.id === id;
+                });
+
+
+            const hinweis =
+                document.getElementById(
+                    "pushGeraeteHinweis"
+                );
+
+
+            if (hinweis) {
+
+                hinweis.textContent = "Wird abgemeldet ...";
+
+            }
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("push_subscriptions")
+                    .delete()
+                    .eq("id", id);
+
+
+            if (ergebnis.error) {
+
+                if (hinweis) {
+
+                    hinweis.textContent =
+                        "Abmelden hat nicht geklappt: " +
+                        ergebnis.error.message;
+
+                }
+
+                return;
+
+            }
+
+
+            // War es dieses Fenster? Dann auch lokal abmelden.
+            if (eintrag &&
+                eigenerPushEndpoint &&
+                eintrag.endpoint === eigenerPushEndpoint) {
+
+                try {
+
+                    const reg =
+                        serviceWorkerRegistration ||
+                        await navigator.serviceWorker.getRegistration();
+
+
+                    if (reg) {
+
+                        const eigene =
+                            await reg.pushManager.getSubscription();
+
+
+                        if (eigene) {
+
+                            await eigene.unsubscribe();
+
+                        }
+
+                    }
+
+                }
+
+                catch (fehler) {
+
+                    console.error(
+                        "Lokales Abmelden fehlgeschlagen:",
+                        fehler
+                    );
+
+                }
+
+
+                try {
+
+                    localStorage.setItem(
+                        "pushAbgemeldet",
+                        "ja"
+                    );
+
+                }
+
+                catch (fehler) {
+                    // Im privaten Modus nicht möglich - dann meldet
+                    // sich dieses Fenster beim nächsten Öffnen eben
+                    // wieder an.
+                }
+
+            }
+
+
+            await ladePushGeraete();
 
         }
 
