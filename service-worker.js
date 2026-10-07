@@ -1,5 +1,5 @@
 /* =====================================================================
-   SERVICE WORKER für "Mein KI-Assistent"
+   SERVICE WORKER für "YouDo"
 
    Ein Service Worker ist eine kleine JavaScript-Datei, die der Browser
    im HINTERGRUND laufen lässt - unabhängig davon, ob die App gerade
@@ -212,7 +212,7 @@ self.addEventListener("fetch", function (event) {
 
 self.addEventListener("push", function (event) {
 
-    let title = "Mein KI-Assistent";
+    let title = "YouDo";
 
     let body = "Es gibt etwas Neues.";
 
