@@ -5275,7 +5275,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-10-07 / 21:40";
+        const BUILD_ID = "2026-10-08 / 12:20";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -11816,9 +11816,9 @@
 
         async function sendTestPush() {
 
-            showNotificationResult(
-                "Sende Anfrage an den Server..."
-            );
+            protokollLeeren();
+
+            logSchritt("Test gestartet");
 
 
             try {
@@ -11834,14 +11834,20 @@
                     fehler
                 );
 
-                showNotificationResult(
-                    "Unerwarteter Fehler beim Senden:\n" +
+                logSchritt(
+                    "ABBRUCH - unerwarteter Fehler: " +
                     (fehler && fehler.message
                         ? fehler.message
                         : String(fehler))
                 );
 
             }
+
+
+            // Egal wie es ausging: Es muss IMMER eine Schlusszeile geben.
+            // Fehlt sie, ist die App irgendwo stillschweigend hängengeblieben -
+            // und genau das soll man dann auch sehen können.
+            logSchritt("--- Ende ---");
 
         }
 
@@ -11998,9 +12004,7 @@
 
             // --- Schritt 1: Login-Schlüssel besorgen ---
 
-            showNotificationResult(
-                "Schritt 1 von 3: Login wird geprüft..."
-            );
+            logSchritt("Schritt 1/3: Login wird geprüft");
 
 
             const token =
@@ -12009,7 +12013,7 @@
 
             if (!token) {
 
-                showNotificationResult(
+                logSchritt(
                     "Es wurde kein gültiger Login gefunden.\n\n" +
                     "Melde dich einmal ab und wieder an, dann erneut versuchen."
                 );
@@ -12021,10 +12025,9 @@
 
             // --- Schritt 2: Anfrage schicken ---
 
-            zeigeMitCountdown(
-                "Schritt 2 von 3: Anfrage wird an den Server geschickt...",
-                15
-            );
+            logSchritt("Schritt 2/3: Anfrage geht an den Server");
+
+            starteCountdown(15);
 
 
             // Bricht die Anfrage ab, falls der Server nicht antwortet -
@@ -12094,7 +12097,7 @@
 
                 if (fehler.name === "AbortError") {
 
-                    showNotificationResult(
+                    logSchritt(
                         "Zeitüberschreitung: Der Server hat 15 Sekunden lang nicht geantwortet.\n\n" +
                         "Prüfe in Supabase unter Edge Functions -> send-push -> Logs, " +
                         "ob dort überhaupt ein Aufruf ankommt."
@@ -12104,7 +12107,7 @@
 
                 else {
 
-                    showNotificationResult(
+                    logSchritt(
                         "Die Anfrage wurde vom Browser blockiert:\n" +
                         fehler.name + " - " + fehler.message +
                         "\n\nDas deutet fast immer auf CORS hin: Die Edge Function " +
@@ -12129,10 +12132,9 @@
 
             // --- Schritt 3: Antwort lesen ---
 
-            zeigeMitCountdown(
-                "Schritt 3 von 3: Antwort wird gelesen...",
-                12
-            );
+            logSchritt("Schritt 3/3: Antwort wird gelesen");
+
+            starteCountdown(12);
 
 
             let rohtext;
@@ -12185,7 +12187,7 @@
                 clearTimeout(abbruchTimer);
 
 
-                showNotificationResult(
+                logSchritt(
                     "Der Server hat geantwortet (Status " + response.status +
                     "), aber die Antwort kam nie vollständig an.\n\n" +
                     "Das heißt: Die Edge Function bleibt mitten in der " +
@@ -12203,6 +12205,12 @@
             clearTimeout(abbruchTimer);
 
 
+            logSchritt(
+                "Antwort da: Status " + response.status +
+                ", " + rohtext.length + " Zeichen"
+            );
+
+
             let daten = null;
 
 
@@ -12218,9 +12226,27 @@
             }
 
 
+            /*
+            // Leere oder unlesbare Antwort: Früher lief die App hier
+            // einfach weiter und landete in der "kein Gerät angemeldet"-
+            // Behandlung - mit einer völlig irreführenden Meldung.
+            */
+
+            if (!daten) {
+
+                logSchritt(
+                    "Antwort war kein lesbares JSON. Rohtext: " +
+                    (rohtext.slice(0, 200) || "(leer)")
+                );
+
+                return;
+
+            }
+
+
             if (!response.ok) {
 
-                showNotificationResult(
+                logSchritt(
                     mitFunktionsStand(
                         "Der Server hat mit einem Fehler geantwortet (Status " +
                         response.status + "):\n\n" +
@@ -12238,9 +12264,9 @@
 
             if (daten && daten.sent > 0) {
 
-                showNotificationResult(
+                logSchritt(
                     mitFunktionsStand(
-                        "Erfolg! Der Server hat die Nachricht an " +
+                        "ERFOLG! Der Server hat die Nachricht an " +
                         daten.sent + " Gerät(e) geschickt.\n\n" +
                         "Tipp: Schließe die App komplett und lass sie dir noch " +
                         "einmal schicken - so siehst du, dass es auch ohne " +
@@ -12284,7 +12310,7 @@
                     ).join("\n");
 
 
-                showNotificationResult(
+                logSchritt(
                     mitFunktionsStand(
                         "Der Server kennt deine Geräte, aber der Push-Dienst " +
                         "hat die Nachricht abgelehnt.\n\nAntwort des Dienstes:\n" +
@@ -12307,26 +12333,74 @@
             // gleich hier - und sagen genau, woran sie scheitert.
             */
 
-            const ergebnis =
-                await subscribeToPush();
+            logSchritt(
+                "Server kennt kein Gerät - versuche Anmeldung nachzuholen"
+            );
+
+            starteCountdown(10);
+
+
+            /*
+            // WICHTIG: Auch hier ein Zeitlimit. Die Anmeldung beim
+            // Push-Dienst kann auf dem iPhone hängen bleiben (etwa wenn
+            // der Service Worker die Seite nicht steuert) - und dann
+            // passierte vorher gar nichts mehr, ohne jede Meldung.
+            */
+
+            let ergebnis;
+
+
+            try {
+
+                ergebnis =
+                    await Promise.race([
+
+                        subscribeToPush(),
+
+                        new Promise(function (_, reject) {
+
+                            setTimeout(
+                                function () {
+
+                                    reject(
+                                        new Error("Zeitlimit bei der Anmeldung")
+                                    );
+
+                                },
+                                10000
+                            );
+
+                        })
+
+                    ]);
+
+            }
+
+            catch (fehler) {
+
+                logSchritt(
+                    "Anmeldung hängt fest: " + fehler.message +
+                    " - das deutet auf den Service Worker hin."
+                );
+
+                return;
+
+            }
 
 
             if (ergebnis.ok) {
 
-                showNotificationResult(
-                    "Dieses Gerät war noch nicht angemeldet - das habe ich " +
-                    "gerade nachgeholt.\n\nTippe noch einmal auf " +
-                    "\"Test-Benachrichtigung\", jetzt sollte es klappen."
+                logSchritt(
+                    "Gerät nachträglich angemeldet. Tippe noch einmal auf " +
+                    "\"Test-Benachrichtigung\"."
                 );
 
             }
 
             else {
 
-                showNotificationResult(
-                    "Es ist noch kein Gerät angemeldet, und die Anmeldung " +
-                    "klappt auch jetzt nicht.\n\nGrund:\n" +
-                    ergebnis.grund
+                logSchritt(
+                    "Anmeldung nicht möglich. Grund: " + ergebnis.grund
                 );
 
             }
@@ -12344,16 +12418,101 @@
         */
 
         /*
-        // SICHTBARER COUNTDOWN
+        // PROTOKOLL STATT EINZELMELDUNGEN
         //
-        // Warum das nötig ist: Bei "Antwort wird gelesen..." sieht man
-        // nicht, ob die App noch arbeitet oder endgültig hängt. Ohne
-        // Rückmeldung tippt man nach zwei Sekunden auf "kaputt" - dabei
-        // läuft das Zeitlimit noch. Ein mitlaufender Countdown macht
-        // sichtbar, dass Warten dazugehört und wie lange noch.
+        // Bisher hat jede neue Meldung die vorherige überschrieben.
+        // Wenn die App dann irgendwo still stehenblieb, sah man nur den
+        // letzten Zwischenstand und wusste nicht, wie weit sie gekommen
+        // war. Jetzt wird jeder Schritt mit Zeitstempel untereinander
+        // gesammelt - ein einziger Screenshot zeigt damit den kompletten
+        // Ablauf.
         */
 
+        let protokoll = [];
+
+        let protokollStart = 0;
+
+        let countdownZeile = "";
+
         let countdownTimer = null;
+
+
+        function renderProtokoll() {
+
+            const box =
+                document.getElementById(
+                    "notificationResult"
+                );
+
+
+            if (!box) {
+                return;
+            }
+
+
+            box.textContent =
+                protokoll.join("\n") +
+                (countdownZeile
+                    ? "\n" + countdownZeile
+                    : "");
+
+            box.style.display = "block";
+
+        }
+
+
+        // Hängt eine Zeile ans Protokoll an (mit Sekunden seit dem Start)
+        function logSchritt(text) {
+
+            if (protokollStart === 0) {
+
+                protokollStart = Date.now();
+
+            }
+
+
+            const sekunden =
+                ((Date.now() - protokollStart) / 1000).toFixed(1);
+
+
+            protokoll.push(
+                "[" + sekunden + "s] " + text
+            );
+
+
+            /*
+            // Wichtig: Ein laufender Countdown muss hier WIRKLICH gestoppt
+            // werden. Die Zeile nur zu leeren reichte nicht - der Timer
+            // lief weiter und schrieb sie gleich wieder hin, auch wenn der
+            // Schritt längst vorbei war.
+            */
+
+            stoppeCountdown();
+
+            countdownZeile = "";
+
+            renderProtokoll();
+
+
+            console.log(
+                "[Benachrichtigungen]",
+                text
+            );
+
+        }
+
+
+        function protokollLeeren() {
+
+            stoppeCountdown();
+
+            protokoll = [];
+
+            protokollStart = Date.now();
+
+            countdownZeile = "";
+
+        }
 
 
         function stoppeCountdown() {
@@ -12369,7 +12528,8 @@
         }
 
 
-        function zeigeMitCountdown(basistext, sekunden) {
+        // Zeigt unter der letzten Protokollzeile einen Countdown an
+        function starteCountdown(sekunden) {
 
             stoppeCountdown();
 
@@ -12377,28 +12537,10 @@
             let rest = sekunden;
 
 
-            const box =
-                document.getElementById(
-                    "notificationResult"
-                );
+            countdownZeile =
+                "    ... warte noch " + rest + " s";
 
-
-            function schreiben() {
-
-                if (!box) {
-                    return;
-                }
-
-                box.textContent =
-                    basistext +
-                    "\n\nBitte warten - Abbruch in " + rest + " Sekunden...";
-
-                box.style.display = "block";
-
-            }
-
-
-            schreiben();
+            renderProtokoll();
 
 
             countdownTimer =
@@ -12408,35 +12550,24 @@
                         rest--;
 
 
-                        /*
-                        // FRÜHER EIN FEHLER: Bei 0 wurde einfach nur
-                        // gestoppt, ohne den Text noch einmal zu
-                        // schreiben - er blieb dadurch sichtbar auf
-                        // "Abbruch in 1 Sekunde" stehen, als wäre die
-                        // App eingefroren. Jetzt steht am Ende klar da,
-                        // dass die Auswertung läuft.
-                        */
-
                         if (rest <= 0) {
 
                             stoppeCountdown();
 
+                            countdownZeile =
+                                "    ... Zeit abgelaufen";
 
-                            if (box) {
-
-                                box.textContent =
-                                    basistext +
-                                    "\n\nZeit abgelaufen - werte aus...";
-
-                            }
-
+                            renderProtokoll();
 
                             return;
 
                         }
 
 
-                        schreiben();
+                        countdownZeile =
+                            "    ... warte noch " + rest + " s";
+
+                        renderProtokoll();
 
                     },
                     1000
@@ -12445,35 +12576,21 @@
         }
 
 
+        /*
+        // Für Meldungen, die kein Ablaufprotokoll brauchen (z.B. die
+        // Zeile "Benachrichtigungen"). Setzt das Protokoll zurück und
+        // zeigt nur diesen einen Text.
+        */
+
         function showNotificationResult(text) {
 
-            // Ein fertiges Ergebnis beendet immer einen laufenden Countdown
-            stoppeCountdown();
+            protokollLeeren();
+
+            protokoll = [text];
+
+            renderProtokoll();
 
 
-            const box =
-                document.getElementById(
-                    "notificationResult"
-                );
-
-
-            if (!box) {
-
-                // Zur Sicherheit: falls das Element mal fehlt, wenigstens
-                // in der Konsole ausgeben.
-                console.log(text);
-
-                return;
-
-            }
-
-
-            box.textContent = text;
-
-            box.style.display = "block";
-
-
-            // Auch in die Konsole, damit man den Text kopieren kann.
             console.log(
                 "[Benachrichtigungen]",
                 text
