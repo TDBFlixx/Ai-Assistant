@@ -4557,6 +4557,38 @@
 
                 </div>
 
+
+                <!--
+                    NACH UPDATES SUCHEN
+
+                    Normalerweise holt sich die App beim Öffnen von
+                    selbst die neueste Fassung. Dieser Knopf erzwingt
+                    es - falls doch mal eine alte Version hängenbleibt.
+                -->
+
+                <button class="setting-row" onclick="nachUpdateSuchen()">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            🔄
+                        </div>
+
+                        <div class="setting-label">
+                            Nach Updates suchen
+                        </div>
+
+                    </div>
+
+                    <div class="setting-arrow">
+                        ›
+                    </div>
+
+                </button>
+
+
+                <div class="settings-note" id="updateSucheNote"></div>
+
             </div>
 
 
@@ -5335,7 +5367,15 @@
         const APP_UPDATES = [
 
             {
-                version: 7,
+                version: "1.6",
+
+                title: "Schnellere Aktualisierung",
+
+                text: "Die App vom Home-Bildschirm holt sich beim Öffnen jetzt immer die neueste Fassung, statt manchmal noch die alte anzuzeigen."
+            },
+
+            {
+                version: "1.5",
 
                 title: "Geräte für Benachrichtigungen verwalten",
 
@@ -5343,7 +5383,7 @@
             },
 
             {
-                version: 6,
+                version: "1.4",
 
                 title: "Stundenplan mit Uhrzeiten",
 
@@ -5351,7 +5391,7 @@
             },
 
             {
-                version: 5,
+                version: "1.3",
 
                 title: "Schul-Planer statt KI-Chat",
 
@@ -5359,7 +5399,7 @@
             },
 
             {
-                version: 4,
+                version: "1.2",
 
                 title: "Aufgabenlisten in Notizen",
 
@@ -5367,7 +5407,7 @@
             },
 
             {
-                version: 3,
+                version: "1.1",
 
                 title: "Notizen-Funktion hinzugefügt",
 
@@ -5375,7 +5415,7 @@
             },
 
             {
-                version: 2,
+                version: "1.0",
 
                 title: "Neues Design in der Navigation",
 
@@ -5391,20 +5431,32 @@
 
 
         /*
-        // BAU-KENNUNG
+        // VERSIONEN VERGLEICHEN
         //
-        // Die Versionsnummer oben ändert sich nur bei richtigen neuen
-        // Funktionen. Bei kleinen Korrekturen bleibt sie gleich - dann
-        // kann man aber nicht mehr erkennen, ob wirklich die neueste
-        // Datei auf dem Server liegt.
-        //
-        // Diese Kennung ändert sich bei JEDER Änderung. Sie steht unten
-        // in den Einstellungen. Stimmt sie nicht mit der zuletzt
-        // hochgeladenen überein, liegt auf dem Server noch eine ältere
-        // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
+        // Die Versionsnummer ist jetzt ein Text wie "1.6" - und Texte
+        // kann man nicht einfach mit > vergleichen ("1.10" wäre sonst
+        // kleiner als "1.9"). Deshalb wird daraus eine Zahl gebaut:
+        // aus "1.6" wird 1006, aus "1.10" wird 1010.
         */
 
-        const BUILD_ID = "2026-10-08 / 15:05";
+        function versionAlsZahl(text) {
+
+            const teile =
+                String(text).split(".");
+
+
+            const gross =
+                Number(teile[0]) || 0;
+
+
+            const klein =
+                Number(teile[1]) || 0;
+
+
+            return gross * 1000 + klein;
+
+        }
+
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -11429,10 +11481,103 @@
                 // Bewusst ein RELATIVER Pfad ("service-worker.js" statt
                 // "/service-worker.js") - dadurch funktioniert es auch,
                 // wenn die App bei GitHub Pages in einem Unterordner liegt.
+                /*
+                // Gab es beim Laden der Seite schon einen aktiven
+                // Service Worker? Das muss VOR dem Registrieren
+                // festgehalten werden - gleich unten entscheidet es,
+                // ob automatisch neu geladen werden darf.
+                */
+
+                const hatteSchonEinen =
+                    !!navigator.serviceWorker.controller;
+
+
                 serviceWorkerRegistration =
                     await navigator.serviceWorker.register(
                         "service-worker.js"
                     );
+
+
+                /*
+                // AUTOMATISCH NEU LADEN NACH EINEM UPDATE
+                //
+                // Wenn eine neue Fassung des Service Workers
+                // übernimmt, liegt im Fenster meistens noch die alte
+                // Seite. Dann einmal neu laden - danach ist alles
+                // aktuell.
+                //
+                // Zwei Sicherungen gegen eine Endlosschleife:
+                // - nur, wenn vorher schon einer aktiv war (sonst
+                //   würde die App beim allerersten Start neu laden)
+                // - höchstens einmal pro Minute
+                */
+
+                navigator.serviceWorker.addEventListener(
+                    "controllerchange",
+                    function () {
+
+                        if (!hatteSchonEinen) {
+                            return;
+                        }
+
+
+                        let letztesMal = 0;
+
+                        try {
+
+                            letztesMal =
+                                Number(
+                                    sessionStorage.getItem("swNeuGeladen")
+                                ) || 0;
+
+                        }
+
+                        catch (fehler) {
+                            letztesMal = 0;
+                        }
+
+
+                        if (Date.now() - letztesMal < 60000) {
+                            return;
+                        }
+
+
+                        try {
+
+                            sessionStorage.setItem(
+                                "swNeuGeladen",
+                                String(Date.now())
+                            );
+
+                        }
+
+                        catch (fehler) {
+                            // Im privaten Modus nicht möglich - dann
+                            // greift nur die erste Sicherung.
+                        }
+
+
+                        location.reload();
+
+                    }
+                );
+
+
+                /*
+                // Beim Start aktiv nachfragen, ob eine neue Fassung
+                // des Service Workers auf dem Server liegt. Ohne das
+                // schaut der Browser teils nur alle 24 Stunden nach.
+                */
+
+                try {
+
+                    await serviceWorkerRegistration.update();
+
+                }
+
+                catch (fehler) {
+                    // Kein Internet o.ä. - nicht schlimm.
+                }
 
             }
 
@@ -11444,6 +11589,107 @@
                 );
 
             }
+
+        }
+
+
+        /*
+        // "Nach Updates suchen" in den Einstellungen.
+        //
+        // Normalerweise passiert das von allein beim Öffnen der App.
+        // Dieser Knopf ist der Holzhammer für den Fall, dass trotzdem
+        // noch eine alte Fassung angezeigt wird: Service Worker neu
+        // prüfen, Zwischenspeicher wegwerfen, Seite neu laden.
+        */
+
+        async function nachUpdateSuchen() {
+
+            const box =
+                document.getElementById(
+                    "updateSucheNote"
+                );
+
+
+            if (box) {
+
+                box.textContent =
+                    "Wird geprüft ...";
+
+            }
+
+
+            try {
+
+                if ("serviceWorker" in navigator) {
+
+                    const reg =
+                        serviceWorkerRegistration ||
+                        await navigator.serviceWorker.getRegistration();
+
+
+                    if (reg) {
+
+                        await reg.update();
+
+                    }
+
+                }
+
+            }
+
+            catch (fehler) {
+
+                console.error(
+                    "Update-Prüfung fehlgeschlagen:",
+                    fehler
+                );
+
+            }
+
+
+            try {
+
+                if ("caches" in window) {
+
+                    const namen =
+                        await caches.keys();
+
+
+                    await Promise.all(
+                        namen.map(function (name) {
+                            return caches.delete(name);
+                        })
+                    );
+
+                }
+
+            }
+
+            catch (fehler) {
+
+                console.error(
+                    "Zwischenspeicher leeren fehlgeschlagen:",
+                    fehler
+                );
+
+            }
+
+
+            if (box) {
+
+                box.textContent =
+                    "Wird neu geladen ...";
+
+            }
+
+
+            // Kurz warten, damit die Meldung noch lesbar ist.
+            setTimeout(
+                function () {
+                    location.reload();
+                },
+                400
+            );
 
         }
 
@@ -13340,8 +13586,8 @@
             box.textContent =
                 "Mein KI-Assistent - Version " +
                 APP_VERSION +
-                " - Stand " +
-                BUILD_ID;
+                " - " +
+                APP_UPDATES[0].title;
 
         }
 
@@ -13451,7 +13697,7 @@
 
                 localStorage.setItem(
                     "lastSeenVersion",
-                    String(APP_VERSION)
+                    APP_VERSION
                 );
 
                 return;
@@ -13459,12 +13705,21 @@
             }
 
 
+            /*
+            // Bis Version 1.0 standen hier reine Ziffern (2, 3, 4 ...).
+            // Solche alten Werte lassen sich mit der neuen Zählweise
+            // nicht vergleichen - sie gelten deshalb als "unbekannt",
+            // dann erscheint der Hinweis einmalig neu.
+            */
+
             const lastSeen =
-                Number(stored);
+                stored.indexOf(".") === -1
+                    ? 0
+                    : versionAlsZahl(stored);
 
 
             // FALL 2: Alles beim Alten.
-            if (lastSeen >= APP_VERSION) {
+            if (lastSeen >= versionAlsZahl(APP_VERSION)) {
 
                 return;
 
@@ -13487,7 +13742,7 @@
 
             localStorage.setItem(
                 "lastSeenVersion",
-                String(APP_VERSION)
+                APP_VERSION
             );
 
         }
