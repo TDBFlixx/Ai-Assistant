@@ -5275,7 +5275,7 @@
         // Datei (oder der Browser zeigt sie aus dem Zwischenspeicher).
         */
 
-        const BUILD_ID = "2026-10-07 / 17:10";
+        const BUILD_ID = "2026-10-07 / 21:40";
 
 
         // Habits, die für einen brandneuen Account einmalig angelegt
@@ -12255,6 +12255,53 @@
 
 
             /*
+            // FRÜHER EIN FEHLER: Wenn der Server zwar Geräte kannte, das
+            // Verschicken aber bei JEDEM fehlschlug, kam "sent: 0"
+            // zurück - und die App behauptete dann, es sei gar kein Gerät
+            // angemeldet. Der eigentliche Grund stand im Feld "fehler"
+            // und wurde nie angezeigt. Das war die wichtigste fehlende
+            // Information überhaupt, deshalb kommt sie jetzt zuerst.
+            */
+
+            if (
+                daten &&
+                daten.fehler &&
+                daten.fehler.length > 0
+            ) {
+
+                const liste =
+                    daten.fehler.map(
+                        function (eintrag) {
+
+                            return "- " +
+                                (eintrag.dienst ? eintrag.dienst + ": " : "") +
+                                "Status " + eintrag.status +
+                                (eintrag.message
+                                    ? "\n  " + eintrag.message
+                                    : "");
+
+                        }
+                    ).join("\n");
+
+
+                showNotificationResult(
+                    mitFunktionsStand(
+                        "Der Server kennt deine Geräte, aber der Push-Dienst " +
+                        "hat die Nachricht abgelehnt.\n\nAntwort des Dienstes:\n" +
+                        liste +
+                        "\n\nHäufigster Grund bei Status 403: Der VAPID-Schlüssel " +
+                        "in der App passt nicht zu dem in Supabase. Dann muss das " +
+                        "Gerät einmal neu angemeldet werden.",
+                        daten
+                    )
+                );
+
+                return;
+
+            }
+
+
+            /*
             // Der Server kennt kein Gerät für diesen Nutzer. Statt den
             // Nutzer ratlos zurückzulassen, versuchen wir die Anmeldung
             // gleich hier - und sagen genau, woran sie scheitert.
@@ -12361,9 +12408,28 @@
                         rest--;
 
 
+                        /*
+                        // FRÜHER EIN FEHLER: Bei 0 wurde einfach nur
+                        // gestoppt, ohne den Text noch einmal zu
+                        // schreiben - er blieb dadurch sichtbar auf
+                        // "Abbruch in 1 Sekunde" stehen, als wäre die
+                        // App eingefroren. Jetzt steht am Ende klar da,
+                        // dass die Auswertung läuft.
+                        */
+
                         if (rest <= 0) {
 
                             stoppeCountdown();
+
+
+                            if (box) {
+
+                                box.textContent =
+                                    basistext +
+                                    "\n\nZeit abgelaufen - werte aus...";
+
+                            }
+
 
                             return;
 
