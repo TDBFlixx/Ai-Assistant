@@ -2518,6 +2518,21 @@
         }
 
 
+        /* Kleiner grauer Hinweis unter einem Eingabefeld */
+
+        .modal-hinweis {
+
+            font-size: 12px;
+
+            line-height: 1.45;
+
+            color: #6b7a8a;
+
+            margin: -9px 0 16px 2px;
+
+        }
+
+
         /* Erklärtext in einem Fenster */
 
         .modal-text {
@@ -4751,6 +4766,36 @@
 
 
                 <!--
+                    NUR FÜR ADMINS
+
+                    Probelauf für die Hausaufgaben-Erinnerungen: schickt
+                    sofort das, was normalerweise erst am Abend käme.
+                    So muss man nicht bis zur eingestellten Uhrzeit
+                    warten, um zu sehen, ob alles steht.
+                -->
+
+                <button class="setting-row admin-only" onclick="erinnerungenTesten()">
+
+                    <div class="setting-left">
+
+                        <div class="setting-icon">
+                            ⏰
+                        </div>
+
+                        <div class="setting-label">
+                            Erinnerungen testen
+                        </div>
+
+                    </div>
+
+                    <div class="setting-arrow">
+                        ›
+                    </div>
+
+                </button>
+
+
+                <!--
                     RÜCKMELDUNG DIREKT IN DER SEITE
 
                     Hier landen die Ergebnisse der beiden Buttons darüber.
@@ -5449,6 +5494,26 @@
             <input id="homeworkDueInput" type="date">
 
 
+            <!--
+                ERINNERUNG
+
+                Die Benachrichtigung kommt am Tag VOR dem Abgabetag -
+                am Abgabetag selbst wäre sie zu spät. Ohne Abgabetag
+                gibt es deshalb auch nichts zu erinnern.
+            -->
+
+            <label>
+                Erinnerung (optional)
+            </label>
+
+            <input id="homeworkReminderInput" type="time">
+
+            <p class="modal-hinweis">
+                Du bekommst am Tag davor zu dieser Uhrzeit eine
+                Benachrichtigung, falls die Aufgabe dann noch offen ist.
+            </p>
+
+
             <div class="modal-buttons">
 
                 <button class="modal-button cancel-button" onclick="closeHomeworkModal()">
@@ -5835,6 +5900,14 @@
         */
 
         const APP_UPDATES = [
+
+            {
+                version: "1.13",
+
+                title: "Erinnerung an Hausaufgaben",
+
+                text: "Trag beim Anlegen einer Hausaufgabe eine Uhrzeit ein - dann meldet sich die App am Tag vor der Abgabe, falls noch etwas offen ist."
+            },
 
             {
                 version: "1.12",
@@ -8969,6 +9042,134 @@
         }
 
 
+        /*
+        // PROBELAUF FÜR DIE HAUSAUFGABEN-ERINNERUNGEN
+        //
+        // Ruft dieselbe Funktion auf dem Server auf, die sonst die
+        // Schaltuhr jede Minute aufruft - nur mit dem eigenen Login
+        // statt dem geheimen Schlüssel. Der Server nimmt dann NUR die
+        // eigenen Hausaufgaben, ignoriert die eingestellte Uhrzeit und
+        // merkt sich nichts. Man kann den Knopf also beliebig oft
+        // drücken, ohne dass später eine echte Erinnerung ausfällt.
+        */
+
+        async function erinnerungenTesten() {
+
+            protokollLeeren();
+
+            logSchritt("Probelauf gestartet");
+
+
+            let token = "";
+
+            try {
+
+                token = await getAccessToken();
+
+            }
+
+            catch (fehler) {
+
+                token = "";
+
+            }
+
+
+            if (!token) {
+
+                logSchritt(
+                    "Dein Login konnte nicht gelesen werden. Melde dich einmal ab und wieder an."
+                );
+
+                logSchritt("--- Ende ---");
+
+                return;
+
+            }
+
+
+            logSchritt("Frage den Server nach offenen Hausaufgaben für morgen");
+
+
+            try {
+
+                const antwort =
+                    await fetch(
+                        SUPABASE_URL + "/functions/v1/send-reminders",
+                        {
+                            method: "POST",
+
+                            headers: {
+
+                                "Authorization": "Bearer " + token,
+
+                                "apikey": SUPABASE_PUBLISHABLE_KEY,
+
+                                "Content-Type": "application/json"
+
+                            },
+
+                            body: "{}",
+
+                            signal: AbortSignal.timeout(25000)
+                        }
+                    );
+
+
+                const daten =
+                    await antwort.json();
+
+
+                if (!antwort.ok || !daten.ok) {
+
+                    logSchritt(
+                        "Fehler: " +
+                        (daten.fehler || ("Status " + antwort.status)) +
+                        " (Ist die Funktion \"send-reminders\" in Supabase angelegt?)"
+                    );
+
+                    logSchritt("--- Ende ---");
+
+                    return;
+
+                }
+
+
+                if (daten.gesendet > 0) {
+
+                    logSchritt(
+                        "Erinnerung verschickt - sie müsste gleich ankommen."
+                    );
+
+                }
+
+                else {
+
+                    logSchritt(
+                        "Nichts zu erinnern: Für morgen ist keine Hausaufgabe mit Erinnerungszeit offen. Trag eine Hausaufgabe mit dem morgigen Datum und einer Uhrzeit ein und versuch es noch einmal."
+                    );
+
+                }
+
+
+                logSchritt("--- Ende ---");
+
+            }
+
+            catch (fehler) {
+
+                logSchritt(
+                    "Der Server war nicht erreichbar: " +
+                    (fehler && fehler.message ? fehler.message : String(fehler))
+                );
+
+                logSchritt("--- Ende ---");
+
+            }
+
+        }
+
+
         /* ---------------------------------------------------------
            ADMIN-ZUGANG
 
@@ -10134,7 +10335,9 @@
 
                                 text: row.text,
 
-                                dueDate: row.due_date || ""
+                                dueDate: row.due_date || "",
+
+                                erinnerungZeit: row.erinnerung_zeit || ""
 
                             };
 
@@ -11361,7 +11564,10 @@
                         : "");
 
                 faellig.textContent =
-                    "bis " + formatDueDate(eintrag.dueDate);
+                    "bis " + formatDueDate(eintrag.dueDate) +
+                    (eintrag.erinnerungZeit
+                        ? "  ·  🔔 " + eintrag.erinnerungZeit
+                        : "");
 
                 huelle.appendChild(faellig);
 
@@ -12045,6 +12251,10 @@
                 "homeworkDueInput"
             ).value = "";
 
+            document.getElementById(
+                "homeworkReminderInput"
+            ).value = "";
+
 
             document
                 .getElementById("homeworkModal")
@@ -12101,6 +12311,29 @@
                 ).value;
 
 
+            const erinnerung =
+                document.getElementById(
+                    "homeworkReminderInput"
+                ).value;
+
+
+            /*
+            // Eine Erinnerung ohne Abgabetag ergibt keinen Sinn - sie
+            // soll ja am Tag VOR der Abgabe kommen. Lieber einmal
+            // nachfragen, als später still nichts zu schicken.
+            */
+
+            if (erinnerung && !faellig) {
+
+                alert(
+                    "Für eine Erinnerung brauche ich auch den Abgabetag - sonst weiß ich nicht, wann ich Bescheid geben soll."
+                );
+
+                return;
+
+            }
+
+
             closeHomeworkModal();
 
 
@@ -12116,7 +12349,9 @@
                         text: text,
 
                         // Leeres Datum als null speichern, nicht als ""
-                        due_date: faellig || null
+                        due_date: faellig || null,
+
+                        erinnerung_zeit: erinnerung || null
 
                     })
                     .select()
@@ -12147,7 +12382,9 @@
 
                 text: text,
 
-                dueDate: faellig || ""
+                dueDate: faellig || "",
+
+                erinnerungZeit: erinnerung || ""
 
             });
 
