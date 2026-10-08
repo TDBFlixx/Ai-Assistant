@@ -2507,6 +2507,53 @@
         }
 
 
+        /* Der rote Knopf im Lösch-Fenster */
+
+        .loeschen-button {
+
+            background: #d6394a;
+
+            color: white;
+
+        }
+
+
+        /* Erklärtext in einem Fenster */
+
+        .modal-text {
+
+            font-size: 14px;
+
+            line-height: 1.55;
+
+            color: #3a4a5b;
+
+            margin: 2px 0 18px;
+
+        }
+
+
+        /* Fehlermeldung in einem Fenster */
+
+        .modal-error {
+
+            background: rgba(214, 57, 74, 0.1);
+
+            color: #b32c3c;
+
+            font-size: 13px;
+
+            line-height: 1.45;
+
+            border-radius: 11px;
+
+            padding: 11px 13px;
+
+            margin-bottom: 16px;
+
+        }
+
+
         /* =========================================================
            LOGIN / REGISTRIERUNG
            Voller Bildschirm, wird angezeigt solange man nicht
@@ -4555,7 +4602,7 @@
                     Nicht angemeldet
                 </div>
 
-                <div class="profile-email">
+                <div class="profile-email" id="profileSubline">
                     Dein persönlicher Account
                 </div>
 
@@ -4673,7 +4720,16 @@
                     nicht über die App selbst.
                 -->
 
-                <button class="setting-row" onclick="sendTestPush()">
+                <!--
+                    NUR FÜR ADMINS
+
+                    Die Klasse "admin-only" ist der Schalter: alles, was
+                    sie trägt, blendet renderAdminBereiche() für normale
+                    Accounts aus. Kommen später weitere Admin-Funktionen
+                    dazu, bekommen sie einfach dieselbe Klasse.
+                -->
+
+                <button class="setting-row admin-only" onclick="sendTestPush()">
 
                     <div class="setting-left">
 
@@ -4826,19 +4882,12 @@
                         </div>
 
                         <div class="setting-label danger-zone-title">
-                            Alle meine Daten löschen
+                            Account löschen
                         </div>
 
                     </div>
 
                 </button>
-
-                <div class="settings-note">
-                    Löscht alle deine Aufgaben, Habits und Einstellungen
-                    unwiderruflich und meldet dich ab. Dein Login (E-Mail +
-                    Passwort) bleibt bestehen - das komplette Löschen eines
-                    Accounts erfordert später eine serverseitige Funktion.
-                </div>
 
             </div>
 
@@ -5211,6 +5260,62 @@
 
                 <button class="modal-button create-button" onclick="saveLesson()">
                     Speichern
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+     ACCOUNT WIRKLICH LÖSCHEN?
+
+     Bewusst ein eigenes Fenster statt confirm(): Browser blenden
+     solche Standard-Dialoge aus, wenn man viele davon wegklickt -
+     dann würde beim Löschen scheinbar nichts passieren.
+====================================== -->
+
+    <div class="modal" id="deleteAccountModal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2>
+                    Account löschen?
+                </h2>
+
+                <button class="close-button" onclick="closeDeleteAccountModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <p class="modal-text">
+                Dein Account wird mit allem gelöscht, was dazugehört:
+                Aufgaben, Habits, Notizen, Fächer, Stundenplan und dein
+                Profilbild. Auch dein Login verschwindet - du kannst dich
+                danach mit dieser E-Mail nicht mehr anmelden.
+                <br><br>
+                Das lässt sich <strong>nicht</strong> rückgängig machen.
+            </p>
+
+
+            <div class="modal-error" id="deleteAccountError" style="display: none;"></div>
+
+
+            <div class="modal-buttons">
+
+                <button class="modal-button cancel-button" onclick="closeDeleteAccountModal()">
+                    Abbrechen
+                </button>
+
+                <button class="modal-button loeschen-button" id="deleteAccountButton"
+                    onclick="accountEndgueltigLoeschen()">
+                    Löschen
                 </button>
 
             </div>
@@ -5734,6 +5839,14 @@
         const APP_UPDATES = [
 
             {
+                version: "1.11",
+
+                title: "Account löschen und Admin-Zugang",
+
+                text: "Der Knopf in den Einstellungen löscht deinen Account jetzt wirklich - nach einer Rückfrage. Außerdem gibt es einen Admin-Zugang für Funktionen, die nicht jeder sehen soll."
+            },
+
+            {
                 version: "1.10",
 
                 title: "Profilbild und immer der heutige Tag",
@@ -6127,6 +6240,11 @@
             // --- PROFILBILD LADEN ---
 
             await ladeProfilbild();
+
+
+            // --- IST DAS EIN ADMIN-ZUGANG? ---
+
+            await ladeAdminStatus();
 
 
             /*
@@ -8568,8 +8686,11 @@
             authMode = "login";
 
 
-            // Das Bild des vorherigen Nutzers darf nicht stehen bleiben.
+            // Bild und Admin-Rechte des vorherigen Nutzers dürfen
+            // nicht stehen bleiben.
             profilBild = "";
+
+            istAdmin = false;
 
 
             checkAuthState();
@@ -8586,91 +8707,354 @@
         // "publishable key" im Frontend - das darf nur eine Funktion
         // mit dem "secret key" auf einem Server tun (z.B. eine Supabase
         // Edge Function). Das wäre ein guter nächster Ausbauschritt.
-        async function deleteAccount() {
+        /* ---------------------------------------------------------
+           ACCOUNT LÖSCHEN
+
+           Wichtig zu verstehen: Einen Account wirklich zu löschen darf
+           die App NICHT selbst. Dafür bräuchte sie den geheimen
+           "service_role"-Schlüssel von Supabase - und der darf niemals
+           in eine Datei, die jeder im Browser lesen kann. Sonst könnte
+           jeder fremde Accounts löschen.
+
+           Deshalb gibt es dafür eine kleine Funktion auf dem Server
+           ("delete-account"). Die App schickt ihr nur den eigenen
+           Login mit; der Server schaut nach, wem der gehört, und
+           löscht genau diesen einen Account.
+
+           Die Daten verschwinden dabei von selbst: Alle Tabellen hängen
+           per "on delete cascade" am Login.
+        --------------------------------------------------------- */
 
 
-            const confirmed =
-                confirm(
-                    "Wirklich alle deine Aufgaben, Habits und Einstellungen löschen? Das kann nicht rückgängig gemacht werden. (Dein Login bleibt bestehen.)"
-                );
+        function deleteAccount() {
 
-
-            if (!confirmed) {
+            if (!account) {
                 return;
             }
 
 
-            await supabaseClient
-                .from("habits")
-                .delete()
-                .eq(
-                    "user_id",
-                    account.id
+            document.getElementById(
+                "deleteAccountError"
+            ).style.display = "none";
+
+
+            document.getElementById(
+                "deleteAccountButton"
+            ).textContent = "Löschen";
+
+
+            document.getElementById(
+                "deleteAccountModal"
+            ).classList.add("show");
+
+        }
+
+
+        function closeDeleteAccountModal() {
+
+            document.getElementById(
+                "deleteAccountModal"
+            ).classList.remove("show");
+
+        }
+
+
+        function zeigeLoeschFehler(text) {
+
+            const kasten =
+                document.getElementById(
+                    "deleteAccountError"
+                );
+
+            kasten.textContent = text;
+
+            kasten.style.display = "block";
+
+
+            document.getElementById(
+                "deleteAccountButton"
+            ).textContent = "Löschen";
+
+        }
+
+
+        async function accountEndgueltigLoeschen() {
+
+            if (!account) {
+                return;
+            }
+
+
+            const knopf =
+                document.getElementById(
+                    "deleteAccountButton"
                 );
 
 
-            await supabaseClient
-                .from("tasks")
-                .delete()
-                .eq(
-                    "user_id",
-                    account.id
+            knopf.textContent = "Wird gelöscht ...";
+
+
+            document.getElementById(
+                "deleteAccountError"
+            ).style.display = "none";
+
+
+            // Den eigenen Login holen - damit weist sich die App
+            // beim Server aus.
+            let token = "";
+
+            try {
+
+                token = await getAccessToken();
+
+            }
+
+            catch (fehler) {
+
+                token = "";
+
+            }
+
+
+            if (!token) {
+
+                zeigeLoeschFehler(
+                    "Dein Login konnte nicht gelesen werden. Melde dich einmal ab und wieder an, dann versuch es erneut."
                 );
 
+                return;
 
-            await supabaseClient
-                .from("notes")
-                .delete()
-                .eq(
-                    "user_id",
-                    account.id
+            }
+
+
+            let antwort = null;
+
+
+            try {
+
+                const abbruch = new AbortController();
+
+
+                const uhr =
+                    setTimeout(
+                        function () {
+                            abbruch.abort();
+                        },
+                        20000
+                    );
+
+
+                antwort =
+                    await fetch(
+                        SUPABASE_URL + "/functions/v1/delete-account",
+                        {
+                            method: "POST",
+
+                            headers: {
+
+                                "Authorization": "Bearer " + token,
+
+                                "apikey": SUPABASE_PUBLISHABLE_KEY,
+
+                                "Content-Type": "application/json"
+
+                            },
+
+                            body: "{}",
+
+                            signal: abbruch.signal
+                        }
+                    );
+
+
+                clearTimeout(uhr);
+
+            }
+
+            catch (fehler) {
+
+                zeigeLoeschFehler(
+                    "Der Server war nicht erreichbar. Prüfe deine Internetverbindung und versuch es noch einmal."
                 );
 
+                return;
 
-            // Fächer löschen reicht: Stundenplan und Hausaufgaben
-            // hängen per "on delete cascade" daran und verschwinden mit.
-            await supabaseClient
-                .from("subjects")
-                .delete()
-                .eq(
-                    "user_id",
-                    account.id
+            }
+
+
+            let daten = null;
+
+            try {
+
+                daten = await antwort.json();
+
+            }
+
+            catch (fehler) {
+
+                daten = null;
+
+            }
+
+
+            if (!antwort.ok || !daten || !daten.ok) {
+
+                zeigeLoeschFehler(
+                    (daten && daten.fehler)
+                        ? daten.fehler
+                        : "Das Löschen hat nicht geklappt (Status " +
+                          antwort.status +
+                          "). Ist die Funktion \"delete-account\" in Supabase angelegt?"
                 );
 
+                return;
 
-            await supabaseClient
-                .from("settings")
-                .delete()
-                .eq(
-                    "user_id",
-                    account.id
-                );
+            }
 
 
-            await supabaseClient
-                .from("zeitraster")
-                .delete()
-                .eq(
-                    "user_id",
-                    account.id
-                );
+            /*
+            // Geschafft. Der Login existiert jetzt nicht mehr - die
+            // Sitzung im Browser aber schon noch. Die wird hier
+            // weggeräumt, danach landet man wieder beim Anmelden.
+            */
+
+            try {
+
+                await supabaseClient.auth.signOut();
+
+            }
+
+            catch (fehler) {
+                // Macht nichts - den Account gibt es ohnehin nicht mehr.
+            }
 
 
-            await supabaseClient
-                .from("profil")
-                .delete()
-                .eq(
-                    "user_id",
-                    account.id
-                );
+            closeDeleteAccountModal();
+
+
+            account = null;
+
+            isLoggedIn = false;
+
+            istAdmin = false;
+
+            profilBild = "";
+
+            authMode = "login";
 
 
             alert(
-                "Deine Daten wurden gelöscht. Du wirst jetzt abgemeldet."
+                "Dein Account wurde gelöscht."
             );
 
 
-            logout();
+            /*
+            // Zum Schluss die Seite neu laden statt nur umzuschalten.
+            //
+            // Grund: Im Browser liegen noch jede Menge Reste des
+            // gelöschten Accounts - geladene Aufgaben, Notizen, der
+            // Stundenplan. Ein Neuladen räumt all das in einem Rutsch
+            // weg. Außerdem ist es die sichere Variante, falls das
+            // Abmelden oben nicht geklappt hat.
+            */
+
+            window.location.reload();
+
+        }
+
+
+        /* ---------------------------------------------------------
+           ADMIN-ZUGANG
+
+           Ob jemand Admin ist, steht in der Tabelle "admins" in
+           Supabase. Die Regeln dort erlauben nur EINES: nachsehen, ob
+           man selbst drinsteht. Eintragen kann sich niemand - das geht
+           ausschließlich über den SQL-Editor.
+
+           Das Ausblenden hier in der App ist also nur die Anzeige.
+           Ernst wird es erst, wenn eine Admin-Funktion wirklich etwas
+           Mächtiges tut: Dann muss AUCH der Server noch einmal in diese
+           Tabelle schauen, bevor er sie ausführt. Verlass dich nie
+           allein auf ein ausgeblendetes Feld - den Code der App kann
+           jeder im eigenen Browser verändern.
+        --------------------------------------------------------- */
+
+
+        let istAdmin = false;
+
+
+        async function ladeAdminStatus() {
+
+            istAdmin = false;
+
+
+            if (!account) {
+                return;
+            }
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("admins")
+                    .select("user_id")
+                    .eq("user_id", account.id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Admin-Status konnte nicht geprüft werden:",
+                    ergebnis.error
+                );
+
+                return;
+
+            }
+
+
+            istAdmin =
+                !!(ergebnis.data && ergebnis.data.length > 0);
+
+        }
+
+
+        /*
+        // Blendet alle Stellen mit der Klasse "admin-only" ein oder aus.
+        // Neue Admin-Funktionen brauchen später nur diese Klasse.
+        */
+
+        function renderAdminBereiche() {
+
+            const stellen =
+                document.querySelectorAll(
+                    ".admin-only"
+                );
+
+
+            stellen.forEach(
+                function (stelle) {
+
+                    stelle.style.display =
+                        istAdmin ? "" : "none";
+
+                }
+            );
+
+
+            const unterzeile =
+                document.getElementById(
+                    "profileSubline"
+                );
+
+
+            if (unterzeile) {
+
+                unterzeile.textContent =
+                    istAdmin
+                        ? "Admin-Zugang"
+                        : "Dein persönlicher Account";
+
+            }
 
         }
 
@@ -8828,6 +9212,8 @@
 
 
             renderAvatar();
+
+            renderAdminBereiche();
 
         }
 
@@ -15545,6 +15931,8 @@
                     closeHomeworkModal();
 
                     closeZeitModal();
+
+                    closeDeleteAccountModal();
 
                 }
 
