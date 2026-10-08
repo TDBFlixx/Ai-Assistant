@@ -396,7 +396,7 @@
 
             align-items: center;
 
-            justify-content: space-between;
+            justify-content: center;
 
             margin-bottom: 20px;
 
@@ -432,31 +432,11 @@
         }
 
 
-        .arrow-button {
-
-            width: 38px;
-
-            height: 38px;
-
-            border: none;
-
-            border-radius: 50%;
-
-            background:
-                rgba(255, 255, 255, 0.06);
-
-            color: white;
-
-            cursor: pointer;
-
-            font-size: 20px;
-
-        }
-
-
         /* =========================================================
            WOCHENLEISTE
-           Zeigt Mo-So an, anklickbar, um selectedDate zu ändern.
+           Zeigt Mo-So der laufenden Woche an. Reine Anzeige - der
+           heutige Tag ist hervorgehoben, anklicken kann man sie
+           bewusst nicht (siehe Kommentar bei der Top-Bar im HTML).
         ========================================================= */
 
         .week-strip {
@@ -485,7 +465,7 @@
 
             border-radius: 14px;
 
-            cursor: pointer;
+            cursor: default;
 
         }
 
@@ -1655,6 +1635,71 @@
             backdrop-filter: blur(10px);
 
             -webkit-backdrop-filter: blur(10px);
+
+        }
+
+
+        /*
+        // PROFILBILD
+        //
+        // Das Bild füllt den Kreis komplett aus: "object-fit: cover"
+        // schneidet den Überstand ab, statt das Bild zu verzerren.
+        */
+
+        .avatar {
+
+            overflow: hidden;
+
+            cursor: pointer;
+
+        }
+
+
+        .avatar img {
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: cover;
+
+            display: block;
+
+        }
+
+
+        .avatar-aktionen {
+
+            display: flex;
+
+            justify-content: center;
+
+            gap: 16px;
+
+            margin-top: 11px;
+
+        }
+
+
+        .avatar-aktion {
+
+            border: none;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            font-size: 12.5px;
+
+            font-family: inherit;
+
+            cursor: pointer;
+
+            padding: 2px;
+
+            text-decoration: underline;
+
+            text-underline-offset: 3px;
 
         }
 
@@ -3965,12 +4010,18 @@
         <main class="page active" id="homePage">
 
 
+            <!--
+                Oben steht immer der HEUTIGE Tag.
+
+                Früher konnte man hier mit Pfeilen und über die
+                Wochenleiste zu anderen Tagen springen. Das hat mehr
+                verwirrt als geholfen: Wer unbemerkt auf dem Vortag
+                stand, hakte dort seine Habits ab - und wunderte sich,
+                warum heute nichts angekreuzt war. Die Wochenleiste
+                darunter zeigt die Woche jetzt nur noch an.
+            -->
+
             <div class="top-bar">
-
-                <button class="arrow-button" onclick="changeDay(-1)">
-                    ‹
-                </button>
-
 
                 <div class="today-info">
 
@@ -3982,11 +4033,6 @@
                     </div>
 
                 </div>
-
-
-                <button class="arrow-button" onclick="changeDay(1)">
-                    ›
-                </button>
 
             </div>
 
@@ -4484,9 +4530,26 @@
 
             <div class="profile-header">
 
-                <div class="avatar">
-                    👤
+                <!--
+                    Ein Tipp auf den Kreis öffnet die Bildauswahl.
+                    Das eigentliche Dateifeld ist unsichtbar - so sieht
+                    man nicht den grauen Standard-Knopf des Browsers.
+                -->
+
+                <div class="avatar" onclick="bildAuswaehlen()">
+
+                    <span id="avatarPlatzhalter">
+                        👤
+                    </span>
+
+                    <img id="avatarBild" alt="" style="display: none;">
+
                 </div>
+
+
+                <input type="file" id="avatarInput" accept="image/*"
+                    style="display: none;" onchange="bildGewaehlt(event)">
+
 
                 <div class="profile-name" id="accountEmailDisplay">
                     Nicht angemeldet
@@ -4494,6 +4557,20 @@
 
                 <div class="profile-email">
                     Dein persönlicher Account
+                </div>
+
+
+                <div class="avatar-aktionen">
+
+                    <button class="avatar-aktion" onclick="bildAuswaehlen()">
+                        Bild ändern
+                    </button>
+
+                    <button class="avatar-aktion" id="avatarEntfernen"
+                        onclick="bildEntfernen()" style="display: none;">
+                        Entfernen
+                    </button>
+
                 </div>
 
             </div>
@@ -5657,6 +5734,14 @@
         const APP_UPDATES = [
 
             {
+                version: "1.10",
+
+                title: "Profilbild und immer der heutige Tag",
+
+                text: "In den Einstellungen kannst du jetzt ein Bild für deinen Account setzen. Außerdem zeigt die Startseite immer heute - so hakst du Habits nicht mehr aus Versehen am falschen Tag ab."
+            },
+
+            {
                 version: "1.9",
 
                 title: "Eigene Schulzeiten",
@@ -6039,6 +6124,11 @@
             await loadSchoolData();
 
 
+            // --- PROFILBILD LADEN ---
+
+            await ladeProfilbild();
+
+
             /*
             // Falls Benachrichtigungen bereits erlaubt sind: die
             // Push-Anmeldung dieses Geräts auffrischen. Die vom
@@ -6362,18 +6452,6 @@
             `;
 
 
-                // Klick auf einen Wochentag wählt diesen Tag aus
-                button.onclick =
-                    function () {
-
-                        selectedDate =
-                            new Date(date);
-
-                        renderAll();
-
-                    };
-
-
                 strip.appendChild(
                     button
                 );
@@ -6400,21 +6478,6 @@
                             weekday: "long"
                         }
                     );
-
-        }
-
-
-        // Wird von den Pfeil-Buttons oben aufgerufen (-1 = ein Tag zurück,
-        // +1 = ein Tag vor).
-        function changeDay(amount) {
-
-            selectedDate.setDate(
-                selectedDate.getDate() +
-                amount
-            );
-
-
-            renderAll();
 
         }
 
@@ -8505,6 +8568,10 @@
             authMode = "login";
 
 
+            // Das Bild des vorherigen Nutzers darf nicht stehen bleiben.
+            profilBild = "";
+
+
             checkAuthState();
 
         }
@@ -8573,6 +8640,24 @@
 
             await supabaseClient
                 .from("settings")
+                .delete()
+                .eq(
+                    "user_id",
+                    account.id
+                );
+
+
+            await supabaseClient
+                .from("zeitraster")
+                .delete()
+                .eq(
+                    "user_id",
+                    account.id
+                );
+
+
+            await supabaseClient
+                .from("profil")
                 .delete()
                 .eq(
                     "user_id",
@@ -8740,6 +8825,359 @@
                 account
                     ? account.email
                     : "Nicht angemeldet";
+
+
+            renderAvatar();
+
+        }
+
+
+        /* ---------------------------------------------------------
+           PROFILBILD
+
+           Das Bild wird NICHT als Datei irgendwo abgelegt, sondern
+           direkt als Text in der Datenbank gespeichert (eine sogenannte
+           "data:"-Adresse). Das klingt ungewöhnlich, spart hier aber
+           einen ganzen Baukasten: kein Datei-Speicher, keine extra
+           Zugriffsregeln, keine Links, die ablaufen.
+
+           Damit das nicht ausartet, wird jedes Bild vorher auf 256x256
+           Punkte verkleinert - daraus werden meist 20 bis 40 Kilobyte,
+           also etwa so viel wie eine lange Notiz.
+        --------------------------------------------------------- */
+
+
+        // Das aktuelle Bild als "data:"-Adresse, oder "" wenn keins da ist.
+        let profilBild = "";
+
+
+        function renderAvatar() {
+
+            const bild =
+                document.getElementById(
+                    "avatarBild"
+                );
+
+            const platzhalter =
+                document.getElementById(
+                    "avatarPlatzhalter"
+                );
+
+            const entfernen =
+                document.getElementById(
+                    "avatarEntfernen"
+                );
+
+
+            if (!bild || !platzhalter) {
+                return;
+            }
+
+
+            if (profilBild) {
+
+                bild.src = profilBild;
+
+                bild.style.display = "block";
+
+                platzhalter.style.display = "none";
+
+                if (entfernen) {
+                    entfernen.style.display = "inline";
+                }
+
+            }
+
+            else {
+
+                bild.removeAttribute("src");
+
+                bild.style.display = "none";
+
+                platzhalter.style.display = "inline";
+
+                if (entfernen) {
+                    entfernen.style.display = "none";
+                }
+
+            }
+
+        }
+
+
+        // Öffnet die Bildauswahl des Handys bzw. des Rechners.
+        function bildAuswaehlen() {
+
+            if (!account) {
+                return;
+            }
+
+
+            document.getElementById(
+                "avatarInput"
+            ).click();
+
+        }
+
+
+        async function bildGewaehlt(ereignis) {
+
+            const datei =
+                ereignis.target.files &&
+                ereignis.target.files[0];
+
+
+            /*
+            // Das Feld gleich wieder leeren. Sonst meldet der Browser
+            // beim zweiten Mal nichts, wenn man DIESELBE Datei noch
+            // einmal auswählt - für ihn hat sich ja nichts geändert.
+            */
+
+            ereignis.target.value = "";
+
+
+            if (!datei) {
+                return;
+            }
+
+
+            if (datei.type && datei.type.indexOf("image/") !== 0) {
+
+                alert(
+                    "Bitte ein Bild auswählen."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                profilBild =
+                    await bildVerkleinern(datei, 256);
+
+
+                renderAvatar();
+
+
+                await speichereProfilbild();
+
+            }
+
+            catch (fehler) {
+
+                console.error(
+                    "Bild konnte nicht verarbeitet werden:",
+                    fehler
+                );
+
+
+                alert(
+                    "Dieses Bild konnte nicht gelesen werden. Versuch es mit einem anderen."
+                );
+
+            }
+
+        }
+
+
+        /*
+        // Verkleinert ein Bild auf ein Quadrat der gewünschten Größe.
+        // Geschnitten wird aus der MITTE - so wird nichts verzerrt.
+        */
+
+        function bildVerkleinern(datei, groesse) {
+
+            return new Promise(
+                function (fertig, fehlgeschlagen) {
+
+
+                    const leser = new FileReader();
+
+
+                    leser.onerror =
+                        function () {
+                            fehlgeschlagen(
+                                new Error("Datei nicht lesbar")
+                            );
+                        };
+
+
+                    leser.onload =
+                        function () {
+
+
+                            const bild = new Image();
+
+
+                            bild.onerror =
+                                function () {
+                                    fehlgeschlagen(
+                                        new Error("Kein gültiges Bild")
+                                    );
+                                };
+
+
+                            bild.onload =
+                                function () {
+
+                                    // Größtes Quadrat aus der Mitte
+                                    const kante =
+                                        Math.min(
+                                            bild.width,
+                                            bild.height
+                                        );
+
+
+                                    const links =
+                                        (bild.width - kante) / 2;
+
+                                    const oben =
+                                        (bild.height - kante) / 2;
+
+
+                                    const flaeche =
+                                        document.createElement("canvas");
+
+                                    flaeche.width = groesse;
+
+                                    flaeche.height = groesse;
+
+
+                                    const stift =
+                                        flaeche.getContext("2d");
+
+
+                                    stift.drawImage(
+                                        bild,
+                                        links, oben, kante, kante,
+                                        0, 0, groesse, groesse
+                                    );
+
+
+                                    // 0.82 = guter Mittelweg aus
+                                    // Qualität und Dateigröße.
+                                    fertig(
+                                        flaeche.toDataURL(
+                                            "image/jpeg",
+                                            0.82
+                                        )
+                                    );
+
+                                };
+
+
+                            bild.src = leser.result;
+
+                        };
+
+
+                    leser.readAsDataURL(datei);
+
+                }
+            );
+
+        }
+
+
+        async function bildEntfernen() {
+
+            if (!account) {
+                return;
+            }
+
+
+            profilBild = "";
+
+
+            renderAvatar();
+
+
+            await speichereProfilbild();
+
+        }
+
+
+        async function speichereProfilbild() {
+
+            if (!account) {
+                return;
+            }
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("profil")
+                    .upsert(
+                        {
+                            user_id: account.id,
+
+                            bild: profilBild
+                        },
+                        {
+                            onConflict: "user_id"
+                        }
+                    );
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Profilbild konnte nicht gespeichert werden:",
+                    ergebnis.error
+                );
+
+
+                alert(
+                    "Das Bild konnte nicht gespeichert werden:\n" +
+                    ergebnis.error.message +
+                    "\n\n(Fehlt vielleicht noch die Tabelle \"profil\"? Dann profilbild.sql in Supabase ausführen.)"
+                );
+
+            }
+
+        }
+
+
+        async function ladeProfilbild() {
+
+            if (!account) {
+
+                profilBild = "";
+
+                return;
+
+            }
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("profil")
+                    .select("bild")
+                    .eq("user_id", account.id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Profilbild konnte nicht geladen werden:",
+                    ergebnis.error
+                );
+
+                profilBild = "";
+
+                return;
+
+            }
+
+
+            const zeile =
+                ergebnis.data && ergebnis.data[0];
+
+
+            profilBild =
+                (zeile && zeile.bild) || "";
 
         }
 
@@ -15040,6 +15478,18 @@
 
 
         function renderAll() {
+
+
+            /*
+            // Der angezeigte Tag ist IMMER heute.
+            //
+            // Hier neu gesetzt statt nur einmal beim Start: Wer die App
+            // über Nacht offen lässt (auf dem Handy passiert das
+            // ständig), würde sonst am nächsten Morgen noch den
+            // gestrigen Tag sehen und dort seine Habits abhaken.
+            */
+
+            selectedDate = new Date();
 
 
             renderWeek();
