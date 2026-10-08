@@ -5295,9 +5295,7 @@
 
 
             <p class="modal-text">
-                Dein Account wird mit allem gelöscht, was dazugehört:
-                Aufgaben, Habits, Notizen, Fächer, Stundenplan und dein
-                Profilbild. Auch dein Login verschwindet - du kannst dich
+                Dein Account wird mit allem gelöscht - du kannst dich
                 danach mit dieser E-Mail nicht mehr anmelden.
                 <br><br>
                 Das lässt sich <strong>nicht</strong> rückgängig machen.
@@ -5837,6 +5835,14 @@
         */
 
         const APP_UPDATES = [
+
+            {
+                version: "1.12",
+
+                title: "Benachrichtigungen mit mehreren Accounts",
+
+                text: "Meldet sich auf demselben Rechner ein zweiter Account an, lassen sich die Benachrichtigungen jetzt auch dort einrichten."
+            },
 
             {
                 version: "1.11",
@@ -14264,10 +14270,22 @@
 
                             },
                             {
-                                // Ist dieses Gerät schon eingetragen,
-                                // wird der Eintrag aktualisiert statt
-                                // ein zweiter angelegt.
-                                onConflict: "endpoint"
+                                /*
+                                // Ist DIESER NUTZER mit DIESEM GERÄT
+                                // schon eingetragen, wird der Eintrag
+                                // aktualisiert statt ein zweiter angelegt.
+                                //
+                                // Früher stand hier nur "endpoint". Das
+                                // ging schief, sobald sich auf demselben
+                                // Rechner ein zweiter Account anmeldete:
+                                // Die Adresse des Push-Dienstes gehört
+                                // nämlich zum BROWSER, nicht zum Account.
+                                // Der zweite Account stieß also auf die
+                                // Zeile des ersten - und durfte sie
+                                // natürlich nicht überschreiben
+                                // ("violates row-level security policy").
+                                */
+                                onConflict: "user_id,endpoint"
                             }
                         );
 
