@@ -220,11 +220,6 @@
             // Fortschrittsring, Menü-Markierung). Weil weiße Flächen
             // dunkle Schrift brauchen, setzen die betroffenen Knöpfe
             // ihre Schriftfarbe weiter unten selbst auf Dunkel.
-            //
-            // --habit-done-text ist eine eigene Variable nur für diese
-            // App: die Textfarbe ERLEDIGTER Habits - heller als der
-            // Hintergrund, aber gedeckter als das kräftige Weiß der
-            // noch offenen.
             */
 
             --background: #0d0d0e;
@@ -250,8 +245,6 @@
             --red: #ff6675;
 
             --yellow: #f7c95b;
-
-            --habit-done-text: #85868a;
 
         }
 
@@ -537,133 +530,6 @@
         .week-day.selected {
 
             color: white;
-
-        }
-
-
-        /* =========================================================
-           STREAK-KARTE
-        ========================================================= */
-
-        .streak-card {
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            background:
-                linear-gradient(135deg,
-                    rgba(74, 168, 255, 0.13),
-                    rgba(66, 211, 146, 0.06));
-
-            border: 1px solid var(--border);
-
-            border-radius: 18px;
-
-            padding: 15px 16px;
-
-            margin-bottom: 18px;
-
-        }
-
-
-        /*
-        // Gleiche "verschwommene Glas"-Optik wie die anderen Karten.
-        */
-
-        .streak-card {
-
-            background: var(--card);
-
-            backdrop-filter: blur(18px);
-
-            -webkit-backdrop-filter: blur(18px);
-
-        }
-
-
-        .streak-left {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 10px;
-
-        }
-
-
-        .streak-fire {
-            font-size: 22px;
-        }
-
-
-        .streak-title {
-
-            font-weight: 700;
-
-            font-size: 14px;
-
-        }
-
-
-        .streak-subtitle {
-
-            color: var(--muted);
-
-            font-size: 12px;
-
-            margin-top: 3px;
-
-        }
-
-
-        .details-button {
-
-            border: none;
-
-            background:
-                rgba(74, 168, 255, 0.12);
-
-            color: var(--blue-light);
-
-            padding: 8px 12px;
-
-            border-radius: 10px;
-
-            font-size: 12px;
-
-            cursor: pointer;
-
-        }
-
-
-        /* Neutrales Glas als Hintergrund */
-
-        .details-button {
-
-            background: rgba(255, 255, 255, 0.1);
-
-        }
-
-
-        /* =========================================================
-           VERSIONSANZEIGE (ganz unten in den Einstellungen)
-        ========================================================= */
-
-        .app-version {
-
-            text-align: center;
-
-            color: var(--muted);
-
-            font-size: 11.5px;
-
-            padding: 4px 0 10px;
-
-            opacity: 0.8;
 
         }
 
@@ -969,291 +835,17 @@
 
 
         /* =========================================================
-           HABITS (Gewohnheiten)
-        ========================================================= */
-
-        .habit-grid {
-
-            display: grid;
-
-            /* Handy: 2 Spalten nebeneinander */
-            grid-template-columns:
-                repeat(2, 1fr);
-
-            gap: 10px;
-
-            margin-bottom: 28px;
-
-        }
-
-
-        .habit-card {
-
-            position: relative;
-
-            background: var(--card);
-
-            border:
-                1px solid var(--border);
-
-            border-radius: 17px;
-
-            padding: 15px;
-
-            min-height: 100px;
-
-            cursor: pointer;
-
-            transition:
-                transform 0.15s,
-                border-color 0.2s;
-
-        }
-
-
-        .habit-card:active {
-
-            transform:
-                scale(0.97);
-
-        }
-
-
-        /*
-        // Die "verschwommene" Glas-Optik (Blur) ergänzen. Farbe und Rand
-        // kommen schon aus var(--card)/var(--border) - hier fehlt nur
-        // der Weichzeichner für den "Frosted Glass"-Effekt.
-        */
-
-        .habit-card {
-
-            backdrop-filter: blur(16px);
-
-            -webkit-backdrop-filter: blur(16px);
-
-        }
-
-
-        .habit-card.done {
-
-            border-color:
-                rgba(66, 211, 146, 0.5);
-
-        }
-
-
-        /*
-        // Erledigte Habits wirken "verblasst": Name und Icon wechseln vom
-        // kräftigen Weiß zu einem gedeckteren Grauweiß, die Karte selbst
-        // tritt in den Hintergrund zurück und die grüne Markierung wird
-        // gedämpft statt kräftig.
-        */
-
-        .habit-card.done {
-
-            background: rgba(255, 255, 255, 0.02);
-
-            border-color: rgba(66, 211, 146, 0.25);
-
-        }
-
-
-        .habit-card.done .habit-name {
-
-            color: var(--habit-done-text);
-
-        }
-
-
-        .habit-card.done .habit-icon {
-
-            opacity: 0.5;
-
-        }
-
-
-        .habit-card.done .habit-status {
-
-            color: var(--habit-done-text);
-
-            opacity: 0.75;
-
-        }
-
-
-        .habit-icon {
-
-            font-size: 22px;
-
-            margin-bottom: 11px;
-
-        }
-
-
-        .habit-name {
-
-            font-size: 13px;
-
-            font-weight: 700;
-
-            /*
-            // Etwas Platz rechts und links lassen, damit der Text nicht
-            // unter dem Papierkorb- bzw. Häkchen-Button verschwindet.
-            */
-
-            padding-right: 6px;
-
-            /* Sanfter Übergang, falls sich die Farbe beim Abhaken ändert
-               */
-            transition: color 0.2s ease;
-
-        }
-
-
-        .habit-status {
-
-            color: var(--muted);
-
-            font-size: 11px;
-
-            margin-top: 5px;
-
-            /* Platz lassen, damit der Text nicht unter dem
-               Papierkorb-Button (unten rechts) verschwindet */
-            padding-right: 26px;
-
-        }
-
-
-        /* Häkchen-Kreis oben rechts zum Abhaken des Habits */
-
-        .habit-check {
-
-            position: absolute;
-
-            right: 12px;
-
-            top: 12px;
-
-            width: 25px;
-
-            height: 25px;
-
-            border-radius: 50%;
-
-            border: 2px solid #45627a;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            font-size: 12px;
-
-            background: transparent;
-
-        }
-
-
-        /* Neutraler weißlicher Rahmen */
-
-        .habit-check {
-
-            border-color: rgba(255, 255, 255, 0.3);
-
-        }
-
-
-        .habit-card.done .habit-check {
-
-            background: var(--green);
-
-            border-color: var(--green);
-
-            color: #05271b;
-
-        }
-
-
-        /*
-        // PAPIERKORB-BUTTON zum Löschen eines Habits.
-        // Liegt oben links in der Karte, damit er nicht mit dem
-        // Häkchen oben rechts kollidiert.
-        // Es ist ein eigener <button>, deshalb müssen wir beim Klick
-        // per event.stopPropagation() verhindern, dass zusätzlich
-        // noch das Habit abgehakt wird (siehe JS: deleteHabit()).
-        */
-
-        .habit-delete {
-
-            position: absolute;
-
-            /* Unten rechts in der Karte, unter dem Häkchen (das liegt oben rechts) */
-            right: 10px;
-
-            bottom: 10px;
-
-            width: 25px;
-
-            height: 25px;
-
-            border-radius: 50%;
-
-            border: none;
-
-            background:
-                rgba(255, 255, 255, 0.05);
-
-            color: #b9c9d6;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            font-size: 12px;
-
-            cursor: pointer;
-
-        }
-
-
-        .habit-delete:hover {
-
-            background:
-                rgba(255, 102, 117, 0.15);
-
-            color: var(--red);
-
-        }
-
-
-        .add-habit-card {
-
-            border:
-                1px dashed #3d6078;
-
-            background:
-                rgba(255, 255, 255, 0.02);
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            color: var(--muted);
-
-            font-size: 13px;
-
-        }
-
-
-        /* =========================================================
            AUFGABEN (Tasks)
         ========================================================= */
+
+        /* Der 90-Tage-Kreis lässt sich antippen (Starttag ändern) */
+
+        .countdown-card {
+
+            cursor: pointer;
+
+        }
+
 
         .task-list {
 
@@ -1399,9 +991,26 @@
         }
 
 
-        .priority-dot {
+        /*
+        // Die kleine graue Zeile unter einer Aufgabe: "jeden Tag",
+        // "montags", "22:00 · heute". Rot wird sie nur, wenn ein
+        // einmaliger Termin schon vorbei ist.
+        */
 
-            font-size: 14px;
+        .task-meta {
+
+            font-size: 11.5px;
+
+            color: var(--muted);
+
+            margin-top: 3px;
+
+        }
+
+
+        .task-meta.urgent {
+
+            color: var(--red);
 
         }
 
@@ -1466,62 +1075,6 @@
 
         }
 
-
-        .add-main-button {
-
-            width: 48px;
-
-            height: 48px;
-
-            border: none;
-
-            border-radius: 50%;
-
-            background: var(--blue);
-
-            color: white;
-
-            font-size: 30px;
-
-            cursor: pointer;
-
-            box-shadow:
-                0 8px 25px rgba(74, 168, 255, 0.25);
-
-            /*
-            // Flexbox zentriert das "+"-Zeichen exakt in der Mitte
-            // des Kreises (statt sich auf die Standard-Textausrichtung
-            // eines Buttons zu verlassen, die je nach Schriftart
-            // leicht daneben liegen kann).
-            */
-
-            padding: 0;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            /*
-            // line-height: 1 verhindert zusätzlichen Abstand über/unter
-            // dem Zeichen, der die Zentrierung stören könnte.
-            */
-
-            line-height: 1;
-
-        }
-
-
-        /*
-        // SCHWEBENDER "+"-BUTTON AUF DER HOME-SEITE
-        // Liegt fest unten rechts über dem Inhalt (position: fixed),
-        // schwebt über der unteren Navigation und öffnet das
-        // "Neu hinzufügen"-Modal (Aufgabe ODER Habit).
-        // Da dieser Button INNERHALB von #homePage liegt, wird er
-        // automatisch mit versteckt, wenn eine andere Seite aktiv ist
-        // (siehe .page { display: none; } weiter oben).
-        */
 
         .floating-add-button {
 
@@ -2382,20 +1935,6 @@
         .modal-content select:focus {
 
             border-color: var(--blue);
-
-        }
-
-
-        /*
-        // Diese beiden Blöcke (Priorität / Symbol) werden per JS
-        // ein- und ausgeblendet, je nachdem ob man eine Aufgabe
-        // oder ein Habit anlegt. Siehe Funktion updateAddModalFields().
-        */
-
-        #priorityField,
-        #iconField {
-
-            display: block;
 
         }
 
@@ -4018,15 +3557,6 @@
             }
 
 
-            .habit-grid {
-
-                /* Ab Desktop-Breite: 3 Spalten statt 2 */
-                grid-template-columns:
-                    repeat(3, 1fr);
-
-            }
-
-
             .bottom-nav {
 
                 bottom: 20px;
@@ -4043,13 +3573,6 @@
                 width: 190px;
 
                 height: 190px;
-
-            }
-
-
-            .habit-card {
-
-                padding: 12px;
 
             }
 
@@ -4102,37 +3625,6 @@
             <div class="week-strip" id="weekStrip"></div>
 
 
-            <div class="streak-card">
-
-                <div class="streak-left">
-
-                    <div class="streak-fire">
-                        🔥
-                    </div>
-
-                    <div>
-
-                        <div class="streak-title">
-                            <span id="streakNumber">0</span>
-                            Tage Streak
-                        </div>
-
-                        <div class="streak-subtitle">
-                            Weiter so!
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <button class="details-button" onclick="showHabitPage()">
-                    Details
-                </button>
-
-            </div>
-
-
             <!--
                 UPDATE-HINWEIS
                 Normalerweise unsichtbar. Er taucht nur auf, wenn die
@@ -4161,145 +3653,15 @@
             </div>
 
 
-            <!-- FORTSCHRITTS-KREIS -->
+            <!--
+                90-TAGE-COUNTDOWN
 
-            <div class="progress-card">
+                Der Ring füllt sich mit der Zeit, die schon vergangen
+                ist; in der Mitte stehen die Tage, die noch übrig sind.
+                Ein Tipp darauf öffnet die Einstellung des Starttags.
+            -->
 
-                <div class="progress-ring">
-
-                    <svg viewBox="0 0 220 220">
-
-                        <circle class="progress-track" cx="110" cy="110" r="91"></circle>
-
-                        <circle class="progress-value" id="progressCircle" cx="110" cy="110" r="91"></circle>
-
-                    </svg>
-
-
-                    <div class="progress-center">
-
-                        <div class="progress-percent" id="progressPercent">
-                            0%
-                        </div>
-
-                        <div class="progress-label">
-                            Daily Progress
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="progress-summary" id="progressSummary">
-                    0 von 0 Habits erledigt
-                </div>
-
-            </div>
-
-
-            <!-- HABITS -->
-
-            <div class="section-header">
-
-                <h2 class="section-title">
-                    Daily Habits
-                </h2>
-
-                <button class="section-link" onclick="showHabitPage()">
-                    Alle
-                </button>
-
-            </div>
-
-
-            <div class="habit-grid" id="homeHabitGrid"></div>
-
-
-            <!-- AUFGABEN -->
-
-            <div class="section-header">
-
-                <h2 class="section-title">
-                    Meine Aufgaben
-                </h2>
-
-                <button class="section-link" onclick="showTodoPage()">
-                    Alle
-                </button>
-
-            </div>
-
-
-            <ul class="task-list" id="homeTaskList"></ul>
-
-        </main>
-
-
-        <!-- =====================================
-         TO-DO SEITE
-    ====================================== -->
-
-        <main class="page" id="todoPage">
-
-            <div class="page-heading">
-
-                <div style="
-                    display:flex;
-                    align-items:center;
-                    justify-content:space-between;
-                    gap:15px;
-                ">
-
-                    <div>
-
-                        <h1>
-                            Meine Aufgaben
-                        </h1>
-
-                        <p>
-                            Alles, was heute oder später
-                            erledigt werden muss.
-                        </p>
-
-                    </div>
-
-
-                    <button class="add-main-button" onclick="openAddModal('todo')">
-                        +
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <ul class="task-list" id="todoTaskList"></ul>
-
-        </main>
-
-
-        <!-- =====================================
-         HABITS SEITE
-    ====================================== -->
-
-        <main class="page" id="habitPage">
-
-            <div class="page-heading">
-
-                <h1>
-                    Daily Habits
-                </h1>
-
-                <p>
-                    Kleine Gewohnheiten,
-                    große Fortschritte.
-                </p>
-
-            </div>
-
-
-            <div class="progress-card">
+            <div class="progress-card countdown-card" onclick="openCountdownModal()">
 
                 <div class="progress-ring">
 
@@ -4307,19 +3669,19 @@
 
                         <circle class="progress-track" cx="110" cy="110" r="91"></circle>
 
-                        <circle class="progress-value" id="habitProgressCircle" cx="110" cy="110" r="91"></circle>
+                        <circle class="progress-value" id="countdownCircle" cx="110" cy="110" r="91"></circle>
 
                     </svg>
 
 
                     <div class="progress-center">
 
-                        <div class="progress-percent" id="habitProgressPercent">
-                            0%
+                        <div class="progress-percent" id="countdownDays">
+                            90
                         </div>
 
                         <div class="progress-label">
-                            Heute
+                            Tage übrig
                         </div>
 
                     </div>
@@ -4327,23 +3689,47 @@
                 </div>
 
 
-                <div class="progress-summary" id="habitProgressSummary">
-                    0 von 0 erledigt
+                <div class="progress-summary" id="countdownSummary">
+                    Tag 1 von 90
                 </div>
 
             </div>
 
 
+            <!-- AUFGABEN DES TAGES -->
+
             <div class="section-header">
 
                 <h2 class="section-title">
-                    Deine Habits
+                    Aufgaben heute
                 </h2>
+
+                <button class="section-link" onclick="openAddModal('aufgabe')">
+                    Neu
+                </button>
 
             </div>
 
 
-            <div class="habit-grid" id="habitPageGrid"></div>
+            <ul class="task-list" id="heuteListe"></ul>
+
+
+            <!-- WORAN DU IN DEN 90 TAGEN ARBEITEST -->
+
+            <div class="section-header">
+
+                <h2 class="section-title">
+                    90 Tage
+                </h2>
+
+                <button class="section-link" onclick="openAddModal('ziel')">
+                    Neu
+                </button>
+
+            </div>
+
+
+            <ul class="task-list" id="zieleListe"></ul>
 
         </main>
 
@@ -5075,8 +4461,8 @@
 
             <div class="modal-header">
 
-                <h2>
-                    Hinzufügen
+                <h2 id="addModalTitle">
+                    Neue Aufgabe
                 </h2>
 
                 <button class="close-button" onclick="closeAddModal()">
@@ -5087,49 +4473,49 @@
 
 
             <label>
-                Typ
+                Was?
             </label>
 
             <select id="addType" onchange="updateAddModalFields()">
 
-                <option value="todo">
-                    📝 Aufgabe
+                <option value="aufgabe">
+                    ✅ Aufgabe für einen Tag
                 </option>
 
-                <option value="habit">
-                    🔥 Daily Habit
+                <option value="ziel">
+                    🎯 Ziel für die 90 Tage
                 </option>
 
             </select>
 
 
-            <label>
-                Name
+            <label id="addNameLabel">
+                Aufgabe
             </label>
 
-            <input id="newItemName" type="text" placeholder="Was möchtest du hinzufügen?">
+            <input id="newItemName" type="text" placeholder="z.B. Saxofon üben">
 
 
-            <!-- Wird nur bei Typ "Aufgabe" angezeigt -->
+            <!-- Ab hier nur bei einer Aufgabe sichtbar -->
 
-            <div id="priorityField">
+            <div id="addWannField">
 
                 <label>
-                    Priorität
+                    Wann?
                 </label>
 
-                <select id="newPriority">
+                <select id="newWann" onchange="updateAddModalFields()">
 
-                    <option value="low">
-                        🟢 Niedrig
+                    <option value="taeglich">
+                        Jeden Tag
                     </option>
 
-                    <option value="medium" selected>
-                        🟡 Mittel
+                    <option value="wochentag">
+                        An einem Wochentag
                     </option>
 
-                    <option value="high">
-                        🔴 Hoch
+                    <option value="datum">
+                        Einmalig an einem Datum
                     </option>
 
                 </select>
@@ -5137,49 +4523,50 @@
             </div>
 
 
-            <!-- Wird nur bei Typ "Daily Habit" angezeigt -->
-
-            <div id="iconField">
+            <div id="addWochentagField">
 
                 <label>
-                    Symbol
+                    Welcher Tag?
                 </label>
 
-                <select id="newIcon">
+                <select id="newWochentag">
 
-                    <option value="💧">
-                        💧 Wasser
-                    </option>
-
-                    <option value="🍎">
-                        🍎 Ernährung
-                    </option>
-
-                    <option value="🏋️">
-                        🏋️ Gym
-                    </option>
-
-                    <option value="📚">
-                        📚 Lernen
-                    </option>
-
-                    <option value="🧘">
-                        🧘 Meditation
-                    </option>
-
-                    <option value="📖">
-                        📖 Lesen
-                    </option>
-
-                    <option value="😴">
-                        😴 Schlafen
-                    </option>
-
-                    <option value="☀️">
-                        ☀️ Morgenroutine
-                    </option>
+                    <option value="0">Montag</option>
+                    <option value="1">Dienstag</option>
+                    <option value="2">Mittwoch</option>
+                    <option value="3">Donnerstag</option>
+                    <option value="4">Freitag</option>
+                    <option value="5">Samstag</option>
+                    <option value="6">Sonntag</option>
 
                 </select>
+
+            </div>
+
+
+            <div id="addDatumField">
+
+                <label>
+                    Datum
+                </label>
+
+                <input id="newDatum" type="date">
+
+            </div>
+
+
+            <div id="addUhrzeitField">
+
+                <label>
+                    Uhrzeit (optional)
+                </label>
+
+                <input id="newUhrzeit" type="time">
+
+                <p class="modal-hinweis">
+                    Nur zum Sortieren und als Erinnerung für dich selbst -
+                    eine Benachrichtigung schickt sie nicht.
+                </p>
 
             </div>
 
@@ -5196,6 +4583,68 @@
 
             </div>
 
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+     DIE 90 TAGE EINSTELLEN
+     Öffnet sich, wenn man auf den Countdown tippt.
+====================================== -->
+
+    <div class="modal" id="countdownModal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2>
+                    Deine 90 Tage
+                </h2>
+
+                <button class="close-button" onclick="closeCountdownModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <p class="modal-text" id="countdownModalInfo"></p>
+
+
+            <label>
+                Erster Tag
+            </label>
+
+            <input id="start90Input" type="date">
+
+            <p class="modal-hinweis">
+                Der Countdown zählt von hier aus 90 Tage herunter.
+            </p>
+
+
+            <div class="zeit-aktionen">
+
+                <button class="zeit-aktion" onclick="start90AufHeute()">
+                    Heute neu starten
+                </button>
+
+            </div>
+
+
+            <div class="modal-buttons">
+
+                <button class="modal-button cancel-button" onclick="closeCountdownModal()">
+                    Abbrechen
+                </button>
+
+                <button class="modal-button create-button" onclick="speichereStart90()">
+                    Speichern
+                </button>
+
+            </div>
 
         </div>
 
@@ -5783,7 +5232,7 @@
 
         /* =========================================================
            DATEN
-           tasks und habits starten LEER und werden erst nach dem
+           Die Listen starten LEER und werden erst nach dem
            Login mit loadUserData() aus Supabase geladen (siehe weiter
            unten). Nur der Chatverlauf bleibt weiterhin lokal im
            Browser (localStorage) - das war für den KI-Chat nicht
@@ -5793,17 +5242,38 @@
         ========================================================= */
 
 
-        // Liste aller Aufgaben: { id, text, priority, completed }
-        // "id" ist die UUID der Zeile in der Supabase-Tabelle "tasks".
-        let tasks = [];
+        /*
+        // DIE AUFGABEN DES TAGES
+        //
+        // Eine Liste für alles, was an einem Tag ansteht. Die alten
+        // Habits und die getrennte To-Do-Liste gibt es nicht mehr -
+        // der Unterschied steckt jetzt im Feld "art":
+        //
+        //   "taeglich"   jeden Tag            z.B. "22:00 schlafen"
+        //   "wochentag"  immer an einem Tag   z.B. montags schneiden
+        //   "datum"      ein einziges Mal     z.B. Zahnarzt am 24.10.
+        //
+        // "erledigtAm" ist das Datum, an dem zuletzt abgehakt wurde.
+        // Steht dort das heutige, gilt die Aufgabe heute als erledigt -
+        // morgen steht sie von selbst wieder offen da. Genau das macht
+        // aus einer Aufgabe eine tägliche Gewohnheit, ohne dass es ein
+        // zweites System dafür braucht.
+        */
+
+        let tagesaufgaben = [];
 
 
-        // Liste aller Habits: { id, text, icon, completedDates: [...] }
-        // "id" ist die UUID der Zeile in der Supabase-Tabelle "habits".
-        // completedDates speichert für JEDEN Tag einzeln, ob das
-        // Habit erledigt wurde - dadurch kann man in der Woche
-        // zurückblättern und sieht den richtigen Stand pro Tag.
-        let habits = [];
+        // Woran in diesen 90 Tagen gearbeitet wird: { id, text, erledigt }
+        let ziele = [];
+
+
+        // Der erste Tag der 90 Tage, als Text wie "2026-10-14".
+        // Leer heißt: noch nicht festgelegt.
+        let start90 = "";
+
+
+        // Wie lang ein Block ist. Hier ändern, wer lieber 30 Tage will.
+        const BLOCK_TAGE = 90;
 
 
         // Der Tag, der gerade auf der Home-Seite ausgewählt ist
@@ -5900,6 +5370,14 @@
         */
 
         const APP_UPDATES = [
+
+            {
+                version: "1.14",
+
+                title: "90 Tage, Tagesaufgaben und Ziele",
+
+                text: "Die Startseite ist neu: ein Countdown über 90 Tage, darunter deine Aufgaben für heute und die Ziele, an denen du in dieser Zeit arbeitest. Habits und die alte To-Do-Liste sind darin aufgegangen."
+            },
 
             {
                 version: "1.13",
@@ -6050,33 +5528,6 @@
 
 
 
-        // Habits, die für einen brandneuen Account einmalig angelegt
-        // werden (siehe loadUserData() weiter unten).
-        const defaultHabits = [
-
-            {
-                text: "Frühstück",
-                icon: "🍎"
-            },
-
-            {
-                text: "Schule",
-                icon: "📚"
-            },
-
-            {
-                text: "Gym",
-                icon: "🏋️"
-            },
-
-            {
-                text: "Wasser trinken",
-                icon: "💧"
-            }
-
-        ];
-
-
         /* =========================================================
            SPEICHERN (nur noch für den lokalen Chatverlauf - alles
            andere läuft jetzt direkt über Supabase-Aufrufe in den
@@ -6148,11 +5599,11 @@
         async function loadUserData() {
 
 
-            // --- HABITS LADEN ---
+            // --- AUFGABEN DES TAGES LADEN ---
 
-            const habitsResult =
+            const aufgabenResult =
                 await supabaseClient
-                    .from("habits")
+                    .from("tagesaufgaben")
                     .select("*")
                     .order(
                         "created_at",
@@ -6160,39 +5611,42 @@
                     );
 
 
-            if (habitsResult.error) {
+            if (aufgabenResult.error) {
 
                 console.error(
-                    "Fehler beim Laden der Habits:",
-                    habitsResult.error
+                    "Fehler beim Laden der Tagesaufgaben:",
+                    aufgabenResult.error
                 );
 
-                habits = [];
+                tagesaufgaben = [];
 
             }
 
             else {
 
-                // Die Datenbank-Spalte heißt "completed_dates"
-                // (snake_case), im JS-Code nutzen wir weiterhin
-                // "completedDates" (camelCase) wie bisher.
-                habits =
-                    habitsResult.data.map(
+                tagesaufgaben =
+                    aufgabenResult.data.map(
                         function (row) {
 
                             return {
 
-                                id:
-                                    row.id,
+                                id: row.id,
 
-                                text:
-                                    row.text,
+                                text: row.text,
 
-                                icon:
-                                    row.icon,
+                                art: row.art || "taeglich",
 
-                                completedDates:
-                                    row.completed_dates || []
+                                wochentag:
+                                    row.wochentag === null ||
+                                    row.wochentag === undefined
+                                        ? null
+                                        : Number(row.wochentag),
+
+                                datum: row.datum || "",
+
+                                uhrzeit: row.uhrzeit || "",
+
+                                erledigtAm: row.erledigt_am || ""
 
                             };
 
@@ -6202,64 +5656,11 @@
             }
 
 
-            // Ist das ein brandneuer Account ohne eigene Habits?
-            // Dann einmalig die Standard-Habits in der Datenbank anlegen.
-            if (habits.length === 0) {
+            // --- 90-TAGE-ZIELE LADEN ---
 
-                for (
-                    const defaultHabit of defaultHabits
-                ) {
-
-                    const insertResult =
-                        await supabaseClient
-                            .from("habits")
-                            .insert({
-
-                                user_id:
-                                    account.id,
-
-                                text:
-                                    defaultHabit.text,
-
-                                icon:
-                                    defaultHabit.icon,
-
-                                completed_dates: []
-
-                            })
-                            .select()
-                            .single();
-
-
-                    if (!insertResult.error) {
-
-                        habits.push({
-
-                            id:
-                                insertResult.data.id,
-
-                            text:
-                                insertResult.data.text,
-
-                            icon:
-                                insertResult.data.icon,
-
-                            completedDates: []
-
-                        });
-
-                    }
-
-                }
-
-            }
-
-
-            // --- AUFGABEN LADEN ---
-
-            const tasksResult =
+            const zieleResult =
                 await supabaseClient
-                    .from("tasks")
+                    .from("ziele")
                     .select("*")
                     .order(
                         "created_at",
@@ -6267,36 +5668,30 @@
                     );
 
 
-            if (tasksResult.error) {
+            if (zieleResult.error) {
 
                 console.error(
-                    "Fehler beim Laden der Aufgaben:",
-                    tasksResult.error
+                    "Fehler beim Laden der Ziele:",
+                    zieleResult.error
                 );
 
-                tasks = [];
+                ziele = [];
 
             }
 
             else {
 
-                tasks =
-                    tasksResult.data.map(
+                ziele =
+                    zieleResult.data.map(
                         function (row) {
 
                             return {
 
-                                id:
-                                    row.id,
+                                id: row.id,
 
-                                text:
-                                    row.text,
+                                text: row.text,
 
-                                priority:
-                                    row.priority,
-
-                                completed:
-                                    row.completed
+                                erledigt: !!row.erledigt
 
                             };
 
@@ -6408,14 +5803,8 @@
                 home:
                     "homePage",
 
-                todo:
-                    "todoPage",
-
                 school:
                     "schoolPage",
-
-                habit:
-                    "habitPage",
 
                 notes:
                     "notesPage",
@@ -6511,20 +5900,6 @@
 
 
             renderAll();
-
-        }
-
-
-        function showTodoPage() {
-
-            showPage("todo");
-
-        }
-
-
-        function showHabitPage() {
-
-            showPage("habit");
 
         }
 
@@ -6684,924 +6059,517 @@
         ========================================================= */
 
 
-        function isHabitCompleted(
-            habit
-        ) {
+        /* =========================================================
+           DIE AUFGABEN DES TAGES
 
-            return habit.completedDates
-                .includes(
-                    dateKey(selectedDate)
-                );
+           Früher gab es Habits (jeden Tag gleich) und Aufgaben
+           (einmalig) als zwei getrennte Systeme. Das ist jetzt eine
+           einzige Liste: Jede Aufgabe weiß selbst, an welchen Tagen
+           sie auftaucht.
+        ========================================================= */
+
+
+        const WOCHENTAG_NAMEN = [
+            "Montag",
+            "Dienstag",
+            "Mittwoch",
+            "Donnerstag",
+            "Freitag",
+            "Samstag",
+            "Sonntag"
+        ];
+
+
+        const WOCHENTAG_REGELMAESSIG = [
+            "montags",
+            "dienstags",
+            "mittwochs",
+            "donnerstags",
+            "freitags",
+            "samstags",
+            "sonntags"
+        ];
+
+
+        // Das heutige Datum als Text, z.B. "2026-10-23".
+        function heuteKey() {
+
+            return dateKey(new Date());
 
         }
 
 
-        async function toggleHabit(
-            id
-        ) {
+        /*
+        // Welcher Wochentag ist heute? 0 = Montag ... 6 = Sonntag.
+        //
+        // JavaScript zählt von Haus aus mit Sonntag = 0, was hier
+        // ständig für Verwirrung sorgen würde. Deshalb einmal zentral
+        // umgerechnet.
+        */
+
+        function wochentagHeute() {
+
+            const tag = new Date().getDay();
+
+            return tag === 0 ? 6 : tag - 1;
+
+        }
 
 
-            const habit =
-                habits.find(
-                    function (item) {
+        // "2026-10-14" -> ein echtes Datum (lokale Mitternacht)
+        function datumAusText(text) {
 
-                        return item.id === id;
+            const teile = String(text).split("-").map(Number);
 
-                    }
-                );
-
-
-            if (!habit) {
-                return;
-            }
-
-
-            const key =
-                dateKey(selectedDate);
-
-
-            const index =
-                habit.completedDates.indexOf(
-                    key
-                );
-
-
-            // Erst lokal ändern, damit der Klick sich sofort reaktionsschnell
-            // anfühlt (die App muss nicht erst auf die Antwort vom Server warten).
-            if (index === -1) {
-
-                // Tag ist noch nicht erledigt -> hinzufügen
-                habit.completedDates.push(
-                    key
-                );
-
-            }
-
-            else {
-
-                // Tag war schon erledigt -> wieder entfernen (Klick = Umschalten)
-                habit.completedDates.splice(
-                    index,
-                    1
-                );
-
-            }
-
-
-            renderAll();
-
-
-            // Jetzt den neuen Stand auch dauerhaft in Supabase speichern.
-            const updateResult =
-                await supabaseClient
-                    .from("habits")
-                    .update({
-
-                        completed_dates:
-                            habit.completedDates
-
-                    })
-                    .eq(
-                        "id",
-                        habit.id
-                    );
-
-
-            if (updateResult.error) {
-
-                console.error(
-                    "Fehler beim Speichern des Habits:",
-                    updateResult.error
-                );
-
-            }
+            return new Date(
+                teile[0],
+                (teile[1] || 1) - 1,
+                teile[2] || 1
+            );
 
         }
 
 
         /* =========================================================
-           HABIT LÖSCHEN
-           Wird über den Papierkorb-Button auf der Habit-Karte aufgerufen.
+           DER 90-TAGE-COUNTDOWN
         ========================================================= */
 
 
-        async function deleteHabit(
-            id,
-            event
-        ) {
+        // Wie viele volle Tage sind seit dem Starttag vergangen?
+        function tageSeitStart() {
 
-            // WICHTIG: Verhindert, dass der Klick auf den Papierkorb
-            // zusätzlich noch die Karte "anklickt" und das Habit
-            // dadurch versehentlich abgehakt wird.
-            if (event) {
-
-                event.stopPropagation();
-
+            if (!start90) {
+                return 0;
             }
 
 
-            const confirmed =
-                confirm(
-                    "Dieses Habit wirklich löschen? Der gesamte Verlauf geht dabei verloren."
-                );
+            const start = datumAusText(start90);
+
+            start.setHours(0, 0, 0, 0);
 
 
-            if (!confirmed) {
-                return;
-            }
+            const heute = new Date();
+
+            heute.setHours(0, 0, 0, 0);
 
 
-            habits =
-                habits.filter(
-                    function (habit) {
-
-                        return habit.id !== id;
-
-                    }
-                );
-
-
-            renderAll();
-
-
-            const deleteResult =
-                await supabaseClient
-                    .from("habits")
-                    .delete()
-                    .eq(
-                        "id",
-                        id
-                    );
-
-
-            if (deleteResult.error) {
-
-                console.error(
-                    "Fehler beim Löschen des Habits:",
-                    deleteResult.error
-                );
-
-            }
+            return Math.round(
+                (heute - start) / 86400000
+            );
 
         }
 
 
-        /* =========================================================
-           FORTSCHRITT BERECHNEN
-        ========================================================= */
+        function renderCountdown() {
 
-
-        function getHabitProgress() {
-
-
-            if (habits.length === 0) {
-
-                return {
-
-                    completed: 0,
-
-                    total: 0,
-
-                    percentage: 0
-
-                };
-
-            }
-
-
-            const completed =
-                habits.filter(
-                    function (habit) {
-
-                        return isHabitCompleted(
-                            habit
-                        );
-
-                    }
-                ).length;
-
-
-            const percentage =
-                Math.round(
-                    (
-                        completed /
-                        habits.length
-                    ) * 100
-                );
-
-
-            return {
-
-                completed:
-                    completed,
-
-                total:
-                    habits.length,
-
-                percentage:
-                    percentage
-
-            };
-
-        }
-
-
-        /* =========================================================
-           FORTSCHRITTS-KREIS AKTUALISIEREN (mit Animation)
-    
-           Funktionsweise (SVG "stroke-dasharray"-Trick):
-           1. stroke-dasharray = gesamter Kreisumfang
-              -> macht aus dem Kreisrand quasi einen einzigen langen "Strich".
-           2. stroke-dashoffset verschiebt, wo dieser Strich beginnt.
-              offset = 0            -> kompletter Kreis sichtbar (100%)
-              offset = Umfang       -> Kreis komplett "versteckt" (0%)
-           3. Die CSS-Regel "transition: stroke-dashoffset 0.7s ease;"
-              (siehe .progress-value oben im <style>) sorgt dafür, dass
-              der Browser jede Änderung von stroke-dashoffset automatisch
-              über 0.7 Sekunden weich animiert.
-        ========================================================= */
-
-
-        function updateProgress(
-            circleId,
-            percentId,
-            summaryId,
-            label
-        ) {
-
-
-            const progress =
-                getHabitProgress();
-
-
-            const circle =
+            const kreis =
                 document.getElementById(
-                    circleId
+                    "countdownCircle"
                 );
 
-
-            // Muss zum "r"-Wert (Radius) der <circle>-Elemente im HTML passen!
-            const radius = 91;
-
-
-            const circumference =
-                2 *
-                Math.PI *
-                radius;
-
-
-            circle.style.strokeDasharray =
-                circumference;
-
-
-            const offset =
-                circumference -
-                (
-                    progress.percentage /
-                    100
-                ) *
-                circumference;
-
-
-            circle.style.strokeDashoffset =
-                offset;
-
-
-            document.getElementById(
-                percentId
-            ).textContent =
-                progress.percentage + "%";
-
-
-            document.getElementById(
-                summaryId
-            ).textContent =
-                `${progress.completed} von ${progress.total} ${label} erledigt`;
-
-        }
-
-
-        /* =========================================================
-           HABITS RENDERN (als Karten anzeigen)
-        ========================================================= */
-
-
-        function createHabitCard(
-            habit
-        ) {
-
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            const completed =
-                isHabitCompleted(
-                    habit
-                );
-
-
-            card.className =
-                "habit-card";
-
-
-            if (completed) {
-
-                card.classList.add(
-                    "done"
-                );
-
-            }
-
-
-            card.innerHTML = `
-
-            <button
-                class="habit-delete"
-                title="Habit löschen"
-            >
-                🗑️
-            </button>
-
-            <div class="habit-icon">
-                ${habit.icon}
-            </div>
-
-            <div class="habit-name">
-                ${escapeHtml(habit.text)}
-            </div>
-
-            <div class="habit-status">
-                ${completed
-                    ? "Erledigt ✓"
-                    : "Noch offen"
-                }
-            </div>
-
-            <div class="habit-check">
-                ${completed
-                    ? "✓"
-                    : ""
-                }
-            </div>
-
-        `;
-
-
-            // Klick irgendwo auf die Karte (außer dem Papierkorb) hakt ab
-            card.onclick =
-                function () {
-
-                    toggleHabit(
-                        habit.id
-                    );
-
-                };
-
-
-            // Der Papierkorb-Button bekommt seinen eigenen Klick-Handler.
-            // event wird an deleteHabit() weitergegeben, damit dort
-            // stopPropagation() aufgerufen werden kann.
-            const deleteButton =
-                card.querySelector(
-                    ".habit-delete"
-                );
-
-
-            deleteButton.onclick =
-                function (event) {
-
-                    deleteHabit(
-                        habit.id,
-                        event
-                    );
-
-                };
-
-
-            return card;
-
-        }
-
-
-        function renderHabits() {
-
-
-            const homeGrid =
+            const zahl =
                 document.getElementById(
-                    "homeHabitGrid"
+                    "countdownDays"
                 );
-
-
-            const habitGrid =
-                document.getElementById(
-                    "habitPageGrid"
-                );
-
-
-            homeGrid.innerHTML = "";
-
-            habitGrid.innerHTML = "";
-
-
-            habits.forEach(
-                function (habit) {
-
-
-                    // Für Home und Habit-Seite brauchen wir jeweils eine
-                    // eigene Karte (ein DOM-Element kann nicht an zwei
-                    // Stellen gleichzeitig angezeigt werden).
-                    const homeCard =
-                        createHabitCard(
-                            habit
-                        );
-
-
-                    const pageCard =
-                        createHabitCard(
-                            habit
-                        );
-
-
-                    homeGrid.appendChild(
-                        homeCard
-                    );
-
-
-                    habitGrid.appendChild(
-                        pageCard
-                    );
-
-                }
-            );
-
-
-            // "+ Habit hinzufügen"-Karte ganz am Ende der Habits-Seite
-            const addCard =
-                document.createElement(
-                    "div"
-                );
-
-
-            addCard.className =
-                "habit-card add-habit-card";
-
-
-            addCard.textContent =
-                "+ Habit hinzufügen";
-
-
-            addCard.onclick =
-                function () {
-
-                    openAddModal("habit");
-
-                };
-
-
-            habitGrid.appendChild(
-                addCard
-            );
-
-
-            updateProgress(
-                "progressCircle",
-                "progressPercent",
-                "progressSummary",
-                "Habits"
-            );
-
-
-            updateProgress(
-                "habitProgressCircle",
-                "habitProgressPercent",
-                "habitProgressSummary",
-                "Habits"
-            );
-
-        }
-
-
-        /* =========================================================
-           AUFGABEN RENDERN
-        ========================================================= */
-
-
-        function createTaskElement(
-            taskData,
-            index
-        ) {
-
-
-            const task =
-                document.createElement(
-                    "li"
-                );
-
-
-            task.className =
-                "task";
-
-
-            const checkCircle =
-                document.createElement(
-                    "button"
-                );
-
-
-            checkCircle.className =
-                "check-circle";
-
-
-            if (taskData.completed) {
-
-                checkCircle.classList.add(
-                    "checked"
-                );
-
-                checkCircle.textContent =
-                    "✓";
-
-            }
-
-
-            const taskInfo =
-                document.createElement(
-                    "div"
-                );
-
-
-            taskInfo.className =
-                "task-info";
-
 
             const text =
-                document.createElement(
-                    "div"
+                document.getElementById(
+                    "countdownSummary"
                 );
 
 
-            text.className =
-                "task-text";
+            if (!kreis || !zahl || !text) {
+                return;
+            }
+
+
+            const vergangen =
+                Math.max(0, tageSeitStart());
+
+
+            const uebrig =
+                Math.max(0, BLOCK_TAGE - vergangen);
+
+
+            const tagNummer =
+                Math.min(BLOCK_TAGE, vergangen + 1);
+
+
+            zahl.textContent = uebrig;
+
+
+            /*
+            // Der Ring füllt sich mit der VERGANGENEN Zeit. Die Länge
+            // des Kreisbogens ist 2 * Pi * r; "strokeDashoffset" sagt,
+            // wie viel davon unsichtbar bleibt.
+            */
+
+            const radius = 91;
+
+            const umfang = 2 * Math.PI * radius;
+
+
+            const anteil =
+                Math.min(1, vergangen / BLOCK_TAGE);
+
+
+            kreis.style.strokeDasharray = umfang;
+
+            kreis.style.strokeDashoffset =
+                umfang - anteil * umfang;
+
+
+            if (!start90) {
+
+                text.textContent =
+                    "Tippe hier, um deine 90 Tage zu starten";
+
+                return;
+
+            }
+
+
+            if (uebrig === 0) {
+
+                text.textContent =
+                    "Geschafft - die 90 Tage sind um. Tippe für einen neuen Block.";
+
+                return;
+
+            }
+
+
+            const ende = datumAusText(start90);
+
+            ende.setDate(ende.getDate() + BLOCK_TAGE);
 
 
             text.textContent =
-                taskData.text;
+                "Tag " + tagNummer + " von " + BLOCK_TAGE +
+                "  ·  bis " + formatDate(ende);
+
+        }
 
 
-            if (taskData.completed) {
+        function openCountdownModal() {
 
-                text.classList.add(
-                    "completed"
-                );
-
-            }
-
-
-            taskInfo.appendChild(
-                text
-            );
+            document.getElementById(
+                "start90Input"
+            ).value =
+                start90 || heuteKey();
 
 
-            const priority =
-                document.createElement(
-                    "div"
+            const info =
+                document.getElementById(
+                    "countdownModalInfo"
                 );
 
 
-            priority.className =
-                "priority-dot";
+            if (start90) {
 
+                const vergangen =
+                    Math.max(0, tageSeitStart());
 
-            if (
-                taskData.priority ===
-                "high"
-            ) {
-
-                priority.textContent =
-                    "🔴";
-
-            }
-
-            else if (
-                taskData.priority ===
-                "medium"
-            ) {
-
-                priority.textContent =
-                    "🟡";
+                info.textContent =
+                    "Du bist bei Tag " +
+                    Math.min(BLOCK_TAGE, vergangen + 1) +
+                    " von " + BLOCK_TAGE + ".";
 
             }
 
             else {
 
-                priority.textContent =
-                    "🟢";
+                info.textContent =
+                    "Leg fest, wann deine 90 Tage angefangen haben.";
 
             }
 
 
-            const deleteButton =
-                document.createElement(
-                    "button"
-                );
-
-
-            deleteButton.className =
-                "delete-button";
-
-
-            deleteButton.textContent =
-                "🗑️";
-
-
-            /*
-            // AUFGABE ERLEDIGEN (mit Animation)
-            // Ablauf:
-            // 1. Sofort visuell abhaken (Häkchen, durchgestrichener Text).
-            // 2. Klasse "completing" hinzufügen -> CSS lässt die Zeile
-            //    ausblenden und leicht nach rechts rutschen (siehe .task.completing).
-            // 3. Nach 1.5 Sekunden (also NACHDEM die Animation zu sehen war)
-            //    wird die Aufgabe endgültig aus dem Array entfernt und
-            //    alles neu gerendert.
-            */
-
-            checkCircle.onclick =
-                async function () {
-
-
-                    if (
-                        tasks[index] &&
-                        tasks[index].completed
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    if (!tasks[index]) {
-                        return;
-                    }
-
-
-                    tasks[index].completed =
-                        true;
-
-
-                    task.classList.add(
-                        "completing"
-                    );
-
-
-                    checkCircle.classList.add(
-                        "checked"
-                    );
-
-
-                    checkCircle.textContent =
-                        "✓";
-
-
-                    text.classList.add(
-                        "completed"
-                    );
-
-
-                    // In Supabase als erledigt markieren
-                    const updateResult =
-                        await supabaseClient
-                            .from("tasks")
-                            .update({
-                                completed: true
-                            })
-                            .eq(
-                                "id",
-                                taskData.id
-                            );
-
-
-                    if (updateResult.error) {
-
-                        console.error(
-                            "Fehler beim Erledigen der Aufgabe:",
-                            updateResult.error
-                        );
-
-                    }
-
-
-                    setTimeout(
-                        async function () {
-
-
-                            const taskIndex =
-                                tasks.indexOf(
-                                    taskData
-                                );
-
-
-                            if (
-                                taskIndex !== -1
-                            ) {
-
-                                tasks.splice(
-                                    taskIndex,
-                                    1
-                                );
-
-                            }
-
-
-                            renderAll();
-
-
-                            // Erledigte Aufgabe endgültig aus der
-                            // Datenbank entfernen.
-                            const deleteResult =
-                                await supabaseClient
-                                    .from("tasks")
-                                    .delete()
-                                    .eq(
-                                        "id",
-                                        taskData.id
-                                    );
-
-
-                            if (deleteResult.error) {
-
-                                console.error(
-                                    "Fehler beim Entfernen der Aufgabe:",
-                                    deleteResult.error
-                                );
-
-                            }
-
-
-                        },
-                        1500
-                    );
-
-                };
-
-
-            deleteButton.onclick =
-                async function () {
-
-
-                    const taskIndex =
-                        tasks.indexOf(
-                            taskData
-                        );
-
-
-                    if (
-                        taskIndex !== -1
-                    ) {
-
-                        tasks.splice(
-                            taskIndex,
-                            1
-                        );
-
-                    }
-
-
-                    renderAll();
-
-
-                    const deleteResult =
-                        await supabaseClient
-                            .from("tasks")
-                            .delete()
-                            .eq(
-                                "id",
-                                taskData.id
-                            );
-
-
-                    if (deleteResult.error) {
-
-                        console.error(
-                            "Fehler beim Löschen der Aufgabe:",
-                            deleteResult.error
-                        );
-
-                    }
-
-                };
-
-
-            task.appendChild(
-                checkCircle
-            );
-
-
-            task.appendChild(
-                taskInfo
-            );
-
-
-            task.appendChild(
-                priority
-            );
-
-
-            task.appendChild(
-                deleteButton
-            );
-
-
-            return task;
+            document.getElementById(
+                "countdownModal"
+            ).classList.add("show");
 
         }
 
 
-        function renderTasks() {
+        function closeCountdownModal() {
+
+            document.getElementById(
+                "countdownModal"
+            ).classList.remove("show");
+
+        }
 
 
-            const homeList =
+        function start90AufHeute() {
+
+            document.getElementById(
+                "start90Input"
+            ).value = heuteKey();
+
+        }
+
+
+        async function speichereStart90() {
+
+            const wert =
                 document.getElementById(
-                    "homeTaskList"
+                    "start90Input"
+                ).value;
+
+
+            if (!wert) {
+
+                alert(
+                    "Bitte ein Datum auswählen."
                 );
-
-
-            const todoList =
-                document.getElementById(
-                    "todoTaskList"
-                );
-
-
-            homeList.innerHTML = "";
-
-            todoList.innerHTML = "";
-
-
-            if (tasks.length === 0) {
-
-
-                const emptyHome =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                emptyHome.className =
-                    "empty-state";
-
-
-                emptyHome.textContent =
-                    "Keine offenen Aufgaben 🎉";
-
-
-                homeList.appendChild(
-                    emptyHome
-                );
-
-
-                const emptyTodo =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                emptyTodo.className =
-                    "empty-state";
-
-
-                emptyTodo.textContent =
-                    "Du hast momentan keine offenen Aufgaben.";
-
-
-                todoList.appendChild(
-                    emptyTodo
-                );
-
 
                 return;
 
             }
 
 
-            tasks.forEach(
-                function (taskData, index) {
+            start90 = wert;
 
 
-                    homeList.appendChild(
-                        createTaskElement(
-                            taskData,
-                            index
-                        )
+            closeCountdownModal();
+
+            renderCountdown();
+
+
+            await speichereStart90Wert(wert);
+
+        }
+
+
+        // Schreibt den Starttag in die Tabelle "profil" - dort steht
+        // ohnehin schon genau eine Zeile pro Nutzer.
+        async function speichereStart90Wert(wert) {
+
+            if (!account) {
+                return;
+            }
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("profil")
+                    .upsert(
+                        {
+                            user_id: account.id,
+
+                            start_90: wert
+                        },
+                        {
+                            onConflict: "user_id"
+                        }
                     );
 
 
-                    todoList.appendChild(
-                        createTaskElement(
-                            taskData,
-                            index
-                        )
+            if (ergebnis.error) {
+
+                console.error(
+                    "Starttag konnte nicht gespeichert werden:",
+                    ergebnis.error
+                );
+
+
+                alert(
+                    "Der Starttag konnte nicht gespeichert werden:\n" +
+                    ergebnis.error.message +
+                    "\n\n(Fehlt vielleicht noch die Spalte \"start_90\"? Dann tagesaufgaben-und-ziele.sql ausführen.)"
+                );
+
+            }
+
+        }
+
+
+        /* =========================================================
+           WELCHE AUFGABEN STEHEN HEUTE AN?
+        ========================================================= */
+
+
+        function istHeuteFaellig(aufgabe) {
+
+            if (aufgabe.art === "taeglich") {
+
+                return true;
+
+            }
+
+
+            if (aufgabe.art === "wochentag") {
+
+                return aufgabe.wochentag === wochentagHeute();
+
+            }
+
+
+            if (aufgabe.art === "datum") {
+
+                /*
+                // Auch ÜBERFÄLLIGE einmalige Aufgaben bleiben stehen.
+                // Sonst wäre der Zahnarzttermin am Tag danach spurlos
+                // verschwunden, ohne dass man ihn je gesehen hat.
+                */
+
+                return !!aufgabe.datum && aufgabe.datum <= heuteKey();
+
+            }
+
+
+            return false;
+
+        }
+
+
+        function istErledigt(aufgabe) {
+
+            return aufgabe.erledigtAm === heuteKey();
+
+        }
+
+
+        // Alle heutigen Aufgaben, sortiert: erst die mit Uhrzeit (nach
+        // der Uhr), danach die ohne.
+        function aufgabenFuerHeute() {
+
+            return tagesaufgaben
+                .filter(istHeuteFaellig)
+                .slice()
+                .sort(
+                    function (a, b) {
+
+                        if (a.uhrzeit && b.uhrzeit) {
+                            return a.uhrzeit < b.uhrzeit ? -1 : 1;
+                        }
+
+                        if (a.uhrzeit) {
+                            return -1;
+                        }
+
+                        if (b.uhrzeit) {
+                            return 1;
+                        }
+
+                        return 0;
+
+                    }
+                );
+
+        }
+
+
+        // Die kleine graue Zeile unter dem Text einer Aufgabe.
+        function aufgabeBeschreibung(aufgabe) {
+
+            let text = "";
+
+            let dringend = false;
+
+
+            if (aufgabe.art === "taeglich") {
+
+                text = "jeden Tag";
+
+            }
+
+            else if (aufgabe.art === "wochentag") {
+
+                text =
+                    WOCHENTAG_REGELMAESSIG[aufgabe.wochentag] ||
+                    "wöchentlich";
+
+            }
+
+            else if (aufgabe.art === "datum") {
+
+                if (aufgabe.datum === heuteKey()) {
+
+                    text = "heute";
+
+                }
+
+                else if (aufgabe.datum < heuteKey()) {
+
+                    text =
+                        "überfällig · war " +
+                        formatDueDate(aufgabe.datum);
+
+                    dringend = true;
+
+                }
+
+                else {
+
+                    text = formatDueDate(aufgabe.datum);
+
+                }
+
+            }
+
+
+            if (aufgabe.uhrzeit) {
+
+                text = aufgabe.uhrzeit + "  ·  " + text;
+
+            }
+
+
+            return { text: text, dringend: dringend };
+
+        }
+
+
+        /* =========================================================
+           DIE LISTE ZEICHNEN
+        ========================================================= */
+
+
+        function renderTagesaufgaben() {
+
+            const liste =
+                document.getElementById(
+                    "heuteListe"
+                );
+
+
+            if (!liste) {
+                return;
+            }
+
+
+            liste.innerHTML = "";
+
+
+            const heutige = aufgabenFuerHeute();
+
+
+            if (heutige.length === 0) {
+
+                const leer =
+                    document.createElement("li");
+
+                leer.className = "empty-state";
+
+                leer.textContent =
+                    tagesaufgaben.length === 0
+                        ? "Noch nichts eingetragen. Tippe oben auf \"Neu\" und schreib auf, was zu deinem Tag gehört."
+                        : "Für heute steht nichts an.";
+
+                liste.appendChild(leer);
+
+                return;
+
+            }
+
+
+            heutige.forEach(
+                function (aufgabe) {
+
+                    liste.appendChild(
+                        createAufgabenZeile(aufgabe)
                     );
 
                 }
@@ -7610,26 +6578,394 @@
         }
 
 
-        /* =========================================================
-           GEMEINSAMES MODAL: "NEU HINZUFÜGEN"
-           Ein einziges Popup für Aufgaben UND Habits.
-           Das Dropdown "Typ" entscheidet, was am Ende passiert.
-        ========================================================= */
+        function createAufgabenZeile(aufgabe) {
+
+            const zeile =
+                document.createElement("li");
+
+            zeile.className = "task";
 
 
-        // Öffnet das Modal. Optional kann ein Start-Typ übergeben werden,
-        // z.B. openAddModal('habit') von der "+"-Karte bei den Habits.
-        function openAddModal(
-            startType
-        ) {
+            const erledigt = istErledigt(aufgabe);
+
+
+            const kreis =
+                document.createElement("button");
+
+            kreis.className = "check-circle";
+
+
+            if (erledigt) {
+
+                kreis.classList.add("checked");
+
+                kreis.textContent = "✓";
+
+            }
+
+
+            const mitte =
+                document.createElement("div");
+
+            mitte.className = "task-info";
+
+
+            const text =
+                document.createElement("div");
+
+            text.className =
+                "task-text" + (erledigt ? " completed" : "");
+
+            text.textContent = aufgabe.text;
+
+            mitte.appendChild(text);
+
+
+            const beschreibung =
+                aufgabeBeschreibung(aufgabe);
+
+
+            if (beschreibung.text) {
+
+                const unten =
+                    document.createElement("div");
+
+                unten.className =
+                    "task-meta" +
+                    (beschreibung.dringend ? " urgent" : "");
+
+                unten.textContent = beschreibung.text;
+
+                mitte.appendChild(unten);
+
+            }
+
+
+            const loeschen =
+                document.createElement("button");
+
+            loeschen.className = "delete-button";
+
+            loeschen.textContent = "🗑️";
+
+            loeschen.onclick =
+                function () {
+
+                    loescheAufgabe(aufgabe.id);
+
+                };
+
+
+            kreis.onclick =
+                function () {
+
+                    toggleAufgabe(aufgabe.id);
+
+                };
+
+
+            zeile.appendChild(kreis);
+
+            zeile.appendChild(mitte);
+
+            zeile.appendChild(loeschen);
+
+
+            return zeile;
+
+        }
+
+
+        async function toggleAufgabe(id) {
+
+            const aufgabe =
+                tagesaufgaben.find(
+                    function (a) {
+                        return a.id === id;
+                    }
+                );
+
+
+            if (!aufgabe) {
+                return;
+            }
 
 
             /*
-            // Der "+"-Button in der unteren Leiste passt sich der
-            // aktuellen Seite an: Ist die Notizen-Seite offen, legt er
-            // direkt eine neue Notiz an, statt das Aufgaben-Fenster zu
-            // öffnen. Aufrufe MIT Typ (z.B. openAddModal('habit') von
-            // der Habits-Seite) sind davon nicht betroffen.
+            // Eine EINMALIGE Aufgabe ist nach dem Abhaken erledigt -
+            // sie verschwindet ganz, wie früher eine To-Do. Alles
+            // andere wird nur für heute abgehakt und steht morgen
+            // wieder da.
+            */
+
+            if (aufgabe.art === "datum" && !istErledigt(aufgabe)) {
+
+                await loescheAufgabe(id);
+
+                return;
+
+            }
+
+
+            const neuerWert =
+                istErledigt(aufgabe) ? null : heuteKey();
+
+
+            aufgabe.erledigtAm = neuerWert || "";
+
+
+            renderTagesaufgaben();
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("tagesaufgaben")
+                    .update({ erledigt_am: neuerWert })
+                    .eq("id", id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Abhaken konnte nicht gespeichert werden:",
+                    ergebnis.error
+                );
+
+            }
+
+        }
+
+
+        async function loescheAufgabe(id) {
+
+            tagesaufgaben =
+                tagesaufgaben.filter(
+                    function (a) {
+                        return a.id !== id;
+                    }
+                );
+
+
+            renderTagesaufgaben();
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("tagesaufgaben")
+                    .delete()
+                    .eq("id", id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Aufgabe konnte nicht gelöscht werden:",
+                    ergebnis.error
+                );
+
+            }
+
+        }
+
+
+        /* =========================================================
+           DIE 90-TAGE-ZIELE
+        ========================================================= */
+
+
+        function renderZiele() {
+
+            const liste =
+                document.getElementById(
+                    "zieleListe"
+                );
+
+
+            if (!liste) {
+                return;
+            }
+
+
+            liste.innerHTML = "";
+
+
+            if (ziele.length === 0) {
+
+                const leer =
+                    document.createElement("li");
+
+                leer.className = "empty-state";
+
+                leer.textContent =
+                    "Woran willst du in diesen 90 Tagen arbeiten? Tippe auf \"Neu\".";
+
+                liste.appendChild(leer);
+
+                return;
+
+            }
+
+
+            ziele.forEach(
+                function (ziel) {
+
+                    const zeile =
+                        document.createElement("li");
+
+                    zeile.className = "task";
+
+
+                    const kreis =
+                        document.createElement("button");
+
+                    kreis.className = "check-circle";
+
+
+                    if (ziel.erledigt) {
+
+                        kreis.classList.add("checked");
+
+                        kreis.textContent = "✓";
+
+                    }
+
+
+                    const mitte =
+                        document.createElement("div");
+
+                    mitte.className = "task-info";
+
+
+                    const text =
+                        document.createElement("div");
+
+                    text.className =
+                        "task-text" + (ziel.erledigt ? " completed" : "");
+
+                    text.textContent = ziel.text;
+
+                    mitte.appendChild(text);
+
+
+                    const loeschen =
+                        document.createElement("button");
+
+                    loeschen.className = "delete-button";
+
+                    loeschen.textContent = "🗑️";
+
+                    loeschen.onclick =
+                        function () {
+                            loescheZiel(ziel.id);
+                        };
+
+
+                    kreis.onclick =
+                        function () {
+                            toggleZiel(ziel.id);
+                        };
+
+
+                    zeile.appendChild(kreis);
+
+                    zeile.appendChild(mitte);
+
+                    zeile.appendChild(loeschen);
+
+
+                    liste.appendChild(zeile);
+
+                }
+            );
+
+        }
+
+
+        async function toggleZiel(id) {
+
+            const ziel =
+                ziele.find(
+                    function (z) {
+                        return z.id === id;
+                    }
+                );
+
+
+            if (!ziel) {
+                return;
+            }
+
+
+            ziel.erledigt = !ziel.erledigt;
+
+
+            renderZiele();
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("ziele")
+                    .update({ erledigt: ziel.erledigt })
+                    .eq("id", id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Ziel konnte nicht gespeichert werden:",
+                    ergebnis.error
+                );
+
+            }
+
+        }
+
+
+        async function loescheZiel(id) {
+
+            ziele =
+                ziele.filter(
+                    function (z) {
+                        return z.id !== id;
+                    }
+                );
+
+
+            renderZiele();
+
+
+            const ergebnis =
+                await supabaseClient
+                    .from("ziele")
+                    .delete()
+                    .eq("id", id);
+
+
+            if (ergebnis.error) {
+
+                console.error(
+                    "Ziel konnte nicht gelöscht werden:",
+                    ergebnis.error
+                );
+
+            }
+
+        }
+
+
+        /* =========================================================
+           DAS "NEU"-FENSTER
+        ========================================================= */
+
+
+        function openAddModal(startType) {
+
+            /*
+            // Der "+"-Knopf in der unteren Leiste passt sich der
+            // Seite an: Auf der Notizen-Seite legt er direkt eine
+            // Notiz an, auf der Schul-Seite das, was dort gerade
+            // passt. Aufrufe MIT Typ (von den "Neu"-Knöpfen auf der
+            // Startseite) sind davon nicht betroffen.
             */
 
             if (
@@ -7645,13 +6981,6 @@
 
             }
 
-
-            /*
-            // Auf der Schul-Seite hängt es davon ab, welche der drei
-            // Ansichten gerade offen ist: beim Stundenplan gibt es
-            // nichts anzulegen (dort tippt man direkt auf eine Stunde),
-            // bei den Hausaufgaben eine Aufgabe, bei den Fächern ein Fach.
-            */
 
             if (
                 !startType &&
@@ -7687,35 +7016,46 @@
             }
 
 
-            if (startType) {
+            document.getElementById(
+                "addType"
+            ).value =
+                startType === "ziel" ? "ziel" : "aufgabe";
 
-                document.getElementById(
-                    "addType"
-                ).value =
-                    startType;
 
-            }
+            document.getElementById(
+                "newItemName"
+            ).value = "";
+
+            document.getElementById(
+                "newWann"
+            ).value = "taeglich";
+
+            document.getElementById(
+                "newWochentag"
+            ).value = String(wochentagHeute());
+
+            document.getElementById(
+                "newDatum"
+            ).value = heuteKey();
+
+            document.getElementById(
+                "newUhrzeit"
+            ).value = "";
 
 
             updateAddModalFields();
 
 
             document
-                .getElementById(
-                    "addModal"
-                )
-                .classList.add(
-                    "show"
-                );
+                .getElementById("addModal")
+                .classList.add("show");
 
 
             setTimeout(
                 function () {
 
                     document
-                        .getElementById(
-                            "newItemName"
-                        )
+                        .getElementById("newItemName")
                         .focus();
 
                 },
@@ -7728,326 +7068,243 @@
         function closeAddModal() {
 
             document
-                .getElementById(
-                    "addModal"
-                )
-                .classList.remove(
-                    "show"
-                );
-
-
-            // Formular zurücksetzen, damit beim nächsten Öffnen
-            // nicht die alten Werte stehen bleiben.
-            document.getElementById(
-                "newItemName"
-            ).value = "";
-
-
-            document.getElementById(
-                "newPriority"
-            ).value =
-                "medium";
+                .getElementById("addModal")
+                .classList.remove("show");
 
         }
 
 
-        // Blendet je nach gewähltem Typ das Prioritäts- oder
-        // das Symbol-Feld ein bzw. aus.
+        // Blendet genau die Felder ein, die zur Auswahl passen.
         function updateAddModalFields() {
 
+            const typ =
+                document.getElementById("addType").value;
 
-            const type =
-                document.getElementById(
-                    "addType"
-                ).value;
-
-
-            const priorityField =
-                document.getElementById(
-                    "priorityField"
-                );
+            const wann =
+                document.getElementById("newWann").value;
 
 
-            const iconField =
-                document.getElementById(
-                    "iconField"
-                );
+            const istAufgabe = typ === "aufgabe";
 
 
-            if (type === "habit") {
+            document.getElementById(
+                "addModalTitle"
+            ).textContent =
+                istAufgabe ? "Neue Aufgabe" : "Neues Ziel";
 
-                priorityField.style.display =
-                    "none";
 
-                iconField.style.display =
-                    "block";
+            document.getElementById(
+                "addNameLabel"
+            ).textContent =
+                istAufgabe ? "Aufgabe" : "Ziel";
 
-            }
 
-            else {
+            document.getElementById(
+                "newItemName"
+            ).placeholder =
+                istAufgabe
+                    ? "z.B. 22:00 schlafen"
+                    : "z.B. 10 Videos veröffentlichen";
 
-                priorityField.style.display =
-                    "block";
 
-                iconField.style.display =
-                    "none";
+            document.getElementById(
+                "addWannField"
+            ).style.display =
+                istAufgabe ? "block" : "none";
 
-            }
+
+            document.getElementById(
+                "addUhrzeitField"
+            ).style.display =
+                istAufgabe ? "block" : "none";
+
+
+            document.getElementById(
+                "addWochentagField"
+            ).style.display =
+                (istAufgabe && wann === "wochentag") ? "block" : "none";
+
+
+            document.getElementById(
+                "addDatumField"
+            ).style.display =
+                (istAufgabe && wann === "datum") ? "block" : "none";
 
         }
 
 
-        // Liest das Formular aus und legt je nach Typ entweder
-        // eine neue Aufgabe oder ein neues Habit an.
         async function createItem() {
 
-
-            const type =
-                document.getElementById(
-                    "addType"
-                ).value;
-
-
-            const name =
+            const text =
                 document.getElementById(
                     "newItemName"
                 ).value.trim();
 
 
-            if (name === "") {
+            if (text === "") {
+                return;
+            }
+
+
+            const typ =
+                document.getElementById("addType").value;
+
+
+            closeAddModal();
+
+
+            if (typ === "ziel") {
+
+                await erstelleZiel(text);
 
                 return;
 
             }
 
 
-            // WICHTIG: Priorität und Symbol müssen HIER, vor dem
-            // Schließen des Fensters, ausgelesen werden - closeAddModal()
-            // setzt die Formularfelder zurück (u.a. Priorität auf
-            // "medium"), damit beim nächsten Öffnen kein alter Wert
-            // mehr drinsteht. Würden wir erst NACH closeAddModal()
-            // auslesen, bekämen wir also immer schon den
-            // zurückgesetzten Wert statt der echten Auswahl.
-            const selectedPriority =
-                document.getElementById(
-                    "newPriority"
-                ).value;
-
-
-            const selectedIcon =
-                document.getElementById(
-                    "newIcon"
-                ).value;
-
-
-            // Das Fenster schon vorab schließen, damit sich die App
-            // reaktionsschnell anfühlt (wir warten nicht erst auf
-            // die Antwort vom Server).
-            closeAddModal();
-
-
-            if (type === "habit") {
-
-
-                const insertResult =
-                    await supabaseClient
-                        .from("habits")
-                        .insert({
-
-                            user_id:
-                                account.id,
-
-                            text:
-                                name,
-
-                            icon:
-                                selectedIcon,
-
-                            completed_dates: []
-
-                        })
-                        .select()
-                        .single();
-
-
-                if (insertResult.error) {
-
-                    console.error(
-                        "Fehler beim Anlegen des Habits:",
-                        insertResult.error
-                    );
-
-                    alert(
-                        "Das Habit konnte nicht gespeichert werden."
-                    );
-
-                    return;
-
-                }
-
-
-                habits.push({
-
-                    id:
-                        insertResult.data.id,
-
-                    text:
-                        name,
-
-                    icon:
-                        selectedIcon,
-
-                    completedDates:
-                        []
-
-                });
-
-            }
-
-            else {
-
-
-                const insertResult =
-                    await supabaseClient
-                        .from("tasks")
-                        .insert({
-
-                            user_id:
-                                account.id,
-
-                            text:
-                                name,
-
-                            priority:
-                                selectedPriority,
-
-                            completed: false
-
-                        })
-                        .select()
-                        .single();
-
-
-                if (insertResult.error) {
-
-                    console.error(
-                        "Fehler beim Anlegen der Aufgabe:",
-                        insertResult.error
-                    );
-
-                    alert(
-                        "Die Aufgabe konnte nicht gespeichert werden."
-                    );
-
-                    return;
-
-                }
-
-
-                tasks.push({
-
-                    id:
-                        insertResult.data.id,
-
-                    text:
-                        name,
-
-                    priority:
-                        selectedPriority,
-
-                    completed:
-                        false
-
-                });
-
-            }
-
-
-            renderAll();
+            await erstelleAufgabe(text);
 
         }
 
 
-        /* =========================================================
-           STREAK BERECHNEN
-           Zählt rückwärts ab heute, an wie vielen Tagen IN FOLGE
-           ALLE Habits erledigt wurden. Sobald ein Tag fehlt, stoppt
-           die Zählung.
-        ========================================================= */
+        async function erstelleAufgabe(text) {
+
+            const wann =
+                document.getElementById("newWann").value;
 
 
-        function calculateStreak() {
+            const neueAufgabe = {
+
+                user_id: account.id,
+
+                text: text,
+
+                art: wann,
+
+                wochentag:
+                    wann === "wochentag"
+                        ? Number(
+                            document.getElementById("newWochentag").value
+                        )
+                        : null,
+
+                datum:
+                    wann === "datum"
+                        ? (document.getElementById("newDatum").value || null)
+                        : null,
+
+                uhrzeit:
+                    document.getElementById("newUhrzeit").value || null,
+
+                erledigt_am: null
+
+            };
 
 
-            let streak = 0;
+            const ergebnis =
+                await supabaseClient
+                    .from("tagesaufgaben")
+                    .insert(neueAufgabe)
+                    .select()
+                    .single();
 
 
-            const today =
-                new Date();
+            if (ergebnis.error) {
 
-
-            // Wir schauen maximal 365 Tage zurück (mehr braucht kein
-            // realistischer Streak).
-            for (
-                let i = 0;
-                i < 365;
-                i++
-            ) {
-
-
-                const date =
-                    new Date(today);
-
-
-                date.setDate(
-                    today.getDate() - i
+                console.error(
+                    "Aufgabe konnte nicht angelegt werden:",
+                    ergebnis.error
                 );
 
 
-                const key =
-                    dateKey(date);
+                alert(
+                    "Die Aufgabe konnte nicht gespeichert werden:\n" +
+                    ergebnis.error.message +
+                    "\n\n(Fehlt vielleicht noch die Tabelle \"tagesaufgaben\"? Dann tagesaufgaben-und-ziele.sql ausführen.)"
+                );
 
-
-                // "completed" ist nur true, wenn es Habits gibt UND
-                // WIRKLICH JEDES einzelne Habit an diesem Tag erledigt wurde.
-                const completed =
-                    habits.length > 0 &&
-                    habits.every(
-                        function (habit) {
-
-                            return habit.completedDates
-                                .includes(key);
-
-                        }
-                    );
-
-
-                if (completed) {
-
-                    streak++;
-
-                }
-
-                else {
-
-                    break;
-
-                }
+                return;
 
             }
 
 
-            return streak;
+            tagesaufgaben.push({
+
+                id: ergebnis.data.id,
+
+                text: text,
+
+                art: neueAufgabe.art,
+
+                wochentag: neueAufgabe.wochentag,
+
+                datum: neueAufgabe.datum || "",
+
+                uhrzeit: neueAufgabe.uhrzeit || "",
+
+                erledigtAm: ""
+
+            });
+
+
+            renderTagesaufgaben();
 
         }
 
 
-        /* =========================================================
-           LOGIN / REGISTRIERUNG
-        ========================================================= */
+        async function erstelleZiel(text) {
+
+            const ergebnis =
+                await supabaseClient
+                    .from("ziele")
+                    .insert({
+
+                        user_id: account.id,
+
+                        text: text,
+
+                        erledigt: false
+
+                    })
+                    .select()
+                    .single();
 
 
-        // Ganz einfache E-Mail-Prüfung: irgendwas @ irgendwas . irgendwas
+            if (ergebnis.error) {
+
+                console.error(
+                    "Ziel konnte nicht angelegt werden:",
+                    ergebnis.error
+                );
+
+
+                alert(
+                    "Das Ziel konnte nicht gespeichert werden:\n" +
+                    ergebnis.error.message +
+                    "\n\n(Fehlt vielleicht noch die Tabelle \"ziele\"? Dann tagesaufgaben-und-ziele.sql ausführen.)"
+                );
+
+                return;
+
+            }
+
+
+            ziele.push({
+
+                id: ergebnis.data.id,
+
+                text: text,
+
+                erledigt: false
+
+            });
+
+
+            renderZiele();
+
+        }
+
+
         function isValidEmail(
             email
         ) {
@@ -8765,11 +8022,16 @@
             authMode = "login";
 
 
-            // Bild und Admin-Rechte des vorherigen Nutzers dürfen
-            // nicht stehen bleiben.
+            // Nichts vom vorherigen Nutzer darf stehen bleiben.
             profilBild = "";
 
             istAdmin = false;
+
+            start90 = "";
+
+            tagesaufgaben = [];
+
+            ziele = [];
 
 
             checkAuthState();
@@ -9733,11 +8995,18 @@
         }
 
 
+        /*
+        // Holt beides aus der Zeile "profil": das Bild und den
+        // Starttag der 90 Tage.
+        */
+
         async function ladeProfilbild() {
 
             if (!account) {
 
                 profilBild = "";
+
+                start90 = "";
 
                 return;
 
@@ -9747,14 +9016,14 @@
             const ergebnis =
                 await supabaseClient
                     .from("profil")
-                    .select("bild")
+                    .select("bild, start_90")
                     .eq("user_id", account.id);
 
 
             if (ergebnis.error) {
 
                 console.error(
-                    "Profilbild konnte nicht geladen werden:",
+                    "Profil konnte nicht geladen werden:",
                     ergebnis.error
                 );
 
@@ -9771,6 +9040,26 @@
 
             profilBild =
                 (zeile && zeile.bild) || "";
+
+
+            start90 =
+                (zeile && zeile.start_90) || "";
+
+
+            /*
+            // Noch kein Starttag? Dann fängt der Block heute an. So
+            // steht beim ersten Öffnen keine leere Anzeige da -
+            // verschieben kann man ihn jederzeit, indem man den Kreis
+            // antippt.
+            */
+
+            if (!start90) {
+
+                start90 = heuteKey();
+
+                await speichereStart90Wert(start90);
+
+            }
 
         }
 
@@ -16127,7 +15416,7 @@
             // Hier neu gesetzt statt nur einmal beim Start: Wer die App
             // über Nacht offen lässt (auf dem Handy passiert das
             // ständig), würde sonst am nächsten Morgen noch den
-            // gestrigen Tag sehen und dort seine Habits abhaken.
+            // gestrigen Tag sehen und dort seine Aufgaben abhaken.
             */
 
             selectedDate = new Date();
@@ -16135,9 +15424,11 @@
 
             renderWeek();
 
-            renderHabits();
+            renderCountdown();
 
-            renderTasks();
+            renderTagesaufgaben();
+
+            renderZiele();
 
             renderNotesList();
 
@@ -16148,12 +15439,6 @@
             renderNotificationStatus();
 
             renderAppVersion();
-
-
-            document.getElementById(
-                "streakNumber"
-            ).textContent =
-                calculateStreak();
 
         }
 
